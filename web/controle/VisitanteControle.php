@@ -100,23 +100,24 @@ class VisitanteControle
         }
     }
 
-    public function verificarVisitante()
+    public function verificarVisitante(string $paginaRetorno = 'cadastro_visitante.php')
     {
         extract($_REQUEST);
+        $retorno = '../html/recepcao/' . $paginaRetorno . '?cpf=' . urlencode(is_string($cpf ?? null) ? $cpf : '') . '&msg=';
 
         $camposObrigatorios = ['nome', 'sobrenome', 'gender', 'nascimento', 'cpf'];
 
         foreach ($camposObrigatorios as $campo) {
             if (!isset($$campo) || empty($$campo)) {
                 http_response_code(412);
-                header('Location: ../html/recepcao/cadastro_visitante.php?msg=O campo ' . $campo . ' é obrigatório.');
+                header('Location: ' . $retorno . urlencode('O campo ' . $campo . ' é obrigatório.'));
                 exit();
             }
         }
 
         if (!Util::validarCPF($cpf)) {
             http_response_code(412);
-            header('Location: ../html/recepcao/cadastro_visitante.php?msg=O CPF informado não é válido.');
+            header('Location: ' . $retorno . urlencode('O CPF informado não é válido.'));
             exit();
         }
 
@@ -186,7 +187,7 @@ class VisitanteControle
     public function incluirExistente()
     {
         try {
-            $visitante = $this->verificarVisitante();
+            $visitante = $this->verificarVisitante('cadastro_visitante_pessoa_existente.php');
             $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
 
             if (!Csrf::validateToken($_POST['csrf_token']))

@@ -143,18 +143,6 @@ class VoluntarioControle
         }
     }
 
-    public function listarTodos2()
-    {
-        try {
-            $voluntariosDAO = new VoluntarioDAO();
-            $voluntarios = $voluntariosDAO->listarTodos2();
-            $_SESSION['voluntarios2'] = json_encode($voluntarios);
-        }
-        catch (Exception $e) {
-            Util::tratarException($e);
-        }
-    }
-
     public function listarUm()
     {
         try {

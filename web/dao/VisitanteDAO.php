@@ -85,83 +85,74 @@ class VisitanteDAO
         }
     }
 
+    /**
+     * Cadastra como visitante uma pessoa que já existe no sistema.
+     *
+     * A pessoa pode ser atendido, funcionário, sócio etc., então esta tela não altera
+     * os dados que já estão cadastrados: só preenche os campos que estão vazios.
+     */
     public function incluirExistente(Visitante $visitante, $cpf)
     {
         $this->pdo->beginTransaction();
 
         try {
-            $buscaPessoa = $this->pdo->prepare("SELECT id_pessoa FROM pessoa WHERE cpf = :cpf");
-            $buscaPessoa->bindParam(':cpf', $cpf);
+            $buscaPessoa = $this->pdo->prepare("SELECT id_pessoa FROM pessoa WHERE cpf = :cpf FOR UPDATE");
+            $buscaPessoa->bindParam(":cpf", $cpf);
             $buscaPessoa->execute();
             $idPessoa = $buscaPessoa->fetchColumn();
 
-            $sqlPessoa = "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, telefone=:telefone, data_nascimento=:data_nascimento, cep=:cep, estado=:estado, cidade=:cidade, bairro=:bairro, logradouro=:logradouro, numero_endereco=:numero_endereco, complemento=:complemento, ibge=:ibge, registro_geral=:registro_geral, orgao_emissor=:orgao_emissor, data_expedicao=:data_expedicao, nome_pai=:nome_pai, nome_mae=:nome_mae, tipo_sanguineo=:tipo_sanguineo WHERE id_pessoa=:id_pessoa";
+            if ($idPessoa === false)
+                throw new InvalidArgumentException("Pessoa não encontrada.", 404);
 
-            $stmtPessoa = $this->pdo->prepare($sqlPessoa);
+            $buscaVisitante = $this->pdo->prepare("SELECT id_visitante FROM visitante WHERE id_pessoa = :id_pessoa");
+            $buscaVisitante->bindParam(":id_pessoa", $idPessoa);
+            $buscaVisitante->execute();
 
-            $nome = $visitante->getNome();
-            $sobrenome = $visitante->getSobrenome();
-            $sexo = $visitante->getSexo();
-            $telefone = $visitante->getTelefone();
-            $nascimento = $visitante->getDataNascimento();
-            $cep = $visitante->getCep();
-            $estado = $visitante->getEstado();
-            $cidade = $visitante->getCidade();
-            $bairro = $visitante->getBairro();
-            $logradouro = $visitante->getLogradouro();
-            $numeroEndereco = $visitante->getNumeroEndereco();
-            $complemento = $visitante->getComplemento();
-            $ibge = $visitante->getIbge();
-            $rg = $visitante->getRegistroGeral();
-            $orgaoEmissor = $visitante->getOrgaoEmissor();
-            $dataExpedicao = $visitante->getDataExpedicao();
-            $nomePai = $visitante->getNomePai();
-            $nomeMae = $visitante->getNomeMae();
-            $sangue = $visitante->getTipoSanguineo();
+            if ($buscaVisitante->fetchColumn() !== false)
+                throw new InvalidArgumentException("Erro, Visitante já cadastrado no sistema.", 400);
 
-            $stmtPessoa->bindParam(':nome', $nome);
-            $stmtPessoa->bindParam(':sobrenome', $sobrenome);
-            $stmtPessoa->bindParam(':sexo', $sexo);
-            $stmtPessoa->bindParam(':telefone', $telefone);
-            $stmtPessoa->bindParam(':data_nascimento', $nascimento);
-            $stmtPessoa->bindParam(':cep', $cep);
-            $stmtPessoa->bindParam(':estado', $estado);
-            $stmtPessoa->bindParam(':cidade', $cidade);
-            $stmtPessoa->bindParam(':bairro', $bairro);
-            $stmtPessoa->bindParam(':logradouro', $logradouro);
-            $stmtPessoa->bindParam(':numero_endereco', $numeroEndereco);
-            $stmtPessoa->bindParam(':complemento', $complemento);
-            $stmtPessoa->bindParam(':ibge', $ibge);
-            $stmtPessoa->bindParam(':registro_geral', $rg);
-            $stmtPessoa->bindParam(':orgao_emissor', $orgaoEmissor);
-            $stmtPessoa->bindParam(':data_expedicao', $dataExpedicao);
-            $stmtPessoa->bindParam(':nome_pai', $nomePai);
-            $stmtPessoa->bindParam(':nome_mae', $nomeMae);
-            $stmtPessoa->bindParam(':tipo_sanguineo', $sangue);
-            $stmtPessoa->bindParam(':id_pessoa', $idPessoa);
-
-            $stmtPessoa->execute();
+            $campos = [
+                "nome" => $visitante->getNome(),
+                "sobrenome" => $visitante->getSobrenome(),
+                "sexo" => $visitante->getSexo(),
+                "data_nascimento" => $visitante->getDataNascimento(),
+                "cep" => $visitante->getCep(),
+                "estado" => $visitante->getEstado(),
+                "cidade" => $visitante->getCidade(),
+                "bairro" => $visitante->getBairro(),
+                "logradouro" => $visitante->getLogradouro(),
+                "numero_endereco" => $visitante->getNumeroEndereco(),
+                "complemento" => $visitante->getComplemento(),
+                "ibge" => $visitante->getIbge(),
+            ];
 
             $imagem = $visitante->getImagem();
-            if (!empty($imagem)) {
-                $imagem = base64_encode($imagem);
-                $sqlImagem = "UPDATE pessoa SET imagem = :imagem WHERE id_pessoa = :id_pessoa";
-                $stmtImagem = $this->pdo->prepare($sqlImagem);
-                $stmtImagem->bindParam(':imagem', $imagem);
-                $stmtImagem->bindParam(':id_pessoa', $idPessoa);
-                $stmtImagem->execute();
-            }
+            if (!empty($imagem))
+                $campos["imagem"] = base64_encode($imagem);
+
+            // Nomes de coluna vêm da lista fixa acima; os valores vão por parâmetro.
+            $sets = [];
+            foreach (array_keys($campos) as $coluna)
+                $sets[] = "{$coluna} = COALESCE(NULLIF(TRIM({$coluna}), ''), NULLIF(:{$coluna}, ''), {$coluna})";
+
+            $stmtPessoa = $this->pdo->prepare("UPDATE pessoa SET " . implode(", ", $sets) . " WHERE id_pessoa = :id_pessoa");
+
+            foreach ($campos as $coluna => $valor)
+                $stmtPessoa->bindValue(":{$coluna}", is_null($valor) ? null : trim((string) $valor));
+
+            $stmtPessoa->bindValue(":id_pessoa", $idPessoa, PDO::PARAM_INT);
+            $stmtPessoa->execute();
 
             $sqlVisitante = "INSERT INTO visitante (id_pessoa) VALUES (:id_pessoa)";
             $stmtVisitante = $this->pdo->prepare($sqlVisitante);
-            $stmtVisitante->bindParam(':id_pessoa', $idPessoa);
+            $stmtVisitante->bindParam(":id_pessoa", $idPessoa);
             $stmtVisitante->execute();
             $idVisitante = $this->pdo->lastInsertId();
 
             $this->pdo->commit();
             return $idVisitante;
 
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $this->pdo->rollBack();
             throw $e;
         }

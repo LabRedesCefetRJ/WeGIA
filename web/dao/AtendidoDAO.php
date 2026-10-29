@@ -423,24 +423,24 @@ class AtendidoDAO
         return json_encode($atendidos);
     }
 
+
     public function listarTodos2()
     {
-        require_once ROOT . "/dao/memorando/UsuarioDAO.php";
-        $usuario = new UsuarioDAO();
-        $id_usuario = $usuario->obterUsuario($_SESSION["usuario"])['id_pessoa'];
-        $atendidos = array();
-
-        $consulta = $this->pdo->prepare("SELECT p.id_pessoa, p.nome, p.sobrenome, p.cpf FROM atendido a INNER JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE p.id_pessoa!=:idUsuario");
-        $consulta->bindValue(':idUsuario', $id_usuario);
-        $consulta->execute();
+        $pessoas = array();
+        $pdo = Conexao::connect();
+        $consulta = $pdo->query("SELECT p.nome,p.sobrenome,p.cpf,i.id_pessoa FROM pessoa p INNER JOIN pessoa i ON p.id_pessoa = i.id_pessoa");
 
         $x = 0;
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-            $atendidos[$x] = array('id_pessoa' => htmlspecialchars($linha['id_pessoa']), 'nome' => htmlspecialchars($linha['nome']), 'sobrenome' => htmlspecialchars($linha['sobrenome']), 'cpf' => htmlspecialchars($linha['cpf']));
+            if ($linha['cpf'] === "Não informado" || $linha['cpf'] === null) {
+                $pessoas[$x] = array('cpf' => 'Não informado', 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'id' => $linha['id_pessoa']);
+            } else {
+                $pessoas[$x] = array('cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'id' => $linha['id_pessoa']);
+            }
             $x++;
         }
 
-        return $atendidos;
+        return $pessoas;
     }
 
     public function getIdPessoaByIdAtendido(int $idAtendido): int

@@ -40,7 +40,7 @@ if (!$cpf || strlen($cpf) < 1) {
 
 $pdo = Conexao::connect();
 
-$stmt = $pdo->prepare("SELECT * FROM pessoa WHERE cpf = :cpf");
+$stmt = $pdo->prepare("SELECT nome, sobrenome, cpf, sexo, data_nascimento, imagem, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge FROM pessoa WHERE cpf = :cpf");
 $stmt->bindParam(':cpf', $cpf);
 $stmt->execute();
 $pessoa = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -80,83 +80,49 @@ if (!empty($pessoa['imagem'])) {
     
     <script>
         $(function() {
-            var pessoa = <?php echo json_encode($pessoa); ?>;
-            $("#nome").val(pessoa.nome).prop('readonly', true);
-            $("#sobrenome").val(pessoa.sobrenome).prop('readonly', true);
-            $("#cpf").val(pessoa.cpf).prop('readonly', true);
-            if (pessoa.data_nascimento) {
-                var date = pessoa.data_nascimento.split("/");
-                if (date.length === 3) {
-                    $("#nascimento").val(date[2] + "-" + date[1] + "-" + date[0]).prop('readonly', true);
-                } else {
-                    $("#nascimento").val(pessoa.data_nascimento).prop('readonly', true);
+            var pessoa = <?php echo json_encode(array_diff_key($pessoa, ["imagem" => true])); ?>;
+            // Os dados já cadastrados não são alterados por esta tela: só os campos vazios podem ser preenchidos.
+            function preencher(seletor, valor) {
+                var temValor = valor !== null && String(valor).trim() !== "";
+                $(seletor).val(temValor ? valor : "").prop("readonly", temValor);
+            }
+            $("#cpf").val(pessoa.cpf).prop("readonly", true);
+            preencher("#nome", pessoa.nome);
+            preencher("#sobrenome", pessoa.sobrenome);
+            var nascimento = pessoa.data_nascimento || "";
+            var partes = nascimento.split("/");
+            if (partes.length === 3) {
+                nascimento = partes[2] + "-" + partes[1] + "-" + partes[0];
+            }
+            preencher("#nascimento", nascimento);
+            if (pessoa.sexo == "m" || pessoa.sexo == "f") {
+                $(pessoa.sexo == "m" ? "#radioM" : "#radioF").prop("checked", true);
+                $("#hiddenGender").val(pessoa.sexo);
+            } else {
+                $("#radioM, #radioF").prop("disabled", false);
+                $("#hiddenGender").remove();
+            }
+            preencher("#cep", pessoa.cep);
+            preencher("#uf", pessoa.estado);
+            preencher("#cidade", pessoa.cidade);
+            preencher("#bairro", pessoa.bairro);
+            preencher("#rua", pessoa.logradouro);
+            preencher("#complemento", pessoa.complemento);
+            preencher("#ibge", pessoa.ibge);
+            if (pessoa.numero_endereco !== null && String(pessoa.numero_endereco).trim() !== "") {
+                $("#numero_residencia").val(pessoa.numero_endereco).prop("readonly", true);
+            } else {
+                $("#numResidencial").prop("disabled", false);
+                if (pessoa.cep) {
+                    $("#numResidencial").prop("checked", true);
+                    $("#numero_residencia").prop("disabled", true);
                 }
             }
-            if (pessoa.sexo == "m") {
-                $("#radioM").prop('checked', true);
-                $("input[name=gender]").prop('readonly', true);
-                $("#hiddenGender").val('m');
-            } else if (pessoa.sexo == "f") {
-                $("#radioF").prop('checked', true);
-                $("input[name=gender]").prop('readonly', true);
-                $("#hiddenGender").val('f');
-            }
-            $("#cep").val(pessoa.cep).prop('readonly', true);
-            $("#uf").val(pessoa.estado).prop('readonly', true);
-            $("#cidade").val(pessoa.cidade).prop('readonly', true);
-            $("#bairro").val(pessoa.bairro).prop('readonly', true);
-            $("#rua").val(pessoa.logradouro).prop('readonly', true);
-            $("#numero_residencia").val(pessoa.numero_endereco).prop('readonly', true);
-            $("#numero_residencia").prop('readonly', true);
-            $("#complemento").val(pessoa.complemento).prop('readonly', true);
-            $("#ibge").val(pessoa.ibge).prop('readonly', true);
-            if (pessoa.numero_endereco == 'N?o possui' || pessoa.numero_endereco == null || pessoa.numero_endereco == '')
-                $("#numResidencial").prop('checked', true);
         });
 
-        function editar_informacoes() {
-            $("#nome").prop('readonly', false);
-            $("#sobrenome").prop('readonly', false);
-            $("#radioM").prop('disabled', false);
-            $("#radioF").prop('disabled', false);
-            $("#nascimento").prop('readonly', false);
-            $("#cep").prop('readonly', false);
-            $("#uf").prop('readonly', false);
-            $("#cidade").prop('readonly', false);
-            $("#bairro").prop('readonly', false);
-            $("#rua").prop('readonly', false);
-            $("#numero_residencia").prop('readonly', false);
-            $("#numResidencial").prop('disabled', false);
-            $("#complemento").prop('readonly', false);
-            $("#ibge").prop('readonly', false);
-            $("#botaoEditarIP").html('Cancelar');
-            $("#botaoCadastrarIP").prop('disabled', true);
-            $("#botaoEditarIP").removeAttr('onclick');
-            $("#botaoEditarIP").attr('onclick', "return cancelar_informacoes()");
-        }
-
-        function cancelar_informacoes() {
-            $("#nome").prop('readonly', true);
-            $("#sobrenome").prop('readonly', true);
-            $("#radioM").prop('disabled', true);
-            $("#radioF").prop('disabled', true);
-            $("#nascimento").prop('readonly', true);
-            $("#cep").prop('readonly', true);
-            $("#uf").prop('readonly', true);
-            $("#cidade").prop('readonly', true);
-            $("#bairro").prop('readonly', true);
-            $("#rua").prop('readonly', true);
-            $("#numero_residencia").prop('readonly', true);
-            $("#numResidencial").prop('disabled', true);
-            $("#complemento").prop('readonly', true);
-            $("#ibge").prop('readonly', true);
-            $("#botaoEditarIP").html('Editar');
-            $("#botaoCadastrarIP").prop('disabled', false);
-            $("#botaoEditarIP").removeAttr('onclick');
-            $("#botaoEditarIP").attr('onclick', "return editar_informacoes()");
-        }
-
         function pesquisacep(valor) {
+            if ($("#cep").prop("readonly"))
+                return;
             var cep = valor.replace(/\D/g, '');
             if (cep != "") {
                 var validacep = /^[0-9]{8}$/;
@@ -233,7 +199,9 @@ endif; ?>
                                         <div class="thumb-info mb-md">
                                             <img src="<?= $fotoPessoa ?>" style="margin-bottom: 15px;" id="imagem" class="rounded img-responsive" alt="Foto do visitante">
                                             <br>
+                                            <?php if (empty($pessoa['imagem'])): ?>
                                             <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#modalFotoVisitante"><i class="fa fa-camera-retro"></i></button>
+                                            <?php endif; ?>
                                             <div class="modal fade" id="modalFotoVisitante" role="dialog">
                                                 <div class="modal-dialog">
                                                     <div class="modal-content">
@@ -349,7 +317,6 @@ endif; ?>
                                 <?= Csrf::inputField()?>
                                 <input type="hidden" name="nomeClasse" value="VisitanteControle">
                                 <input type="hidden" name="metodo" value="incluirExistente">
-                                <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="return editar_informacoes()">Editar</button>
                                 <button type="submit" class="btn btn-primary" id="botaoCadastrarIP">Cadastrar</button>
                             </div>
                             </div>
