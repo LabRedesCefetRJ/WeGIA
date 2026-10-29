@@ -2602,7 +2602,7 @@ CREATE TABLE IF NOT EXISTS voluntario (
  id_voluntario INT AUTO_INCREMENT PRIMARY KEY,
  id_pessoa INT NOT NULL,
  id_situacao INT NOT NULL,
- id_cargo INT NOT NULL,
+ id_cargo INT NULL DEFAULT NULL,
  data_admissao DATE NOT NULL,
  FOREIGN KEY (id_pessoa) REFERENCES pessoa(id_pessoa) ON DELETE CASCADE,
  FOREIGN KEY (id_situacao) REFERENCES situacao(id_situacao),

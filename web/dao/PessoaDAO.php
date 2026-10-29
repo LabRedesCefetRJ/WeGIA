@@ -168,8 +168,8 @@ class PessoaDAO
         $stmt = $this->pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
         $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
         $stmt->execute();
-        $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
-        return $adm_configurado;
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int) ($resultado['adm_configurado'] ?? 0);
     }
 
     public function getAlvoVoluntario(int $idVoluntario): array
@@ -186,11 +186,18 @@ class PessoaDAO
         return $alvo;
     }
 
-    public function getCargoPorPessoa(int $id_pessoa): int {       
-        $sql = 
-        "SELECT id_cargo FROM funcionario f WHERE f.id_pessoa = :ID_PESSOA
-        UNION
-        SELECT id_cargo FROM voluntario v WHERE v.id_pessoa = :ID_PESSOA";
+    /**
+     * Cargo que define as permissões da pessoa. Quem é funcionário e voluntário
+     * ao mesmo tempo usa o cargo de funcionário (o ORDER BY garante isso: sem
+     * ele o UNION não tem ordem definida). Voluntário sem cargo não conta.
+     */
+    public function getCargoPorPessoa(int $id_pessoa): int {
+        $sql =
+        "SELECT id_cargo, 1 AS prioridade FROM funcionario f WHERE f.id_pessoa = :ID_PESSOA
+        UNION ALL
+        SELECT id_cargo, 2 AS prioridade FROM voluntario v WHERE v.id_pessoa = :ID_PESSOA AND v.id_cargo IS NOT NULL
+        ORDER BY prioridade
+        LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":ID_PESSOA", $id_pessoa, PDO::PARAM_INT);
