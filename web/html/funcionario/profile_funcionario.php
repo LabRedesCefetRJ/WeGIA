@@ -1255,10 +1255,10 @@ try {
                         <label class="col-md-3 control-label">Sexo</label>
                         <div class="col-md-8">
                           <label><input type="radio" name="gender" id="radioM" value="m"
-                              style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i
+                              style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" aria-label="Masculino"> <i
                               class="fa fa-male" style="font-size: 20px;"></i></label>
                           <label><input type="radio" name="gender" id="radioF" value="f"
-                              style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i
+                              style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" aria-label="Feminino"> <i
                               class="fa fa-female" style="font-size: 20px;"></i> </label>
                         </div>
                       </div>

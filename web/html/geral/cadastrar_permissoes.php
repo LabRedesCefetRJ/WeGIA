@@ -133,6 +133,10 @@ extract($_SESSION);
 			});
 
 			$.each(Funcionarios, function(i, item) {
+				// Almoxarife é vinculado a funcionário: voluntários (sem id_funcionario) ficam de fora
+				if (!item.id_funcionario) {
+					return;
+				}
 				$("#id_funcionario")
 					.append($('<option value="' + item.id_funcionario + '"/>')
 						.text(`${item.nome || "Sem Nome"} | ${item.cpf}`)
@@ -274,7 +278,7 @@ extract($_SESSION);
 									<fieldset>
 										<form action="../matPat/adicionar_almoxarife.php" method="post">
 											<div class="form-group">
-												<label class="col-md-3 control-label" for="inputSuccess">Pessoa</label>
+												<label class="col-md-3 control-label" for="inputSuccess">Funcionário</label>
 												<a href="../funcionario/cadastro_funcionario.php">
 													<i class="fas fa-user-plus w3-xlarge" style="margin-top: 0.75vw"></i>
 												</a>
