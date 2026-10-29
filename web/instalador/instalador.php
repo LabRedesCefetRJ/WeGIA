@@ -178,7 +178,9 @@ define('ROOT', dirname(__FILE__));
 define('BKP_DIR', " . var_export($backupDir, true) . ");
 
 define('APP_TIMEZONE', 'America/Sao_Paulo');
+define('CONTRIBUICOES_CRON_ID_PESSOA', 1);
 define('WWW', " . var_export($www, true) . ");
+define( 'SESSION_TIMEOUT', 1800); //30 minutos de inatividade antes de ser limpa pelo garbage collector
 
 // Habilita recursos de desenvolvedor (ex: pagina debug_info.php). Manter \"off\" em produção.
 define('DEV_MODE', 'off');

@@ -18,7 +18,8 @@ class EstoqueDAO
             'tipos_saida' => 'SELECT id_tipo, descricao FROM tipo_saida ORDER BY descricao',
             'responsaveis' => 'SELECT DISTINCT p.id_pessoa, p.nome, p.sobrenome FROM pessoa p INNER JOIN funcionario f ON f.id_pessoa = p.id_pessoa INNER JOIN almoxarife a ON a.id_funcionario = f.id_funcionario WHERE f.id_situacao = 1 ORDER BY p.nome, p.sobrenome',
             'categorias' => 'SELECT id_categoria_produto, descricao_categoria FROM categoria_produto ORDER BY descricao_categoria',
-            'almoxarifados' => 'SELECT id_almoxarifado, descricao_almoxarifado FROM almoxarifado WHERE ativo = 1 ORDER BY descricao_almoxarifado'
+            'almoxarifados' => 'SELECT id_almoxarifado, descricao_almoxarifado FROM almoxarifado WHERE ativo = 1 ORDER BY descricao_almoxarifado',
+            'grupos' => 'SELECT id_grupo_produto, descricao_grupo FROM grupo_produto ORDER BY descricao_grupo'
         ];
         $dados = [];
 

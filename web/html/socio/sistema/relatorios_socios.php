@@ -157,19 +157,88 @@ require_once ROOT . "/html/personalizacao_display.php";
     </script>
     <style>
         @media print {
+            html, body {
+                background: #fff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
 
-            .menuu,
-            .page-header,
-            .box-geracaounica,
-            .header,
-            .print-button {
-                display: none;
+            body > * {
+                display: none !important;
+            }
+
+            body > .body {
+                display: block !important;
+            }
+
+            .body > * {
+                display: none !important;
+            }
+
+            .body > .inner-wrapper {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .inner-wrapper > * {
+                display: none !important;
+            }
+
+            .inner-wrapper > .content-body {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .content-body > * {
+                display: none !important;
+            }
+
+            .content-body .row {
+                display: block !important;
+            }
+
+            .content-body .row > * {
+                display: none !important;
+            }
+
+            .content-body .row > .relatorio-result,
+            .content-body .row > .relatorio-result > * {
+                display: block !important;
             }
 
             .resultado {
-                display: block;
-                margin-top: -100px;
-                width: 100%;
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                position: static !important;
+                overflow: visible !important;
+            }
+
+            .resultado > * {
+                display: block !important;
+            }
+
+            .relatorio-panel {
+                border: none !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .relatorio-panel .panel-body {
+                padding: 0 !important;
+            }
+
+            .relatorio-meta-print {
+                margin-top: 16px;
+                padding-top: 12px;
+                border-top: 1px solid #dfe7ff;
+                font-size: 10px;
+                color: #374151;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
             }
 
             .resultado table {

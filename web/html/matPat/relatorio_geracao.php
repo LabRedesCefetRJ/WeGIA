@@ -27,6 +27,9 @@ $modoRequisicao = $_POST['modo_requisicao'] ?? 'movimentados';
 
 $mostrarZerados = isset($_POST['mostrarZerados']) && $_POST['mostrarZerados'] === 'on';
 
+$tiposEntrada = $_POST['tiposEntrada'] ?? [];
+$tiposSaida = $_POST['tiposSaida'] ?? [];
+
 $o_d = null;
 if ($_POST['tipo_relatorio'] == 'entrada') {
 	$o_d = $_POST['origem'];
@@ -59,6 +62,8 @@ $item = new Item(
 	in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque', 'itens_compra'])
 	? ($_POST['categoria_produto'] ?? null)
 	: ($_POST['tipo'] ?? null),
+	$tiposEntrada,
+    $tiposSaida,
 	$_POST['responsavel'],
 	[
 		'inicio' => $_POST['data_inicio'],
