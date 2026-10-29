@@ -21,6 +21,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 $tipoInicial = filter_input(INPUT_GET, 'tipo', FILTER_UNSAFE_RAW);
 $tipoInicial = VisitadoDAO::tipoValido($tipoInicial) ? $tipoInicial : '';
+$vindoDaEntrada = filter_input(INPUT_GET, 'origem', FILTER_UNSAFE_RAW) === 'entrada';
 ?>
 
 
@@ -280,6 +281,20 @@ $tipoInicial = VisitadoDAO::tipoValido($tipoInicial) ? $tipoInicial : '';
         const fotoSemFoto = WWW_BASE + "img/semfoto.png";
         const csrfToken = <?= json_encode(Csrf::generateToken()) ?>;
         const tipoInicial = <?= json_encode($tipoInicial) ?>;
+        const vindoDaEntrada = <?= json_encode($vindoDaEntrada) ?>;
+        // Mesma chave usada em registro_entrada.php para a seleção da visita atual.
+        const CHAVE_SELECAO = "recepcaoVisitadosSelecionados";
+
+        function selecionarParaVisita(idVisitado, nome) {
+            try {
+                const selecao = JSON.parse(sessionStorage.getItem(CHAVE_SELECAO) || "{}") || {};
+                selecao[idVisitado] = nome;
+                sessionStorage.setItem(CHAVE_SELECAO, JSON.stringify(selecao));
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
 
         function escaparHtml(texto) {
             return $("<div>").text(texto == null ? "" : texto).html();
@@ -371,8 +386,15 @@ $tipoInicial = VisitadoDAO::tipoValido($tipoInicial) ? $tipoInicial : '';
                         id: $botao.data("id")
                     },
                     success: function(resposta) {
+                        const nome = $botao.closest("tr").find("td").eq(1).text().trim();
+                        let mensagem = resposta.mensagem || "Visitado cadastrado com sucesso";
+
+                        if (vindoDaEntrada && resposta.id_visitado && selecionarParaVisita(resposta.id_visitado, nome)) {
+                            mensagem = nome + " foi cadastrado e selecionado para a visita. Volte ao registro de entrada para registrar.";
+                        }
+
                         $("#datatable-default").DataTable().row($botao.closest("tr")).remove().draw(false);
-                        mostrarAlerta("success", resposta.mensagem || "Visitado cadastrado com sucesso");
+                        mostrarAlerta("success", mensagem);
                     },
                     error: function(xhr) {
                         const erro = xhr.responseJSON && xhr.responseJSON.erro ? xhr.responseJSON.erro : "Erro ao cadastrar o visitado.";

@@ -105,7 +105,25 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 		const fotoSemFoto = WWW_BASE + "img/semfoto.png";
 		const idsVisitantes = <?= json_encode($idsVisitantes) ?>;
 
-		let visitadosSelecionados = {};
+		// A seleção fica no sessionStorage para não se perder ao cadastrar um visitado ou recarregar a página.
+		const CHAVE_SELECAO = "recepcaoVisitadosSelecionados";
+
+		function lerSelecao() {
+			try {
+				const salvo = JSON.parse(sessionStorage.getItem(CHAVE_SELECAO) || "{}");
+				return salvo && typeof salvo === "object" ? salvo : {};
+			} catch (e) {
+				return {};
+			}
+		}
+
+		function salvarSelecao() {
+			try {
+				sessionStorage.setItem(CHAVE_SELECAO, JSON.stringify(visitadosSelecionados));
+			} catch (e) {}
+		}
+
+		let visitadosSelecionados = lerSelecao();
 
 		function fotoVisitadoHtml(item) {
 			const src = item.imagem ? ("data:image;base64," + item.imagem) : fotoSemFoto;
@@ -134,7 +152,8 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 				});
 			}
 
-			$("#contadorVisitadosSelecionados").text(ids.length || "instituição");
+			$("#contadorVisitadosSelecionados").text(ids.length);
+			$("#contadorVisitadosBotao").text(ids.length || "instituição");
 			$("#contadorVisitadosResumo").text(ids.length || "1 (instituição)");
 			$("#totalVisitasGeradas").text(Math.max(ids.length, 1) * idsVisitantes.length);
 		}
@@ -146,7 +165,7 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 			$.ajax({
 				url: "../../controle/control.php",
 				method: "GET",
-				data: { nomeClasse: "VisitadoControle", metodo: "listarTodos", tipo: tipo },
+				data: { nomeClasse: "VisitadoControle", metodo: "listarTodos", tipo: tipo === "todos" ? "" : tipo },
 				dataType: "json",
 				success: function (dados) {
 
@@ -173,6 +192,11 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 
 					tabela.draw();
 				},
+				error: function (xhr) {
+					const erro = xhr.responseJSON && xhr.responseJSON.erro ? xhr.responseJSON.erro : "Não foi possível carregar a lista de visitados.";
+					$("#datatable-default").DataTable().clear().draw();
+					$("#alertaVisitados").html(`<div class="alert alert-danger" role="alert">${escaparHtml(erro)}</div>`);
+				}
 			});
 		}
 
@@ -182,16 +206,22 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
             $("#header").load("../header.php");
             $(".menuu").load("../menu.php");
 
-			const tipoSalvo = localStorage.getItem("tipoVisitado");
+			let tipoSalvo = null;
+			try {
+				tipoSalvo = localStorage.getItem("tipoVisitado");
+			} catch (e) {}
 
-			if (tipoSalvo && $("#tipo option[value='" + tipoSalvo + "']").length) {
-				$("#tipo").val(tipoSalvo);
-				carregar(tipoSalvo);
-			}
+			const tipoAtual = tipoSalvo && $("#tipo option[value='" + tipoSalvo + "']").length ? tipoSalvo : "todos";
+			$("#tipo").val(tipoAtual);
+			carregar(tipoAtual);
+			atualizarSelecionados();
 
 			$("#tipo").on("change", function () {
    				let tipo = $(this).val();
-				localStorage.setItem("tipoVisitado", tipo);
+				try {
+					localStorage.setItem("tipoVisitado", tipo);
+				} catch (e) {}
+				$("#alertaVisitados").empty();
     			carregar(tipo);
 			});
 
@@ -204,6 +234,8 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 				} else {
 					delete visitadosSelecionados[id];
 				}
+
+				salvarSelecao();
 
 				atualizarSelecionados();
 			});
@@ -237,6 +269,9 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 
 				$("#formRegistrarEntradaMultipla").remove();
 				$("body").append(formHtml);
+				try {
+					sessionStorage.removeItem(CHAVE_SELECAO);
+				} catch (e) {}
 				$("#formRegistrarEntradaMultipla").trigger("submit");
 			});
         });
@@ -314,7 +349,7 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 								<a href="pre_registro_entrada.php" class="btn btn-default">
 									<i class="fa fa-user-plus"></i> Adicionar visitante
 								</a>
-								<a href="cadastro_visitado.php" class="btn btn-primary">
+								<a href="cadastro_visitado.php?origem=entrada" class="btn btn-primary">
 									<i class="fa fa-user-plus"></i> Cadastrar Visitado
 								</a>
 							</div>
@@ -338,7 +373,7 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 
         				<button type="button" id="botaoRegistrarEntradaTopo" class="btn btn-primary">
             				<i class="fa fa-sign-in"></i>
-            				Registrar Entrada (<span id="contadorVisitadosSelecionados">instituição</span>)
+            				Registrar Entrada (<span id="contadorVisitadosBotao">instituição</span>)
         				</button>
     				</div>
 				</section>
@@ -352,7 +387,7 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 						<h2 class="panel-title">Selecione o tipo de visitado:</h2><br>
 						<form method="GET" action="#" id="select_tipo" name="select_tipo">
 							<select name="select_tipo" id="tipo">
-								<option selected disabled></option>
+								<option value="todos" selected>Todos</option>
 								<option value="atendido">Atendido</option>
 								<option value="funcionario">Funcionário</option>
 								<option value="pet">Pet</option>
@@ -367,6 +402,7 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 						</div>
 					</header>
 					<div class="panel-body">
+						<div id="alertaVisitados"></div>
 						<table class="table table-bordered table-striped mb-none"
 							id="datatable-default">
 							<thead>
