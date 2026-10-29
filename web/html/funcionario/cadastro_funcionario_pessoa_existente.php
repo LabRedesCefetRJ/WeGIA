@@ -66,7 +66,8 @@ try {
   $funcionarioControle->listarCpf();
 
   $situacoes = $pdo->query("SELECT * FROM situacao")->fetchAll(PDO::FETCH_ASSOC);
-  $cargos = $pdo->query("SELECT * FROM cargo")->fetchAll(PDO::FETCH_ASSOC);
+  // Só o administrador pode conceder o cargo de Administrador (id 1), o controller também barra
+  $cargos = $pdo->query((new FuncionarioDAO())->verificaAdm($id_pessoa) ? "SELECT * FROM cargo" : "SELECT * FROM cargo WHERE id_cargo <> 1")->fetchAll(PDO::FETCH_ASSOC);
   $tipos = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
   $escala = $pdo->query("SELECT * FROM escala_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {

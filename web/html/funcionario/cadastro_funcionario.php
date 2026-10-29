@@ -51,7 +51,8 @@ $fieldErrors = getSessionFormErrors();
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $situacao = $mysqli->query("SELECT * FROM situacao");
-$cargo = $mysqli->query("SELECT * FROM cargo");
+// Só o administrador pode conceder o cargo de Administrador (id 1), o controller também barra
+$cargo = $mysqli->query((new FuncionarioDAO())->verificaAdm($_SESSION['id_pessoa']) ? "SELECT * FROM cargo" : "SELECT * FROM cargo WHERE id_cargo <> 1");
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>

@@ -355,6 +355,27 @@ class FuncionarioControle
         return $horario;
     }
 
+    /**
+     * Valida o cargo informado e o devolve como inteiro, barrando a concessão
+     * do cargo de Administrador (id 1) por quem não é o administrador do sistema.
+     *
+     * A checagem e a gravação precisam usar este mesmo valor.
+     */
+    private function validarCargoConcedido($cargo): int
+    {
+        $idCargo = filter_var($cargo, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        if ($idCargo === false) {
+            throw new InvalidArgumentException('O cargo informado é inválido.', 412);
+        }
+
+        if ($idCargo === 1 && !(new FuncionarioDAO())->verificaAdm($_SESSION['id_pessoa'] ?? 0)) {
+            throw new InvalidArgumentException('Acesso negado: Apenas administradores podem conceder o cargo de Administrador.', 403);
+        }
+
+        return $idCargo;
+    }
+
     /**Extrai os dados de uma requisição e retorna um objeto do tipo Funcionario*/
     public function verificarFuncionario()
     {
@@ -553,7 +574,7 @@ class FuncionarioControle
         $funcionario->setCertificado_reservista_numero($certificado_reservista_numero);
         $funcionario->setCertificado_reservista_serie($certificado_reservista_serie);
         $funcionario->setId_situacao($situacao);
-        $funcionario->setId_cargo($cargo);
+        $funcionario->setId_cargo($this->validarCargoConcedido($cargo));
         $funcionario->setCns($cns !== '' ? $cns : null);
 
         return $funcionario;
@@ -691,7 +712,7 @@ class FuncionarioControle
         $funcionario->setCertificado_reservista_numero($certificado_reservista_numero);
         $funcionario->setCertificado_reservista_serie($certificado_reservista_serie);
         $funcionario->setId_situacao($situacao);
-        $funcionario->setId_cargo($cargo);
+        $funcionario->setId_cargo($this->validarCargoConcedido($cargo));
 
         return $funcionario;
     }
@@ -1448,7 +1469,6 @@ public function alterarOutros()
 
             $idPessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
             $idFuncionario = filter_var($id_funcionario, FILTER_SANITIZE_NUMBER_INT);
-            $novoCargo = filter_var($cargo, FILTER_SANITIZE_NUMBER_INT);
 
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
@@ -1456,6 +1476,8 @@ public function alterarOutros()
                 throw new InvalidArgumentException('O id do usuário fornecido não é válido.', 412);
             if (!$idFuncionario || $idFuncionario < 1)
                 throw new InvalidArgumentException('O id do funcionário fornecido é inválido.', 412);
+
+            $novoCargo = $this->validarCargoConcedido($cargo ?? null);
 
             $pdo = Conexao::connect();
             $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
@@ -1474,9 +1496,6 @@ public function alterarOutros()
             if ($alvo['adm_configurado'] == 1 && $adm_configurado != 1) {
                 throw new InvalidArgumentException("Acesso negado: Apenas administradores podem alterar os dados de outro administrador.", 403);
             }
-            if ($novoCargo == 1 && $adm_configurado != 1) {
-                throw new InvalidArgumentException("Acesso negado: Apenas administradores podem conceder o cargo de Administrador.", 403);
-            }
 
             if (!empty($data_admissao)) {
                 $pdo = Conexao::connect();
@@ -1492,7 +1511,7 @@ public function alterarOutros()
 
             $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
             $funcionario->setId_funcionario($id_funcionario);
-            $funcionario->setId_cargo($cargo);
+            $funcionario->setId_cargo($novoCargo);
             $funcionario->setPis($pis);
             $funcionario->setCtps($ctps);
             $funcionario->setUf_ctps($uf_ctps);
