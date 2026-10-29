@@ -523,6 +523,7 @@ class ContribuicaoController
         }
     }
 
+    //precisa de retrocompatibilidade
     public function downloadContribuicaoPdf(Request $request, Response $response, array $args): Response
     {
         try {
@@ -532,26 +533,41 @@ class ContribuicaoController
                 return $this->jsonError($response, 'Identificador da contribuição inválido.', 400);
             }
 
-            $nomeArquivo = basename($contribuicaoId);
-            if (!preg_match('/\.pdf$/i', $nomeArquivo)) {
-                $nomeArquivo .= '.pdf';
+            $conteudoPdf = null;
+            $uuidContribuicao = \api\utils\UuidGenerator::parseV7($contribuicaoId);
+            if ($uuidContribuicao !== null) {
+                $daoContribuicao = new \ContribuicaoLogDAO($this->pdo);
+                $documento = $daoContribuicao->buscarDocumentoPorUuid($uuidContribuicao->toString());
+                if (is_array($documento) && !empty($documento['documento'])) {
+                    $conteudoPdf = $documento['documento'];
+                    $nomeArquivo = 'contribuicao_' . $uuidContribuicao->toString() . '.pdf';
+                } else {
+                    return $this->jsonError($response, 'Arquivo PDF não encontrado.', 404);
+                }
             }
 
-            $validation = $this->validarAcessoContribuicaoPorArquivo($request, $nomeArquivo);
-            if ($validation instanceof Response) {
-                return $validation;
-            }
+            if ($conteudoPdf === null) {
+                $nomeArquivo = basename($contribuicaoId);
+                if (!preg_match('/\.pdf$/i', $nomeArquivo)) {
+                    $nomeArquivo .= '.pdf';
+                }
 
-            $diretorioPdf = dirname(__DIR__, 4) . '/web/html/contribuicao/pdfs';
-            $caminhoArquivo = $diretorioPdf . '/' . $nomeArquivo;
+                $validation = $this->validarAcessoContribuicaoPorArquivo($request, $nomeArquivo);
+                if ($validation instanceof Response) {
+                    return $validation;
+                }
 
-            if (!is_file($caminhoArquivo) || !is_readable($caminhoArquivo)) {
-                return $this->jsonError($response, 'Arquivo PDF não encontrado.', 404);
-            }
+                $diretorioPdf = dirname(__DIR__, 4) . '/web/html/contribuicao/pdfs';
+                $caminhoArquivo = $diretorioPdf . '/' . $nomeArquivo;
 
-            $conteudoPdf = file_get_contents($caminhoArquivo);
-            if ($conteudoPdf === false) {
-                return $this->jsonError($response, 'Erro ao ler o arquivo PDF.', 500);
+                if (!is_file($caminhoArquivo) || !is_readable($caminhoArquivo)) {
+                    return $this->jsonError($response, 'Arquivo PDF não encontrado.', 404);
+                }
+
+                $conteudoPdf = file_get_contents($caminhoArquivo);
+                if ($conteudoPdf === false) {
+                    return $this->jsonError($response, 'Erro ao ler o arquivo PDF.', 500);
+                }
             }
 
             $response->getBody()->write($conteudoPdf);
@@ -816,8 +832,7 @@ class ContribuicaoController
             $response->getBody()->write(json_encode([
                 'link' => $linkBoleto,
                 'codigo' => $codigoApi,
-                //'contribuicao_id' => (int)$contribuicaoLog->getId() voltar para o id do banco de dados quando for implementado o registro de contribuições no banco, por enquanto vamos usar o nome do arquivo como id
-                'contribuicao_id' => $this->extrairNomeArquivo($linkBoleto) //extrair do link de pagamento
+                'contribuicao_id' => $contribuicaoLog->getUuid()
             ]));
 
             return $response->withStatus(201)
@@ -967,13 +982,14 @@ class ContribuicaoController
                 }
             }
 
+            $primeiraContribuicao = $resultado['contribuicoes']->getIterator()->current();
+
             $this->pdo->commit();
 
             $response->getBody()->write(json_encode([
-                'link' => WWW . 'html/contribuicao/' . $resultado['link'],
+                'link' => WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($primeiraContribuicao->getUuid()),
                 'parcelas' => (int)$parcelas,
-                //'contribuicao_id' => (int)$contribuicaoLog->getId() voltar para o id do banco de dados quando for implementado o registro de contribuições no banco, por enquanto vamos usar o nome do arquivo como id
-                'contribuicao_id' => $this->extrairNomeArquivo($resultado['link']) //extrair do link de pagamento
+                'contribuicao_id' => $primeiraContribuicao->getUuid()
             ]));
 
             return $response->withStatus(201)
@@ -1103,7 +1119,7 @@ class ContribuicaoController
                 'qrcode' => $respostaPix['qrcode'],
                 'copiaCola' => $respostaPix['copiaCola'],
                 'codigo' => $codigoApi,
-                'contribuicao_id' => (int)$contribuicaoLog->getId()
+                'contribuicao_id' => $contribuicaoLog->getUuid()
             ]));
 
             return $response->withStatus(201)
@@ -1235,7 +1251,7 @@ class ContribuicaoController
                 'sucesso' => true,
                 'mensagem' => 'Pagamento processado com sucesso!',
                 'transacao_id' => $transacaoId,
-                'contribuicao_id' => (int)$contribuicaoLog->getId()
+                'contribuicao_id' => $contribuicaoLog->getUuid()
             ]));
 
             return $response->withStatus(201)
