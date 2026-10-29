@@ -77,3 +77,32 @@ function mascara(m,t,e,c){
     if (cursorfixo && !livre) cursor--;
     t.setSelectionRange(cursor, cursor);
 }
+
+// Formata valores numéricos para exibição em reais.
+function formatarMoeda(valor) {
+    return Number(valor ?? 0).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+// O primeiro caractere define o formato: barras numéricas ou AAA0000.
+function formatarCodigoProduto(valor) {
+    const codigo = valor.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (/^[0-9]/.test(codigo)) {
+        return codigo.replace(/[^0-9]/g, '');
+    }
+
+    const letras = codigo.match(/^[A-Z]{0,3}/)[0];
+    const numeros = codigo.slice(letras.length).replace(/[^0-9]/g, '').slice(0, 4);
+    return letras + (letras.length === 3 ? numeros : '');
+}
+
+function mascaraCodigoProduto(campo) {
+    const cursor = campo.selectionStart;
+    const antesDoCursor = formatarCodigoProduto(campo.value.slice(0, cursor));
+    campo.value = formatarCodigoProduto(campo.value);
+    campo.setSelectionRange(antesDoCursor.length, antesDoCursor.length);
+}

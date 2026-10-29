@@ -48,7 +48,7 @@ class EntradaDAO
 
             $stmt->execute();
         } catch(PDOException $e){
-            echo 'Error: <b>  na tabela produto = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            throw $e;
         }
 
     }

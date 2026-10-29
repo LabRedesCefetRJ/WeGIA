@@ -345,6 +345,18 @@ unset(
         							Aplicar grupo
     							</button>
 							</form>
+                            <?php if ($tipo === 'ativo'): ?>
+                                <form id="formArquivarProdutos" method="POST" action="<?= WWW ?>controle/control.php" style="display: inline-block;">
+                                    <input type="hidden" name="nomeClasse" value="ProdutoControle">
+                                    <input type="hidden" name="metodo" value="arquivarTodos">
+                                    <input type="hidden" name="produtos_json" id="produtosArquivarJson">
+                                    <?= Csrf::inputField() ?>
+                                    <button type="submit" id="btnArquivarSelecionados" class="btn btn-warning" disabled>
+                                        <i class="fa-solid fa-folder"></i> Arquivar selecionados
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+
 						</div>
 
 						<div class="abas-produtos">
@@ -386,7 +398,9 @@ unset(
 							</div>
 
 							<div class="campo-filtro">
-								<label for="filtroGrupo">Grupo</label>
+								<label for="filtroGrupo">
+								<a href="<?= WWW ?>html/matPat/adicionar_grupo_produto.php" data-cadastrar-grupo title="Cadastrar grupo" aria-label="Cadastrar grupo"><i class="fas fa-plus w3-xlarge" aria-hidden="true"></i></a>
+								Grupo</label>
 								<select id="filtroGrupo" class="form-control">
 									<option value="">Todos</option>
 									<option value="Sem grupo">Sem grupo</option>
@@ -561,6 +575,7 @@ unset(
 
 					function atualizarBotaoAplicar() {
     					const temProdutos = produtosSelecionados.size > 0;
+                        $('#btnArquivarSelecionados').prop('disabled', !temProdutos);
     					const temGrupo = $('#grupoSelecionado').val() !== '';
 
     					$('#btnAplicarGrupo').prop(
@@ -706,6 +721,23 @@ unset(
         					this.submit();
     					}
 					});	
+
+
+                    $('#formArquivarProdutos').on('submit', function (event) {
+                        event.preventDefault();
+                        const quantidade = produtosSelecionados.size;
+                        if (!quantidade) {
+                            return;
+                        }
+
+                        const mensagem = `Deseja arquivar ${quantidade} produto${quantidade === 1 ? '' : 's'} selecionado${quantidade === 1 ? '' : 's'}? ` +
+                            'Os produtos serão removidos de entradas, saídas e relatórios. Movimentações sem outros produtos visíveis serão arquivadas automaticamente.';
+
+                        if (confirm(mensagem)) {
+                            $('#produtosArquivarJson').val(JSON.stringify([...produtosSelecionados]));
+                            this.submit();
+                        }
+                    });
 
 					$('#grupoSelecionado').on('change', function () {
     					atualizarBotaoAplicar();
