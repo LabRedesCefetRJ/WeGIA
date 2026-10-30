@@ -20,7 +20,7 @@ class ProcessoAceitacaoDAO
      * @return int ID do processo criado.
      * @throws PDOException Em caso de erro no banco.
     */
-    public function criarProcessoInicial(int $id_pessoa, int $id_status = 1, ?string $descricao): int
+    public function criarProcessoInicial(int $id_pessoa, int $id_status, ?string $descricao): int
     {
         Util::definirFusoHorario();
         $data_inicio = date('Y-m-d H:i:s');
@@ -204,6 +204,32 @@ class ProcessoAceitacaoDAO
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_processo', $idProcesso, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function listarTodos()
+    {
+        $processos = array();
+        $sql = 'SELECT 
+            p.id_pessoa,
+            p.nome,
+            p.sobrenome,
+            p.cpf,
+            pa.id_status,
+            s.descricao AS status,
+            pa.id,
+            pa.descricao,
+            COUNT(e.id) AS etapas_count 
+        FROM processo_aceitacao pa 
+        JOIN pessoa p ON pa.id_pessoa = p.id_pessoa 
+        JOIN pa_status s ON pa.id_status = s.id 
+        LEFT JOIN pa_etapa e ON e.id_processo_aceitacao = pa.id 
+        GROUP BY p.id_pessoa, p.nome, p.sobrenome, p.cpf, s.descricao, pa.id, pa.id_status, pa.descricao 
+        ORDER BY p.nome ASC';
+        
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
