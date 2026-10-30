@@ -10,7 +10,7 @@ Documentação das endpoints e formatos JSON do módulo de Configuração da WeG
 
 ### Endpoint
 ```
-GET /configuracao/documento/modelo
+GET /configuracao/documentos/modelo
 ```
 
 ### Autenticação
@@ -22,10 +22,11 @@ Authorization: ******
 
 ### Descrição
 Retorna os registros armazenados na tabela `modelo_documento` sem incluir o conteúdo binário da coluna `documento`.
+Cada registro inclui `id_funcionario`, que identifica o funcionário responsável pelo cadastro.
 
 ### Exemplo de requisição
 ```bash
-curl -X GET "http://localhost:8000/configuracao/documento/modelo" \
+curl -X GET "http://localhost:8000/configuracao/documentos/modelo" \
   -H "Authorization: ******"
 ```
 
@@ -34,6 +35,7 @@ curl -X GET "http://localhost:8000/configuracao/documento/modelo" \
 [
   {
     "id": 1,
+    "id_funcionario": 1,
     "descricao": "Modelo de avaliação inicial",
     "extensao": "odt",
     "created_at": "2026-09-30 10:00:00",
@@ -49,7 +51,7 @@ curl -X GET "http://localhost:8000/configuracao/documento/modelo" \
 
 ### Endpoint
 ```
-GET /configuracao/documento/modelo/{id}/file
+GET /configuracao/documentos/modelo/{id}/file
 ```
 
 ### Autenticação
@@ -60,7 +62,7 @@ Retorna o arquivo binário associado ao modelo de documento informado na tabela 
 
 ### Exemplo de requisição
 ```bash
-curl -X GET "http://localhost:8000/configuracao/documento/modelo/1/file" \
+curl -X GET "http://localhost:8000/configuracao/documentos/modelo/1/file" \
   -H "Authorization: ******" \
   -o modelo-1.odt
 ```
@@ -71,7 +73,7 @@ curl -X GET "http://localhost:8000/configuracao/documento/modelo/1/file" \
 
 ### Endpoint
 ```
-POST /configuracao/documento/modelo
+POST /configuracao/documentos/modelo
 ```
 
 ### Autenticação
@@ -101,7 +103,7 @@ global: true
 
 ### Exemplo de requisição
 ```bash
-curl -X POST "http://localhost:8000/configuracao/documento/modelo" \
+curl -X POST "http://localhost:8000/configuracao/documentos/modelo" \
   -H "Authorization: ******" \
   -F "descricao=Modelo de avaliação inicial" \
   -F "arquivo=@/caminho/para/modelo.odt" \

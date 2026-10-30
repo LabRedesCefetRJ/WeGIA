@@ -958,6 +958,12 @@ require_once ROOT . "/html/geral/msg.php";
 								<h4>Configurações Gerais</h4>
 							</div>
 						</a>
+						<a href="<?= WWW ?>html/configuracao/documento_modelo.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa fa-file-text-o"></i>
+								<h4>Modelos de documento</h4>
+							</div>
+						</a>
 						<a href="<?= WWW ?>html/geral/cadastrar_permissoes.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa fa-key"></i>

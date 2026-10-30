@@ -624,6 +624,11 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 						</a>
 					</li>
 					<li>
+						<a href="<?= WWW ?>html/configuracao/documento_modelo.php">
+							Modelos de documento
+						</a>
+					</li>
+					<li>
 						<a href="<?= WWW ?>html/geral/cadastrar_permissoes.php">
 							Permissões
 						</a>

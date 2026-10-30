@@ -16,33 +16,38 @@ class FuncionarioDAO
 
     public function verificaAdm($id)
     {
-        $buscaAdm = 'SELECT * FROM pessoa WHERE id_pessoa=:id AND adm_configurado=1';
+        $buscaAdm = 'SELECT 1 FROM pessoa WHERE id_pessoa=:id AND adm_configurado=1';
 
-        $stmt = $this->pdo->prepare($buscaAdm);
-        $stmt->bindParam(':id', $id);
+        try {
+            $stmt = $this->pdo->prepare($buscaAdm);
+            $stmt->bindParam(':id', $id);
+            $stmt->execute();
 
-        $stmt->execute();
-
-        if ($stmt->rowCount() == 1) {
-            return true;
+            return $stmt->rowCount() == 1;
+        } catch (PDOException $e) {
+            error_log(__METHOD__ . ': ' . $e->getMessage());
+            throw new RuntimeException('Não foi possível verificar o administrador.', 0, $e);
         }
-
-        return false;
     }
 
     public function getIdFuncionarioComIdPessoa($idPessoa)
     {
-        $stmt = $this->pdo->prepare("
+        try {
+            $stmt = $this->pdo->prepare("
                 SELECT id_funcionario 
-                FROM pessoa p 
-                JOIN funcionario f ON (p.id_pessoa = f.id_pessoa) 
-                WHERE f.id_pessoa = :id_pessoa
+                FROM funcionario
+                WHERE id_pessoa = :id_pessoa
+                LIMIT 1
             ");
-        $stmt->bindParam(":id_pessoa", $idPessoa);
-        $stmt->execute();
-        $func = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt->bindParam(":id_pessoa", $idPessoa);
+            $stmt->execute();
+            $idFuncionario = $stmt->fetchColumn();
 
-        return $func["id_funcionario"];
+            return $idFuncionario === false ? null : $idFuncionario;
+        } catch (PDOException $e) {
+            error_log(__METHOD__ . ': ' . $e->getMessage());
+            throw new RuntimeException('Não foi possível buscar o funcionário da pessoa.', 0, $e);
+        }
     }
 
     public function listarIdPessoa($cpf)
