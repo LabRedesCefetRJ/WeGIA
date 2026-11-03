@@ -788,7 +788,7 @@ class ContribuicaoController
                 return $this->jsonError($response, 'Classe de serviço de pagamento não encontrada.', 500);
             }
 
-            $servicoPagamento = new $classeService();
+            $servicoPagamento = new $classeService($this->pdo);
             $dataGeracao = (new \DateTimeImmutable('now'))->format('Y-m-d');
             try {
                 $dataVencimento = $this->resolverDataVencimento($data['dia'] ?? null);
@@ -938,7 +938,7 @@ class ContribuicaoController
                 return $this->jsonError($response, $e->getMessage(), 400);
             }
 
-            $servicoPagamento = new $classeService();
+            $servicoPagamento = new $classeService($this->pdo);
             $contribuicaoLogDao = new \ContribuicaoLogDAO($this->pdo);
             $agradecimento = $contribuicaoLogDao->getAgradecimento();
             $contribuicaoLogCollection = new \ContribuicaoLogCollection();
@@ -1078,7 +1078,7 @@ class ContribuicaoController
                 return $this->jsonError($response, 'Classe de serviço de pagamento não encontrada.', 500);
             }
 
-            $servicoPagamento = new $classeService();
+            $servicoPagamento = new $classeService($this->pdo);
             $dataGeracao = (new \DateTimeImmutable('now'))->format('Y-m-d');
             $dataVencimento = (new \DateTimeImmutable('now'))->modify('+1 day')->format('Y-m-d');
 
@@ -1214,7 +1214,7 @@ class ContribuicaoController
                 return $this->jsonError($response, 'Classe de serviço de pagamento não encontrada.', 500);
             }
 
-            $servicoPagamento = new $classeService();
+            $servicoPagamento = new $classeService($this->pdo);
             $dataGeracao = (new \DateTimeImmutable('now'))->format('Y-m-d');
 
             $contribuicaoLogDao = new \ContribuicaoLogDAO($this->pdo);
@@ -1369,7 +1369,7 @@ class ContribuicaoController
                 return $this->jsonError($response, 'Não foi possível criar a recorrência.', 500);
             }
 
-            $servicoPagamento = new $classeService();
+            $servicoPagamento = new $classeService($this->pdo);
             $processamentoAssinatura = $servicoPagamento->criarAssinatura($recorrencia, $dadosCartao);
 
             $assinaturaId = $processamentoAssinatura['transacao_id'] ?? null;
