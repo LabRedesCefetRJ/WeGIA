@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 //requisições necessárias
@@ -39,7 +40,7 @@ class RecorrenciaController
             //captcha
             if (!isset($_SESSION['usuario'])) {
                 $captchaGoogle = new CaptchaGoogleService();
-                if (!$captchaGoogle->validate())
+                if (!$captchaGoogle->validate($documento))
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
             }
 

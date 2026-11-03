@@ -55,10 +55,13 @@ class CaptchaController
 
             $pdo->commit();
 
-            if($update)
+            if ($update) {
                 header("Location: ../html/contribuicao/view/captcha.php?msg=editar-sucesso#mensagem-tabela");
-            else
+                exit;
+            } else {
                 header("Location: ../html/contribuicao/view/captcha.php?msg=editar-falha#mensagem-tabela");
+                exit;
+            }
         } catch (Exception $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
@@ -66,6 +69,7 @@ class CaptchaController
 
             Util::tratarException($e);
             header("Location: ../html/contribuicao/view/captcha.php?msg=editar-falha#mensagem-tabela");
+            exit;
         }
     }
 }

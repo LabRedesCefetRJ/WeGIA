@@ -126,6 +126,69 @@ function alternarPaginas(idProxima, idAtual) {
 }
 
 /**
+ * O pagamento consome a confirmação de captcha feita na etapa do CPF (uso
+ * único) e o token do widget também já foi gasto nela. Depois de um erro na
+ * geração do pagamento, a única forma de tentar de novo é confirmar o CPF
+ * outra vez: reinicia o widget e volta pra essa etapa (pag2).
+ */
+function voltarParaConfirmarCpf(idAtual = 'pag5') {
+    reiniciarCaptcha();
+    alternarPaginas('pag2', idAtual);
+}
+
+/**
+ * O token do widget é de uso único: depois de enviado (com sucesso ou não)
+ * a próxima consulta de CPF precisa de um novo, senão o servidor responde 412.
+ */
+function reiniciarCaptcha() {
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+    }
+}
+
+/**
+ * Volta de idAtual para idAnterior; voltando até a etapa do CPF (pag2), o
+ * captcha precisa ser confirmado de novo.
+ */
+function voltarPagina(idAnterior, idAtual) {
+    if (idAnterior === 'pag2') {
+        voltarParaConfirmarCpf(idAtual);
+        return;
+    }
+
+    alternarPaginas(idAnterior, idAtual);
+}
+
+/**
+ * Etapa anterior ao endereço (pag4). No fluxo de completar cadastro a pag3
+ * fica em branco se nenhum campo de contato está faltando — nesse caso volta
+ * direto pra etapa do CPF.
+ */
+function paginaAnteriorAoEndereco() {
+    if (emFluxoParcial() && !camposFaltantesSocio.some((campo) => CAMPOS_CONTATO.includes(campo))) {
+        return 'pag2';
+    }
+
+    return 'pag3';
+}
+
+/**
+ * Etapa anterior ao pagamento (pag5), espelhando o caminho de ida: o
+ * cadastro completo passa pelo endereço; o fluxo de completar cadastro só
+ * passa pelas etapas com campos faltantes; quem tem cadastro completo (ou
+ * pessoa já cadastrada sem nada faltando) foi direto da etapa do CPF.
+ */
+function paginaAnteriorAoPagamento() {
+    if (emFluxoParcial()) {
+        if (camposFaltantesSocio.some((campo) => CAMPOS_ENDERECO.includes(campo))) return 'pag4';
+        if (camposFaltantesSocio.some((campo) => CAMPOS_CONTATO.includes(campo))) return 'pag3';
+        return 'pag2';
+    }
+
+    return (acao === 'cadastrar' || acao === 'atualizar') ? 'pag4' : 'pag2';
+}
+
+/**
  * Configura a função passada como parâmetro como ação padrão para 
  * o clique do botão com id de consultar-btn
  * @param {*} funcao 
@@ -204,7 +267,7 @@ function configurarVoltaCpf() {
     const btnVoltaCpf = document.getElementById('volta-cpf');
     btnVoltaCpf.addEventListener('click', (ev) => {
         ev.preventDefault();
-        alternarPaginas('pag2', 'pag3');
+        voltarParaConfirmarCpf('pag3');
     });
 }
 
@@ -212,7 +275,15 @@ function configurarVoltaContato() {
     const btnVoltaContato = document.getElementById('volta-contato');
     btnVoltaContato.addEventListener('click', (ev) => {
         ev.preventDefault();
-        alternarPaginas('pag3', 'pag4');
+        voltarPagina(paginaAnteriorAoEndereco(), 'pag4');
+    });
+}
+
+function configurarVoltaEndereco() {
+    const btnVoltaEndereco = document.getElementById('volta-endereco');
+    btnVoltaEndereco.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        voltarPagina(paginaAnteriorAoPagamento(), 'pag5');
     });
 }
 
@@ -240,19 +311,36 @@ function configurarAvancaEndereco(funcao) {
     });
 }
 
+/**
+ * Igual a configurarAvancaContato(), mas no fluxo de completarCadastroSocio()
+ * pula a etapa de endereço (pag4) direto pra pag5 quando nenhum campo
+ * faltante pertence a ela — não faz sentido mostrar uma página em branco.
+ * Não substitui configurarAvancaContato() em nenhum lugar antigo.
+ */
+function configurarAvancaContatoDinamico(funcao) {
+    const btnAvancaContato = document.getElementById('avanca-contato');
+    btnAvancaContato.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        if (!funcao()) {
+            return;
+        }
+
+        const precisaDeEndereco = !emFluxoParcial()
+            || camposFaltantesSocio.some((campo) => CAMPOS_ENDERECO.includes(campo));
+
+        alternarPaginas(precisaDeEndereco ? 'pag4' : 'pag5', 'pag3');
+    });
+}
+
 function configurarAvancaTerminar(funcao) { //<-- Adicionar verificação de captcha aqui
     const btnAvancaTerminar = document.getElementById('avanca-terminar');
     btnAvancaTerminar.addEventListener('click', (ev) => {
         ev.preventDefault();
 
-        //Verificação do reCAPTCHA
-        const captchaResponse = grecaptcha.getResponse();
-
-        if (!captchaResponse) {
-            alert('Por favor, confirme que você não é um robô.');
-            return;
-        }
-
+        // O captcha é confirmado na etapa do CPF (verificarCadastroSocio) e
+        // validado no servidor pela sessão amarrada ao documento. Não dá pra
+        // checar o widget aqui: ele fica escondido na pag2 e o token expira em
+        // ~2 minutos, o que travava quem demorava pra chegar até aqui.
         btnAvancaTerminar.disabled = true;
         btnAvancaTerminar.classList.add('disabled');
         setLoader(btnAvancaTerminar);
@@ -359,7 +447,131 @@ async function cadastrarSocioPessoaExistente() {
     formData.append('metodo', 'criarSocio');
     formData.append('documento_socio', documento);
 
+    // Campos que faltavam no cadastro da pessoa: mesma formatação usada em
+    // completarCadastroSocio() (o servidor exige o CEP como 00000-000).
+    camposFaltantesSocio.forEach((campo) => {
+        let valor = document.getElementById(campo)?.value ?? '';
+
+        if (campo === 'cep') {
+            valor = formatarCEP(valor);
+        }
+
+        formData.set(campo, valor);
+    });
+
     anexarTagsAoFormData(form, formData);
+
+    const response = await fetch("../controller/control.php", {
+        method: "POST",
+        body: formData
+    });
+
+    const resposta = await response.json();
+
+    if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${resposta.erro}`);
+    }
+
+    if (!resposta.mensagem) {
+        throw new Error("Resposta inválida do servidor.");
+    }
+
+    console.log(resposta.mensagem);
+    return true;
+}
+
+/**
+ * Ids dos campos do formulário público que compõem o cadastro de um sócio,
+ * agrupados por etapa (pag3 = contato, pag4 = endereço).
+ */
+const CAMPOS_CONTATO = ['nome', 'sobrenome', 'data_nascimento', 'email', 'telefone'];
+const CAMPOS_ENDERECO = ['cep', 'rua', 'numero', 'bairro', 'uf', 'cidade', 'complemento'];
+const CAMPOS_CADASTRO_SOCIO = [...CAMPOS_CONTATO, ...CAMPOS_ENDERECO];
+
+/**
+ * Campos retornados por verificarCadastroSocio como faltantes para o sócio
+ * atualmente em consulta. Usado por completarCadastroSocio() pra saber
+ * quais valores enviar.
+ */
+let camposFaltantesSocio = [];
+
+/**
+ * Valor original de `acao` da página (ex: 'boleto', 'qrcode', 'cartao-credito'),
+ * guardado na primeira consulta de CPF. Sócio com cadastro completo só paga,
+ * então volta a esse valor — sem isso ficava o `acao` da consulta anterior
+ * (ex: 'cadastrar') e o fluxo tentava cadastrar de novo um sócio existente.
+ */
+let acaoSomentePagamento = null;
+
+/**
+ * Fluxo de completar cadastro: sócio com campos faltando ('atualizar_parcial')
+ * ou pessoa já cadastrada, ainda não sócia, com campos faltando
+ * ('cadastrar_existente'). Nos dois, só os campos faltantes ficam liberados
+ * e só eles são validados.
+ */
+function emFluxoParcial() {
+    return acao === 'atualizar_parcial'
+        || (acao === 'cadastrar_existente' && camposFaltantesSocio.length > 0);
+}
+
+/**
+ * Restaura todos os campos do cadastro pro estado editável/vazio, pra não
+ * carregar bloqueios de uma consulta anterior por outro documento.
+ */
+function desbloquearCamposCadastro() {
+    CAMPOS_CADASTRO_SOCIO.forEach((id) => {
+        const campo = document.getElementById(id);
+        if (!campo) return;
+
+        campo.disabled = false;
+        campo.classList.remove('campo-bloqueado');
+
+        const wrapper = campo.closest('div.wrap-input100');
+        if (wrapper) wrapper.classList.remove('hidden');
+    });
+}
+
+/**
+ * Esconde e desabilita os campos que não estão na lista de campos
+ * faltantes, exibindo no formulário só o que realmente precisa ser
+ * preenchido.
+ */
+function bloquearCamposCompletos(camposFaltantes) {
+    CAMPOS_CADASTRO_SOCIO.forEach((id) => {
+        if (camposFaltantes.includes(id)) return;
+
+        const campo = document.getElementById(id);
+        if (!campo) return;
+
+        campo.value = '';
+        campo.disabled = true;
+        campo.classList.add('campo-bloqueado');
+
+        const wrapper = campo.closest('div.wrap-input100');
+        if (wrapper) wrapper.classList.add('hidden');
+    });
+}
+
+async function completarCadastroSocio() {
+    const documento = pegarDocumento();
+
+    const formData = new FormData();
+    formData.append('nomeClasse', 'SocioController');
+    formData.append('metodo', 'completarCadastroSocio');
+    formData.append('documento_socio', documento);
+    formData.append('g-recaptcha-response', grecaptcha.getResponse());
+
+    camposFaltantesSocio.forEach((campo) => {
+        let valor = document.getElementById(campo)?.value ?? '';
+
+        if (campo === 'cep') {
+            valor = formatarCEP(valor);
+        } else if (campo === 'data_nascimento') {
+            valor = converterDataParaISO(valor);
+        }
+
+        formData.append(campo, valor);
+    });
 
     const response = await fetch("../controller/control.php", {
         method: "POST",
@@ -497,6 +709,85 @@ function verificarEndereco() {
     }
 
     return true;
+}
+
+/**
+ * Igual a verificarEndereco(), mas pula os campos desabilitados (usado no
+ * fluxo de completarCadastroSocio(), onde só os campos faltantes ficam
+ * habilitados). Não substitui verificarEndereco() em nenhum lugar antigo.
+ */
+function verificarEnderecoParcial() {
+    const cepObject = document.getElementById('cep');
+    const ruaObject = document.getElementById('rua');
+    const numeroObject = document.getElementById('numero');
+    const bairroObject = document.getElementById('bairro');
+    const ufObject = document.getElementById('uf');
+    const cidadeObject = document.getElementById('cidade');
+
+    if (!cepObject.disabled && !cepObject.readOnly) {
+        const cep = formatarCEP(cepObject.value);
+
+        if (!cep || cep.length != 9) {
+            alert('O CEP informado não está no formato válido');
+            return false;
+        }
+    }
+
+    if (!ruaObject.disabled && !ruaObject.readOnly) {
+        const rua = ruaObject.value;
+
+        if (!rua || rua.length < 1) {
+            alert('A rua não pode estar vazia.');
+            return false;
+        }
+    }
+
+    if (!numeroObject.disabled && !numeroObject.readOnly) {
+        const numeroEndereco = numeroObject.value;
+
+        if (!numeroEndereco || numeroEndereco.length < 1) {
+            alert('O número de endereço não pode estar vazio.');
+            return false;
+        }
+    }
+
+    if (!bairroObject.disabled && !bairroObject.readOnly) {
+        const bairro = bairroObject.value;
+
+        if (!bairro || bairro.length < 1) {
+            alert('O bairro não pode estar vazio.');
+            return false;
+        }
+    }
+
+    if (!ufObject.disabled && !ufObject.readOnly) {
+        const uf = ufObject.value;
+
+        if (!uf || uf.length < 1) {
+            alert('O estado não pode estar vazio.');
+            return false;
+        }
+    }
+
+    if (!cidadeObject.disabled && !cidadeObject.readOnly) {
+        const cidade = cidadeObject.value;
+
+        if (!cidade || cidade.length < 1) {
+            alert('A cidade não pode estar vazia.');
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Escolhe entre verificarEndereco() (fluxo antigo) e verificarEnderecoParcial()
+ * (fluxo novo de completar cadastro) de acordo com a ação atual, sem alterar
+ * nenhuma das duas.
+ */
+function verificarEnderecoDinamico() {
+    return emFluxoParcial() ? verificarEnderecoParcial() : verificarEndereco();
 }
 
 function converterDataParaISO(dataBR) {
@@ -742,10 +1033,147 @@ async function buscarSocio() {
             return;
         }
 
-        throw new Error(data?.resultado || "Erro na consulta.");
+        throw new Error(data?.erro || "Erro na consulta.");
 
     } catch (error) {
         console.error(error);
+    }
+
+    console.log("Consulta realizada");
+}
+
+/**
+ * Versão de buscarSocio() que usa a rota pública verificarCadastroSocio em
+ * vez de buscarPorDocumento: não recebe os dados já cadastrados do sócio,
+ * só se ele existe e quais campos obrigatórios faltam. Usada na página de
+ * cobranças pra só pedir os dados que realmente faltam. Não substitui
+ * buscarSocio() em nenhum lugar antigo.
+ */
+async function buscarCadastroSocio() {
+    const documento = pegarDocumento();
+
+    if (!validarDocumento(documento)) {
+        alert("O documento informado não é válido");
+        return;
+    }
+
+    const captchaResponse = grecaptcha.getResponse();
+
+    if (!captchaResponse) {
+        alert('Por favor, confirme que você não é um robô.');
+        return;
+    }
+
+    console.log("Verificando cadastro do sócio...");
+
+    // Desabilita o botão enquanto a consulta está em andamento: sem isso,
+    // um segundo clique/espaço antes da resposta chegar dispara essa
+    // função de novo em paralelo, e as duas chamadas concorrentes podem
+    // deixar as páginas em estados inconsistentes (ex: pag2 não esconde
+    // enquanto pag4 já aparece).
+    const btnConsulta = document.getElementById("consultar-btn");
+    if (btnConsulta) btnConsulta.disabled = true;
+
+    desbloquearCamposCadastro();
+    camposFaltantesSocio = [];
+
+    if (acaoSomentePagamento === null) {
+        acaoSomentePagamento = acao;
+    }
+
+    const formData = new FormData();
+    formData.append('nomeClasse', 'SocioController');
+    formData.append('metodo', 'verificarCadastroSocio');
+    formData.append('documento', documento);
+    formData.append('g-recaptcha-response', captchaResponse);
+
+    try {
+        const response = await fetch("../controller/control.php", {
+            method: "POST",
+            body: formData
+        });
+
+        let data = null;
+
+        // O controller sempre retorna JSON (200 ou 404)
+        try {
+            data = await response.json();
+        } catch (_) {
+            data = null;
+        }
+
+        console.log("Resposta:", data);
+
+        if (response.ok) {
+            if (data?.camposFaltantes?.length > 0) {
+                camposFaltantesSocio = data.camposFaltantes;
+                bloquearCamposCompletos(camposFaltantesSocio);
+                acao = "atualizar_parcial";
+
+                const precisaDeContato = camposFaltantesSocio.some((campo) => CAMPOS_CONTATO.includes(campo));
+                alternarPaginas(precisaDeContato ? "pag3" : "pag4", "pag2");
+            } else {
+                acao = acaoSomentePagamento;
+                alternarPaginas("pag5", "pag2");
+            }
+
+            // Só existe nas páginas com confirmação (boleto/pix/mensalidade).
+            const divAgradecimento = document.getElementById("div-agradecimento");
+            if (divAgradecimento) {
+                divAgradecimento.innerHTML = `<h3>Obrigado por contribuir mais uma vez!</h3>`;
+            }
+
+            return;
+        }
+
+        if (response.status === 404) {
+            if (data?.existePessoa) {
+                console.log("Pessoa encontrada.");
+
+                acao = "cadastrar_existente";
+
+                // Pessoa já cadastrada com dados obrigatórios vazios (ex:
+                // e-mail): pede só esses campos antes do pagamento.
+                if (data?.camposFaltantes?.length > 0) {
+                    camposFaltantesSocio = data.camposFaltantes;
+                    bloquearCamposCompletos(camposFaltantesSocio);
+
+                    const precisaDeContato = camposFaltantesSocio.some((campo) => CAMPOS_CONTATO.includes(campo));
+                    alternarPaginas(precisaDeContato ? "pag3" : "pag4", "pag2");
+                } else {
+                    alternarPaginas("pag5", "pag2");
+                }
+            } else {
+                console.log("Pessoa não encontrada.");
+
+                acao = "cadastrar";
+                alternarPaginas("pag3", "pag2");
+            }
+
+            return;
+        }
+
+        // Daqui pra baixo o usuário continua na pag2 e o token enviado já foi
+        // gasto: o widget é reiniciado no catch pra próxima tentativa não dar 412.
+        if (response.status === 412) {
+            throw new Error(data?.erro || 'O token do captcha não é válido. Tente novamente.');
+        }
+
+        if (response.status === 429) {
+            throw new Error(data?.erro || 'Muitas tentativas. Tente novamente em alguns instantes.');
+        }
+
+        throw new Error(data?.erro || "Erro na consulta.");
+
+    } catch (error) {
+        console.error(error);
+        reiniciarCaptcha();
+        // TypeError: falha de rede ou bug no script, sem mensagem útil pro usuário.
+        alert(error instanceof TypeError || !error.message
+            ? 'Não foi possível verificar o documento. Tente novamente.'
+            : error.message);
+    } finally {
+        if (btnConsulta) btnConsulta.disabled = false;
     }
 
     console.log("Consulta realizada");

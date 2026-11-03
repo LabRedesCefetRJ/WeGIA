@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 
 function fecharConexao(mysqli_stmt $stmt, mysqli $conexao)
 {
@@ -53,7 +54,9 @@ if (mysqli_affected_rows($conexao)) {
     $_SESSION['proxima'] = "Listar cargos";
     fecharConexao($stmt2, $conexao);
     header("Location: ../sucesso.php");
+    exit;
 } else {
     fecharConexao($stmt2, $conexao);
     header("Location: ./cargos.php?msg_e=Erro ao modificar cargo.");
+    exit;
 }

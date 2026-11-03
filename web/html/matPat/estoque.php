@@ -20,6 +20,7 @@ require_once ROOT . '/dao/EstoqueDAO.php';
 $_SESSION['estoque'] = (new EstoqueDAO)->ListarTodos();
 if (!isset($_SESSION['estoque'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listartodos&nomeClasse=EstoqueControle&nextPage=' . WWW . 'html/matPat/estoque.php');
+	exit;
 }
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)

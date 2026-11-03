@@ -4,6 +4,7 @@ require_once "./html/seguranca/sessionStart.php";
 session_start();
 if (isset($_SESSION['usuario'])) {
 	header("Location: ./html/home.php");
+	exit;
 }
 setcookie("PHPSESSID", "", 0, "/");
 session_destroy();
