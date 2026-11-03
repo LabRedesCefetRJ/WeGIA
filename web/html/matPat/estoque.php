@@ -102,12 +102,17 @@ define('PERMISSAO', permissaoUsuario($_SESSION['id_pessoa'], 2));
 	<!-- jquery functions -->
 	<script>
 		$(function() {
-			let estoque = <?= $_SESSION["estoque"] ?>;
+			let estoque = <?= json_encode(
+				json_decode($_SESSION['estoque'], false, 512, JSON_THROW_ON_ERROR),
+				JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR
+			) ?>;
 			<?php unset($_SESSION['estoque']); ?>
 
 			$.each(estoque, function(i, item) {
 				$("#tabela")
-					.append($("<tr class='item " + item.descricao_almoxarifado + " " + item.categoria + " " + (item.qtd <= 0 ? 'itemSemEstoque' : '') + "'>")
+					.append($("<tr>")
+						.addClass('item')
+						.toggleClass('itemSemEstoque', item.qtd <= 0)
 						.append($("<td>")
 							.text(item.codigo))
 						.append($("<td>")
@@ -152,7 +157,14 @@ define('PERMISSAO', permissaoUsuario($_SESSION['id_pessoa'], 2));
 			$('#home-icon').empty();
 			$('#selecao').empty();
 			$('#home-icon').append($('<span />').text("<?php display_campo("Titulo", "str"); ?>"));
-			$('#selecao').html("<h2>Estoque</h2>Almoxarifado: " + almox + "</br>Categoria: " + categ + "</br>" + mZero + "</br>");
+			$('#selecao').empty()
+				.append($('<h2>').text('Estoque'))
+				.append(document.createTextNode('Almoxarifado: ' + almox))
+				.append($('<br>'))
+				.append(document.createTextNode('Categoria: ' + categ))
+				.append($('<br>'))
+				.append(document.createTextNode(mZero))
+				.append($('<br>'));
 			filterItem();
 			$('.datatables-header').children(0).hide()
 			$('#print-btn')

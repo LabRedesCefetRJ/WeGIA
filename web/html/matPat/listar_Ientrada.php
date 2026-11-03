@@ -162,7 +162,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 				},
 				{
 					label: "Valor Total",
-					valor: entrada.valor_total
+					valor: formatarMoeda(entrada.valor_total)
 				},
 				{
 					label: "Data",
@@ -209,10 +209,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 				const totalItem = item.valor_unitario * item.qtd;
 
-				const totalFormatado = new Intl.NumberFormat('pt-BR', {
-        			style: 'currency',
-        			currency: 'BRL'
-    			}).format(totalItem);
+				const totalFormatado = formatarMoeda(totalItem);
 
 				$('#tabela')
 					.append($('<tr />')
@@ -221,7 +218,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 						.append($('<td />')
 							.text(item.qtd))
 						.append($('<td />')
-							.text(item.valor_unitario))
+							.text(formatarMoeda(item.valor_unitario)))
 						.append($('<td />')
 							.text(item.unidade))
 						.append($('<td />')
@@ -325,17 +322,17 @@ require_once ROOT . "/html/personalizacao_display.php";
                 			>
             			</td>
             			<td>
-                			<input 
+                			<div class="input-group"><span class="input-group-addon">R$</span><input 
                     			type="number" 
                     			step="0.01" 
                     			min="0"
                     			class="form-control valor-item-entrada"
                     			data-id-ientrada="${item.id_ientrada}"
                     			value="${item.valor_unitario}"
-                			>
+                			></div>
             			</td>
             			<td>${item.unidade}</td>
-            			<td>R$ ${(Number(item.qtd) * Number(item.valor_unitario)).toFixed(2)}</td>
+            			<td>${formatarMoeda(Number(item.qtd) * Number(item.valor_unitario))}</td>
         			</tr>
     			`);
 			});

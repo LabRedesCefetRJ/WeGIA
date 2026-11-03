@@ -48,9 +48,9 @@ class OrcamentoDAO
 
         $stmt->execute();
 
-        return $stmt->rowCount() > 0
-            ? (int) $this->pdo->lastInsertId()
-            : 0;
+        $id = $stmt->rowCount() > 0 ? (int) $this->pdo->lastInsertId() : 0;
+        if ($id > 0) $this->salvarVencimentos($id, $orcamento);
+        return $id;
     }
 
     public function editar(Orcamento $orcamento): int
@@ -89,7 +89,12 @@ class OrcamentoDAO
 
         $stmt->execute();
 
-        return $stmt->rowCount();
+        // Mesmo sem mudança nos demais campos, os vencimentos podem ter mudado.
+        $atual = $this->pdo->prepare('SELECT o.id_orcamento FROM orcamento o INNER JOIN cotacao c ON c.id_cotacao = o.id_cotacao WHERE o.id_orcamento = ? AND o.id_cotacao = ? AND c.status = ?');
+        $atual->execute([$orcamento->getId_orcamento(), $orcamento->getId_cotacao(), 'analise']);
+        if ($atual->fetchColumn() === false) return 0;
+        $this->salvarVencimentos($orcamento->getId_orcamento(), $orcamento);
+        return 1;
     }
 
     public function excluir($id_orcamento): int
@@ -121,9 +126,9 @@ class OrcamentoDAO
 
     public function buscarPorId($id_orcamento, $bloquear = false): ?Orcamento
     {
-        $sql = 'SELECT *
-                FROM orcamento
-                WHERE id_orcamento = :id_orcamento';
+        $sql = "SELECT o.*, (SELECT GROUP_CONCAT(v.dias ORDER BY v.dias SEPARATOR '/') FROM orcamento_vencimento v WHERE v.id_orcamento = o.id_orcamento) AS vencimentos_pagamento
+                FROM orcamento o
+                WHERE id_orcamento = :id_orcamento";
 
         if ($bloquear) {
             if (!$this->pdo->inTransaction()) {
@@ -158,6 +163,7 @@ class OrcamentoDAO
                     o.id_cotacao,
                     o.id_fornecedor,
                     o.condicao_pagamento,
+                    (SELECT GROUP_CONCAT(v.dias ORDER BY v.dias SEPARATOR \'/\') FROM orcamento_vencimento v WHERE v.id_orcamento = o.id_orcamento) AS vencimentos_pagamento,
                     o.prazo_entrega,
                     o.valor,
                     origem.nome_origem AS fornecedor,
@@ -230,6 +236,17 @@ class OrcamentoDAO
         }
     }
 
+    private function salvarVencimentos(int $id, Orcamento $orcamento): void
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM orcamento_vencimento WHERE id_orcamento = ?');
+        $stmt->execute([$id]);
+        if ($orcamento->getVencimentosPagamento() === '') return;
+        $stmt = $this->pdo->prepare('INSERT INTO orcamento_vencimento (id_orcamento, dias) VALUES (?, ?)');
+        foreach (explode('/', $orcamento->getVencimentosPagamento()) as $dia) {
+            $stmt->execute([$id, (int) $dia]);
+        }
+    }
+
     private function vincularDados(PDOStatement $stmt, Orcamento $orcamento): void
     {
         $stmt->bindValue(
@@ -272,7 +289,8 @@ class OrcamentoDAO
             $dados['id_fornecedor'],
             $dados['condicao_pagamento'],
             $dados['prazo_entrega'],
-            $dados['valor']
+            $dados['valor'],
+            ($dados['vencimentos_pagamento'] ?? '') !== '' ? $dados['vencimentos_pagamento'] : null
         );
 
         $orcamento->setId_orcamento($dados['id_orcamento']);

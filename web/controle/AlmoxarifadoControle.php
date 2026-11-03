@@ -17,6 +17,7 @@ class AlmoxarifadoControle
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
         $regex = '#^((\.\./|' . WWW . ')html/(matPat|geral)/(cadastrar_permissoes|cadastro_entrada|cadastro_saida|listar_almox|remover_produto|cadastro_doador|listar_origem)\.php(\?id_produto=\d+)?)$#';
+        $regexCadastroOrigem = '#^(\.\./|' . preg_quote(WWW, '#') . ')html/matPat/cadastro_doador\.php\?origem=(entrada|cotacao|lista_origem)$#';
 
         try {
             if (!filter_var($nextPage, FILTER_VALIDATE_URL))
@@ -27,7 +28,9 @@ class AlmoxarifadoControle
 
             $_SESSION['almoxarifado'] = $almoxarifados;
 
-            preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+            (preg_match($regex, $nextPage) || preg_match($regexCadastroOrigem, $nextPage))
+                ? header('Location:' . $nextPage)
+                : header('Location:' . WWW . 'html/home.php');
         } catch (Exception $e) {
             Util::tratarException($e);
         }

@@ -48,6 +48,11 @@ class ProcessoAceitacaoControle
     public function incluir()
     {
         try {
+            $idPessoaPost = $this->getPostValue('id_pessoa_atendido');
+            $idPessoaPost = ($idPessoaPost !== null && trim((string)$idPessoaPost) !== '') ? filter_var($idPessoaPost, FILTER_VALIDATE_INT): null;
+            if ($idPessoaPost !== null && ($idPessoaPost === false || $idPessoaPost <= 0)) {
+                throw new InvalidArgumentException('ID do atendido inválido.', 400);
+            }
             $cpf = $this->normalizeCpf($this->getPostValue('cpf'));
             $descricao = $this->getPostValue('descricao');
             $email = $this->getPostValue('email', FILTER_SANITIZE_EMAIL);
@@ -60,28 +65,41 @@ class ProcessoAceitacaoControle
             $numero = $this->getPostValue('numero_residencia');
             $complemento = $this->getPostValue('complemento');
             $ibge = $this->getPostValue('ibge');
+            $status = (int)($_POST['id_status_cadastro'] ?? 1);
 
             $pessoaDAO = new PessoaDAO($this->pdo);
             $existingPessoa = null;
-            if ($cpf !== null) {
+            if ($idPessoaPost !== null) {
+                $existingPessoa = $pessoaDAO->verificarExistenciaPorId($idPessoaPost);
+
+                if ($existingPessoa === null) {
+                    throw new InvalidArgumentException(
+                        'O atendido informado não foi encontrado.',
+                        404
+                    );
+                }
+            } elseif ($cpf !== null && $cpf !== '') {
                 $existingPessoa = $pessoaDAO->verificarExistencia($cpf);
             }
 
+            $id_pessoa = $existingPessoa?->getIdpessoa();
+
             if ($existingPessoa !== null) {
+                $id_pessoa = $existingPessoa->getIdpessoa();
                 $nome = $existingPessoa->getNome();
                 $sobrenome = $existingPessoa->getSobrenome();
                 $sexo = $existingPessoa->getSexo();
                 $dataNascimento = $existingPessoa->getDataNascimento();
-                $email = $existingPessoa->getEmail();
-                $telefone = $existingPessoa->getTelefone();
-                $cep = $existingPessoa->getCep();
-                $rua = $existingPessoa->getLogradouro();
-                $bairro = $existingPessoa->getBairro();
-                $cidade = $existingPessoa->getCidade();
-                $uf = $existingPessoa->getEstado();
-                $numero = $existingPessoa->getNumeroEndereco();
-                $complemento = $existingPessoa->getComplemento();
-                $ibge = $existingPessoa->getIbge();
+                $email = $existingPessoa->getEmail() ?? '';
+                $telefone = $existingPessoa->getTelefone() ?? '';
+                $cep = $existingPessoa->getCep() ?? '';
+                $rua = $existingPessoa->getLogradouro() ?? '';
+                $bairro = $existingPessoa->getBairro() ?? '';
+                $cidade = $existingPessoa->getCidade() ?? '';
+                $uf = $existingPessoa->getEstado() ?? '';
+                $numero = $existingPessoa->getNumeroEndereco() ?? '';
+                $complemento = $existingPessoa->getComplemento() ?? '';
+                $ibge = $existingPessoa->getIbge() ?? '';
             } else {
                 $nome = $this->getPostValue('nome');
                 $sobrenome = $this->getPostValue('sobrenome');
@@ -103,7 +121,7 @@ class ProcessoAceitacaoControle
                 $this->validarDataNascimento($dataNascimento);
             }
             $this->validarEmail($email);
-            $this->validarTelefone($telefone);
+            $this->validarTelefone($telefone); 
             $cep = $this->validarCep($cep);
             $this->validarEndereco([
                 'cep' => $cep,
@@ -119,7 +137,12 @@ class ProcessoAceitacaoControle
             $processoDAO = new ProcessoAceitacaoDAO($this->pdo);
             $this->pdo->beginTransaction();
 
-            if (!isset($id_pessoa)) {
+            if ($id_pessoa === null) {
+                $nome = $this->getPostValue('nome');
+                $sobrenome = $this->getPostValue('sobrenome');
+                $sexo = $this->getPostValue('sexo');
+                $dataNascimento = $this->getPostValue('data_nascimento');
+
                 $id_pessoa = $pessoaDAO->inserirPessoa(
                     $cpf,
                     $nome,
@@ -139,7 +162,7 @@ class ProcessoAceitacaoControle
                 );
             }
 
-            $resultado = $processoDAO->criarProcessoInicial($id_pessoa, 1, $descricao);
+            $resultado = $processoDAO->criarProcessoInicial($id_pessoa, $status, $descricao);
             if (!$resultado || $resultado <= 0) {
                 throw new Exception('Erro ao cadastrar processo de aceitação no servidor.', 500);
             }
@@ -197,19 +220,25 @@ class ProcessoAceitacaoControle
 
     private function validarTelefone(?string $telefone): void
     {
-        if ($telefone === null) {
+        $telefone = trim((string) $telefone);
+
+        if ($telefone === '' || strtolower($telefone) === 'null') {
             return;
         }
 
         $digits = preg_replace('/\D+/', '', $telefone);
+
         if (!preg_match('/^\d{10,11}$/', $digits)) {
-            throw new InvalidArgumentException('Telefone inválido. Informe DDD + número, com 10 ou 11 dígitos.', 400);
+            throw new InvalidArgumentException(
+                'Telefone inválido. Informe DDD + número, com 10 ou 11 dígitos.',
+                400
+            );
         }
     }
 
     private function validarEmail(?string $email): void
     {
-        if ($email === null) {
+        if ($email == null ) {
             return;
         }
 
@@ -220,7 +249,7 @@ class ProcessoAceitacaoControle
 
     private function validarCep(?string $cep): ?string
     {
-        if ($cep === null) {
+        if ($cep == null) {
             return null;
         }
 
@@ -372,6 +401,46 @@ class ProcessoAceitacaoControle
             echo json_encode(['success' => false, 'erro' => $e->getMessage()]);
         }
     }
+    
+    public function buscarPessoaPorId()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+
+            if ($id === false || $id === null || $id <= 0) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'O id de pessoa é inválido ou não foi informado.'
+                ]);
+                return;
+            }
+
+            $pessoaDAO = new PessoaDAO($this->pdo);
+            $pessoa = $pessoaDAO->verificarExistenciaPorId($id);
+
+            if ($pessoa === null) {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Pessoa não encontrada.'
+                ]);
+                return;
+            }
+
+            // Retornar no formato esperado pelo JavaScript
+            echo json_encode([
+                'success' => true,
+                'pessoa' => $pessoa
+            ]);
+
+        }catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+    
 
     public function getPessoaDoProcesso()
     {

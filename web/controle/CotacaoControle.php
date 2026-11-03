@@ -45,6 +45,8 @@ class CotacaoControle
             $valores = $_POST['valor'] ?? [];
             $prazos = $_POST['prazo_entrega'] ?? [];
             $condicoesPagamento = $_POST['condicao_pagamento'] ?? [];
+            $vencimentos = $_POST['vencimentos_pagamento'] ?? [];
+            if (!is_array($vencimentos)) throw new InvalidArgumentException('Vencimentos inválidos.', 400);
 
             if (!is_array($fornecedores) || !is_array($valores) || !is_array($prazos) || !is_array($condicoesPagamento)) {
                 throw new InvalidArgumentException(
@@ -81,7 +83,8 @@ class CotacaoControle
                     $id_fornecedor,
                     $condicoesPagamento[$indice] ?? null,
                     $prazos[$indice] ?? null,
-                    $valores[$indice] ?? null
+                    $valores[$indice] ?? null,
+                    $vencimentos[$indice] ?? ''
                 );
 
                 $id_orcamento = $this->orcamentoDAO->incluir($orcamento);
@@ -198,7 +201,7 @@ class CotacaoControle
     private function listarFornecedores(): array
     {
         $origemDAO = new OrigemDAO();
-        $fornecedores = json_decode($origemDAO->listarId_Nome(), true);
+        $fornecedores = json_decode($origemDAO->listarTodos(), true);
 
         if (!is_array($fornecedores)) {
             throw new RuntimeException(

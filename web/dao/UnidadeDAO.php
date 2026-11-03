@@ -21,7 +21,7 @@ class UnidadeDAO
 
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela unidade_produto = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            throw $e;
         }
     }
 
@@ -53,7 +53,7 @@ class UnidadeDAO
             $stmt->bindParam(':id_unidade', $id_unidade);
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela unidade_produto = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            throw $e;
         }
     }
     public function listarTodos()
