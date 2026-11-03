@@ -70,6 +70,49 @@ class PessoaDAO
         return $pessoa;
     }
 
+    public function verificarExistenciaPorId(int $id)
+    {
+        $sql = "SELECT * FROM pessoa WHERE id_pessoa = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        
+        if ($stmt->rowCount() < 1) {
+            return null;
+        }
+
+        $pessoaArray = $stmt->fetch(PDO::FETCH_ASSOC);
+        $pessoa = new PessoaDTOSocio(
+            $pessoaArray['cpf'],
+            $pessoaArray['nome'],
+            $pessoaArray['sobrenome'],
+            $pessoaArray['sexo'],
+            $pessoaArray['data_nascimento'],
+            $pessoaArray['registro_geral'],
+            $pessoaArray['orgao_emissor'],
+            $pessoaArray['data_expedicao'],
+            $pessoaArray['nome_mae'],
+            $pessoaArray['nome_pai'],
+            $pessoaArray['tipo_sanguineo'],
+            null,
+            $pessoaArray['email'],
+            $pessoaArray['telefone'],
+            null,
+            $pessoaArray['cep'],
+            $pessoaArray['estado'],
+            $pessoaArray['cidade'],
+            $pessoaArray['bairro'],
+            $pessoaArray['logradouro'],
+            $pessoaArray['numero_endereco'],
+            $pessoaArray['complemento'],
+            $pessoaArray['ibge']
+        );
+
+        $pessoa->setIdpessoa($id);
+
+        return $pessoa;
+    }
+
 
 public function inserirPessoa($cpf, $nome, $sobrenome, $email = null, $telefone = null, $cep = null, $rua = null, $bairro = null, $cidade = null, $uf = null, $numero = null, $complemento = null, $ibge = null, $sexo = null, $dataNascimento = null) 
 {

@@ -29,14 +29,19 @@ try {
 	$statusProcesso =  $paStatusDao->listarTodos();
 
 	//pegar status da requisição
-	$idStatusGet = isset($_GET['status-processo']) ? filter_input(INPUT_GET, 'status-processo', FILTER_SANITIZE_NUMBER_INT) : 1;
+	$idStatusGet = isset($_GET['status-processo']) ? filter_input(INPUT_GET, 'status-processo', FILTER_SANITIZE_NUMBER_INT) : 0;
 
 	if ($idStatusGet === false)
-		$idStatusGet = 1;
+		$idStatusGet = 0;
+	
 
 	$processoDAO     = new ProcessoAceitacaoDAO($pdo);
 	$nomeProcessoGet = isset($_GET['nome-processo']) ? trim(filter_input(INPUT_GET, 'nome-processo', FILTER_SANITIZE_SPECIAL_CHARS)) : '';
-	$processosAceitacao = $processoDAO->getByStatus($idStatusGet, $nomeProcessoGet);
+	if($idStatusGet == 0){
+		$processosAceitacao = $processoDAO->listarTodos();
+	} else{
+		$processosAceitacao = $processoDAO->getByStatus($idStatusGet, $nomeProcessoGet);
+	}	
 
 	define('ID_STATUS_CONCLUIDO', 2);
 
@@ -195,21 +200,24 @@ try {
 				<section class="panel panel-primary">
 					<header class="panel-heading">
 						<h2 class="panel-title">Lista de Processos</h2>
-						<div class="form-inline" style="margin-top: 10px;">
-							<label for="status-processo">Status: </label>
-							<select class="form-control" name="status-processo" id="status-processo">
-								<?php foreach ($statusProcesso as $status): ?>
-									<option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
-								<?php endforeach; ?>
-					</select>
-					<div class="form-group" style="margin-bottom: 0;">
-						<input type="text" id="nome-processo" class="form-control" placeholder="Pesquisar por nome" value="<?= htmlspecialchars($nomeProcessoGet ?? '', ENT_QUOTES, 'UTF-8') ?>" />
-					</div>
+						<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
+							<div class="form-inline" style="margin-top: 10px;">
+								<label for="status-processo">Status: </label>
+								<select class="form-control" name="status-processo" id="status-processo">
+									<option value=0>Todos</option>
+									<?php foreach ($statusProcesso as $status): ?>
+										<option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+							<div class="form-inline" style="margin-top: 10px; text-align: right;">
+								<div class="form-group" style="margin-bottom: 0;">
+									<input type="text" id="nome-processo" class="form-control" placeholder="Pesquisar por nome ou cpf" value="<?= htmlspecialchars($nomeProcessoGet ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+								</div>
 
-							<button type="button" class="btn btn-default" id="listar-processo">
-								Listar
-							</button>
-						</div>
+								<button type="button" class="btn btn-default" id="listar-processo" title="Pesquisar" aria-label="Pesquisar"> <i class="fa fa-search" aria-hidden="true"></i></button>
+							</div>	
+						</div>					
 					</header>
 					<div class="panel-body">
 						<?php if (empty($processosAceitacao)): ?>
@@ -218,19 +226,23 @@ try {
 							</div>
 						<?php else: ?>
 							<div class="table-responsive">
-								<table class="table table-striped table-bordered table-hover">
+								<table id="tabela-processos" class="table table-striped table-bordered table-hover">
 									<thead>
 										<tr>
 											<th>Nome</th>
 											<th <?php if(!$showCpfColumn) echo 'style="display:none"' ?>>CPF</th> <!-- display:none caso todos os cpfs sejam nulos -->
 											<th>Descrição</th>
 											<th>Etapas</th>
+											<?php if ((int)$idStatusGet === 0): ?>
+												<th>Status</th>
+											<?php endif; ?>
 											<th>Arquivos</th>
 											<th>Ações</th>
 										</tr>
 									</thead>
 									<tbody>
-										<?php foreach ($processosAceitacao as $processo): ?>
+										<?php 
+										foreach ($processosAceitacao as $processo): ?>
 											<tr>
 												<td onclick="window.location.href = './etapa_processo.php?id=<?= (int)$processo['id'] ?>'"><a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" style="color: inherit"><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></a></td>
 												<td <?php if(!$showCpfColumn) echo 'style="display:none"' ?>><?= isset($processo['cpf']) && !empty($processo['cpf']) ? formatCpfForDisplay($processo['cpf']) : 'Não informado.' ?></td>
@@ -243,7 +255,11 @@ try {
 								<?php else: ?>
 									<span class="text-muted" style="font-size: 12px;">Sem etapas</span>
 								<?php endif; ?>
-
+											<?php if ((int)$idStatusGet === 0): ?>
+												<td>
+													<?= htmlspecialchars($processo['status'] ?? 'Não informado') ?>
+												</td>
+											<?php endif; ?>
 												<td>
 													<button type="button"
 														class="btn btn-xs btn-info btn-arquivos-processo"
@@ -258,6 +274,7 @@ try {
 												<td style="display: flex; flex-wrap: wrap; gap: 10px;">
 													<?php
 													$atendidoId = $processoDAO->getIdAtendido($processo['id']);
+													$idStatus = (int) $processo['id_status'];
 
 													if ($atendidoId != false && $atendidoId >= 1):
 													?>
@@ -272,6 +289,18 @@ try {
 															onclick="return confirm('Tem certeza de que deseja cadastrar um atendido para o processo de <?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome'], ENT_QUOTES) ?>?');">
 															<i class="fa fa-user-plus"></i> Cadastrar Atendido
 														</a>
+
+													<?php elseif (in_array($idStatus, [1, 4], true)): ?>
+														<form action="../../controle/control.php" method="POST"
+															style="display: inline;"
+															onsubmit="return confirm('Deseja realmente concluir este processo?');">
+															<input type="hidden" name="nomeClasse" value="ProcessoAceitacaoControle">
+															<input type="hidden" name="metodo" value="atualizarStatus">
+															<input type="hidden" name="id_processo" value="<?= (int) $processo['id'] ?>">
+															<input type="hidden" name="id_status" value="2">
+															<button type="submit" class="btn btn-xs btn-success"><i class="fa fa-check" aria-hidden="true"></i> Concluir Processo </button>
+														</form>
+
 													<?php else: ?>
 														<button type="button"
 															class="btn btn-xs btn-success"
@@ -473,6 +502,7 @@ try {
                                 <div id="alertNovoProcesso" class="alert alert-danger" role="alert" style="display: none;"></div>
 
                                 <div class="form-group">
+									<input type="hidden" id="id_pessoa_atendido" name="id_pessoa_atendido" value="">
                                     <label>Nome <span class="text-danger">*</span></label>
                                     <input type="text" id="nome" name="nome" class="form-control<?= !empty($fieldErrors['nome']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" required autocomplete="given-name" value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
                                     <?php if (!empty($fieldErrors['nome']) && $openModal === 'modalNovoProcesso'): ?>
@@ -578,6 +608,19 @@ try {
 								<div class="form-group">
 									<label>Descrição</label>
 									<textarea class="form-control" rows="5" name="descricao"><?= htmlspecialchars($oldInput['descricao'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+								</div>
+
+								<div>
+									<label>Status do Processo:</label>
+									<button type="button" onclick="adicionar_status()" class="btn btn-link p-0">
+										<i class="fa fa-plus"></i>
+									</button>
+
+									<select name="id_status_cadastro" id="selectStatusProcessoCadastro" class="form-control select-status-processo" style="min-width: 200px;">
+										<?php foreach ($statusProcesso as $status): ?>
+											<option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
+										<?php endforeach; ?>
+									</select>
 								</div>
 							</div>
 							<div class="modal-footer">
@@ -693,6 +736,65 @@ try {
 	<script src="<?php echo WWW; ?>Functions/onlyChars.js"></script>
 	<script src="<?php echo WWW; ?>Functions/mascara.js"></script>
 	<script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+	<script>
+		$(document).ready(function () {
+			const params = new URLSearchParams(window.location.search);
+			const modal = params.get('modal');
+			const id_pessoa_atendido = params.get('idpessoa');
+
+			if (modal === 'modalNovoProcesso') {
+				$('#modalNovoProcesso').modal('show');
+			}
+			if (id_pessoa_atendido) {
+				$.ajax({
+					url: '../../controle/control.php',
+					type: 'GET',
+					dataType: 'json',
+					data: {
+						nomeClasse: 'ProcessoAceitacaoControle',
+						metodo: 'buscarPessoaPorId',
+						id: id_pessoa_atendido
+					},
+					success: function(response) {
+						if (!response.success || !response.pessoa) {
+							return;
+						}
+						$('#id_pessoa_atendido').val(id_pessoa_atendido);
+						$('#cpf').val(response.pessoa.cpf || '');
+						$('#nome').val(response.pessoa.nome || '');
+						$('#sobrenome').val(response.pessoa.sobrenome || '');
+						$('#email').val(response.pessoa.email || '');
+						const telefone = response.pessoa.telefone;
+						$('#telefone').val(telefone && telefone.trim().toLowerCase() !== 'null' ? telefone : '');
+						$('#cep').val(response.pessoa.cep || '');
+						$('#rua').val(response.pessoa.logradouro || '');
+						$('#numero_residencia').val(
+							response.pessoa.numero_endereco || ''
+						);
+						$('#bairro').val(response.pessoa.bairro || '');
+						$('#cidade').val(response.pessoa.cidade || '');
+						$('#uf').val(response.pessoa.estado || '');
+						$('#ibge').val(response.pessoa.ibge || '');
+						$('#data_nascimento_processo').val(
+							response.pessoa.data_nascimento || ''
+						);
+
+						if (
+							response.pessoa.sexo === 'm' ||
+							response.pessoa.sexo === 'f'
+						) {
+							$('input[name="sexo"][value="' +
+								response.pessoa.sexo + '"]').prop('checked', true);
+						}
+					},
+					error: function(xhr) {
+						console.error('Erro ao buscar pessoa:', xhr.status, xhr.responseText);
+					}
+				});
+				$('#selectStatusProcessoCadastro').val('2');
+			}
+		});
+	</script>
 	<?php if (!empty($openModal)): ?>
 		<script>
 			$(function() {
@@ -1179,6 +1281,43 @@ function formatCpfField(field) {
 		// Seleciona o status adequado
 		const selectElement = document.getElementById('status-processo');
 		selectElement.value = '<?= $idStatusGet ?>';
+
+		selectElement.addEventListener('change', function() {
+			const valorStatus = selectElement.value;
+
+			let url = './processo_aceitacao.php?status-processo=' + encodeURIComponent(valorStatus);
+
+			window.location.href = url;
+		});
+
+			$(document).ready(function() {
+				var tabela = $('#tabela-processos').DataTable({
+					searching: true,
+					dom: 'lrtip'
+				});
+
+				// Pesquisa somente nas colunas Nome (0) e CPF (1).
+				$.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+					if (settings.nTable.id !== 'tabela-processos') {
+						return true;
+					}
+
+					var busca = $('#nome-processo').val().trim().toLowerCase();
+
+					if (busca === '') {
+						return true;
+					}
+
+					var nome = $('<div>').html(data[0]).text().toLowerCase();
+					var cpf = $('<div>').html(data[1]).text().toLowerCase();
+
+					return nome.includes(busca) || cpf.includes(busca);
+				});
+
+				$('#nome-processo').on('input', function() {
+					tabela.draw();
+				});
+			});
 
 		const btnListar = document.getElementById('listar-processo');
 
