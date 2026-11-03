@@ -70,6 +70,25 @@ class MeioPagamentoDAO
         return $meioPagamento;
     }
 
+    public function buscarPorId(int $id): ?MeioPagamento
+    {
+        $sqlBuscarPorId = 'SELECT id, meio, id_plataforma, status FROM contribuicao_meioPagamento WHERE id = :id LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sqlBuscarPorId);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        if ($stmt->rowCount() < 1) {
+            return null;
+        }
+
+        $meioPagamentoArray = $stmt->fetch(PDO::FETCH_ASSOC);
+        $meioPagamento = new MeioPagamento($meioPagamentoArray['meio'], $meioPagamentoArray['id_plataforma'], $meioPagamentoArray['status']);
+        $meioPagamento->setId($meioPagamentoArray['id']);
+
+        return $meioPagamento;
+    }
+
     /**
      * Remover o meio de pagamento que possuí id equivalente no banco de dados da aplicação
      */

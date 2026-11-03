@@ -16,6 +16,7 @@ class Contribuicao implements ContribuicaoInterface
     private DateTime $dataGeracao;
     private string $status;
     private string $codigo;
+    private ?string $uuid = null;
 
     public function __construct(?int $id, ?int $idGateway, ?int $idMeioPagamento, int $idSocio, float $valor, ?DateTime $dataPagamento, DateTime $dataVencimento, DateTime $dataGeracao, string $status, ?string $codigo = null)
     {
@@ -98,6 +99,17 @@ class Contribuicao implements ContribuicaoInterface
     public function getCodigo(): string
     {
         return $this->codigo;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(?string $uuid): self
+    {
+        $this->uuid = $uuid;
+        return $this;
     }
 
     public function setId(int $id): ContribuicaoInterface
