@@ -486,77 +486,105 @@ class ProdutoDAO
 
 	public function arquivar(int $idProduto): void
 	{
-		if ($idProduto < 1) {
-			throw new InvalidArgumentException("ID do produto inválido.", 400);
-		}
-
-    	$pdo = Conexao::connect();
-    	$pdo->beginTransaction();
-
-    	try {
-        	$stmtEntradasAfetadas = $pdo->prepare("
-           		SELECT DISTINCT id_entrada
-            	FROM ientrada
-            	WHERE id_produto = :id_produto
-              		AND oculto = false
-        	");
-        	$stmtEntradasAfetadas->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
-        	$stmtEntradasAfetadas->execute();
-        	$entradasAfetadas = $stmtEntradasAfetadas->fetchAll(PDO::FETCH_COLUMN);
-
-        	$stmtSaidasAfetadas = $pdo->prepare("
-            	SELECT DISTINCT id_saida
-            	FROM isaida
-            	WHERE id_produto = :id_produto
-             		AND oculto = false
-        	");
-        	$stmtSaidasAfetadas->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
-        	$stmtSaidasAfetadas->execute();
-        	$saidasAfetadas = $stmtSaidasAfetadas->fetchAll(PDO::FETCH_COLUMN);
-
-        	$stmtProduto = $pdo->prepare("
-            	UPDATE produto
-            	SET ativo = 0
-            	WHERE id_produto = :id_produto
-              		AND oculto = false
-        	");
-        	$stmtProduto->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
-        	$stmtProduto->execute();
-
-        	$stmtIentrada = $pdo->prepare("
-            	UPDATE ientrada
-            	SET oculto = true,
-                	oculto_por_produto_inativo = 1
-            	WHERE id_produto = :id_produto
-              		AND oculto = false
-        	");
-        	$stmtIentrada->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
-        	$stmtIentrada->execute();
-
-        	$stmtIsaida = $pdo->prepare("
-            	UPDATE isaida
-            	SET oculto = true,
-                	oculto_por_produto_inativo = 1
-            	WHERE id_produto = :id_produto
-              		AND oculto = false
-        	");
-        	$stmtIsaida->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
-        	$stmtIsaida->execute();
-
-        	foreach ($entradasAfetadas as $idEntrada) {
-            	$this->recalcularEntradaPorId((int)$idEntrada, $pdo);
-        	}
-
-        	foreach ($saidasAfetadas as $idSaida) {
-            	$this->recalcularSaidaPorId((int)$idSaida, $pdo);
-        	}
-
-        	$pdo->commit();
-    	} catch (Exception $e) {
-        	$pdo->rollBack();
-        	throw $e;
-    	}
+		$this->arquivarTodos([$idProduto]);
 	}
+
+	public function arquivarTodos(array $idsProdutos): int
+	{
+		if (empty($idsProdutos)) {
+			throw new InvalidArgumentException('Nenhum produto foi informado.', 400);
+		}
+		foreach ($idsProdutos as $idProduto) {
+			if (!is_int($idProduto) || $idProduto < 1) {
+				throw new InvalidArgumentException('ID do produto inválido.', 400);
+			}
+		}
+		$idsProdutos = array_values(array_unique($idsProdutos));
+		sort($idsProdutos);
+		$pdo = $this->pdo;
+		$pdo->beginTransaction();
+
+		try {
+			$placeholders = implode(',', array_fill(0, count($idsProdutos), '?'));
+			$stmt = $pdo->prepare("SELECT id_produto FROM produto WHERE id_produto IN ($placeholders) AND oculto = false AND ativo = 1 FOR UPDATE");
+			$stmt->execute($idsProdutos);
+			if (count($stmt->fetchAll(PDO::FETCH_COLUMN)) !== count($idsProdutos)) {
+				throw new InvalidArgumentException('Um dos produtos selecionados não está mais disponível para arquivamento. Atualize a lista.', 400);
+			}
+
+			foreach ($idsProdutos as $idProduto) {
+				$this->arquivarProduto($idProduto, $pdo);
+			}
+			$pdo->commit();
+			return count($idsProdutos);
+		} catch (Throwable $e) {
+			if ($pdo->inTransaction()) {
+				$pdo->rollBack();
+			}
+			throw $e;
+		}
+	}
+
+    private function arquivarProduto(int $idProduto, PDO $pdo): void
+    {
+        $stmtEntradasAfetadas = $pdo->prepare("
+            SELECT DISTINCT id_entrada
+            FROM ientrada
+            WHERE id_produto = :id_produto
+                AND oculto = false
+        ");
+        $stmtEntradasAfetadas->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+        $stmtEntradasAfetadas->execute();
+        $entradasAfetadas = $stmtEntradasAfetadas->fetchAll(PDO::FETCH_COLUMN);
+
+        $stmtSaidasAfetadas = $pdo->prepare("
+            SELECT DISTINCT id_saida
+            FROM isaida
+            WHERE id_produto = :id_produto
+                AND oculto = false
+        ");
+        $stmtSaidasAfetadas->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+        $stmtSaidasAfetadas->execute();
+        $saidasAfetadas = $stmtSaidasAfetadas->fetchAll(PDO::FETCH_COLUMN);
+
+        $stmtProduto = $pdo->prepare("
+            UPDATE produto
+            SET ativo = 0
+            WHERE id_produto = :id_produto
+                AND oculto = false
+        ");
+        $stmtProduto->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+        $stmtProduto->execute();
+
+        $stmtIentrada = $pdo->prepare("
+            UPDATE ientrada
+            SET oculto = true,
+                oculto_por_produto_inativo = 1
+            WHERE id_produto = :id_produto
+                AND oculto = false
+        ");
+        $stmtIentrada->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+        $stmtIentrada->execute();
+
+        $stmtIsaida = $pdo->prepare("
+            UPDATE isaida
+            SET oculto = true,
+                oculto_por_produto_inativo = 1
+            WHERE id_produto = :id_produto
+                AND oculto = false
+        ");
+        $stmtIsaida->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+        $stmtIsaida->execute();
+
+        foreach ($entradasAfetadas as $idEntrada) {
+            $this->recalcularEntradaPorId((int)$idEntrada, $pdo);
+        }
+
+        foreach ($saidasAfetadas as $idSaida) {
+            $this->recalcularSaidaPorId((int)$idSaida, $pdo);
+        }
+
+    }
 
 	public function desarquivar(int $idProduto): void
 	{

@@ -101,6 +101,7 @@ if (isset($_SESSION['produto'], $_SESSION['categoria'], $_SESSION['unidade'], $_
 	<!-- Theme Custom CSS -->
 	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
 
+	<script src="<?= WWW ?>Functions/mascara.js"></script>
 	<!-- Head Libs -->
 	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
 
@@ -378,9 +379,10 @@ if (isset($_SESSION['produto'], $_SESSION['categoria'], $_SESSION['unidade'], $_
 
 
 										<div class="form-group">
-											<label class="col-md-3 control-label" for="profileCompany">Código</label>
+											<label class="col-md-3 control-label" for="codigo">Código</label>
 											<div class="col-md-8">
-												<input type="text" name="codigo" class="form-control" minlength="11" id="codigo" id="profileCompany">
+												<input type="text" name="codigo" class="form-control" id="codigo" oninput="mascaraCodigoProduto(this)" placeholder="Ex.: 7891234567890 ou CON0003" aria-describedby="codigo-ajuda" pattern="([0-9]+|[A-Z]{3}[0-9]{4})" title="Informe um código de barras numérico ou um código como CON0003">
+												<span id="codigo-ajuda" class="help-block">Digite apenas números ou 3 letras e 4 números (ex.: CON0003).</span>
 											</div>
 										</div>
 

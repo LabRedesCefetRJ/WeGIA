@@ -267,6 +267,11 @@ $origemLista = CotacaoSuporte::origemLista();
                                             <p>
                                                 <strong>Condição de pagamento:</strong><br>
                                                 <?= htmlspecialchars(Orcamento::CONDICOES_PAGAMENTO[$orcamento['condicao_pagamento'] ?? ''] ?? 'Não informado', ENT_QUOTES, 'UTF-8') ?>
+                                                <?php if (!empty($orcamento['vencimentos_pagamento'])): ?>
+                                                    · <?= htmlspecialchars($orcamento['vencimentos_pagamento'], ENT_QUOTES, 'UTF-8') ?> dias
+                                                <?php elseif (($orcamento['condicao_pagamento'] ?? '') !== 'avista'): ?>
+                                                    · Vencimentos não informados
+                                                <?php endif; ?>
                                             </p>
                                             <p>
                                                 <strong>Prazo de entrega:</strong><br>
@@ -319,6 +324,7 @@ $origemLista = CotacaoSuporte::origemLista();
                                                     data-id="<?= $idOrcamento ?>"
                                                     data-fornecedor="<?= (int) $orcamento['id_fornecedor'] ?>"
                                                     data-valor="<?= htmlspecialchars($orcamento['valor'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-vencimentos="<?= htmlspecialchars($orcamento['vencimentos_pagamento'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                                     data-condicao-pagamento="<?= htmlspecialchars($orcamento['condicao_pagamento'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                                     data-prazo="<?= htmlspecialchars($orcamento['prazo_entrega'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                                     data-arquivo="<?= htmlspecialchars($orcamento['arquivo_nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
@@ -338,6 +344,7 @@ $origemLista = CotacaoSuporte::origemLista();
 
                             <form data-cotacao-form
                                 id="formEscolherOrcamento"
+                                novalidate
                                 method="post"
                                 action="<?= WWW ?>controle/control.php"
                             >
@@ -478,6 +485,12 @@ $origemLista = CotacaoSuporte::origemLista();
                                                         <option value="<?= htmlspecialchars($valorCondicao, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($rotuloCondicao, ENT_QUOTES, 'UTF-8') ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
+                                                <p class="help-block" data-condicao-habitual></p>
+                                                <div data-vencimentos-cotacao hidden>
+                                                    <label for="novoCondicaoPagamento-vencimentos">Prazo ou vencimentos (dias)</label>
+                                                    <input type="text" class="form-control" name="vencimentos_pagamento" id="novoCondicaoPagamento-vencimentos" maxlength="255" placeholder="Ex.: 30 ou 30/60/90">
+                                                    <small class="help-block">Ex.: 30 para pagar em 30 dias; 30/60 para duas parcelas. Com entrada: 0/30/60.</small>
+                                                </div>
                                             </div>
 
                                             <div class="form-group">
@@ -608,6 +621,12 @@ $origemLista = CotacaoSuporte::origemLista();
                                                         <option value="<?= htmlspecialchars($valorCondicao, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($rotuloCondicao, ENT_QUOTES, 'UTF-8') ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
+                                                <p class="help-block" data-condicao-habitual></p>
+                                                <div data-vencimentos-cotacao hidden>
+                                                    <label for="editarCondicaoPagamento-vencimentos">Prazo ou vencimentos (dias)</label>
+                                                    <input type="text" class="form-control" name="vencimentos_pagamento" id="editarCondicaoPagamento-vencimentos" maxlength="255" placeholder="Ex.: 30 ou 30/60/90">
+                                                    <small class="help-block">Ex.: 30 para pagar em 30 dias; 30/60 para duas parcelas. Com entrada: 0/30/60.</small>
+                                                </div>
                                             </div>
 
                                             <div class="form-group">
@@ -722,6 +741,11 @@ $origemLista = CotacaoSuporte::origemLista();
             $('#editarValor').val(valor);
             $('#editarPrazo').val(prazo);
             $('#editarCondicaoPagamento').val(botao.attr('data-condicao-pagamento'));
+            $('#editarCondicaoPagamento-vencimentos').val(botao.attr('data-vencimentos') || '');
+            const formPagamento = document.getElementById('editarCondicaoPagamento').form;
+            formPagamento.dataset.condicaoLegada = !botao.attr('data-vencimentos')
+                ? botao.attr('data-condicao-pagamento') : '';
+            formPagamento.dataset.fornecedorLegado = String(fornecedor);
 
             $('#editarArquivo').val('');
 
@@ -759,6 +783,9 @@ $origemLista = CotacaoSuporte::origemLista();
     </script>
     <script>
         window.limitesUploadCotacao = <?= json_encode(CotacaoSuporte::limitesUpload()) ?>;
+    </script>
+    <script>
+        window.condicoesFornecedores = <?= json_encode(array_column($fornecedores, null, 'id_origem'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     </script>
     <script src="../../assets/javascripts/forms/cotacao.js"></script>
 </body>

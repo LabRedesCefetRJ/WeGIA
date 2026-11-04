@@ -138,7 +138,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                             	.append($('<td />').text(item.nome_origem ?? ''))
                             	.append($('<td />').text(item.descricao ?? ''))
                             	.append($('<td />').text(item.nome ?? ''))
-                            	.append($('<td />').text(item.valor_total ?? ''))
+                            	.append($('<td />').attr('data-order', Number(item.valor_total ?? 0)).text(formatarMoeda(item.valor_total)))
                             	.append($('<td />').text(item.data ?? ''))
                             	.append($('<td />').text(item.hora ?? ''))
                     	);

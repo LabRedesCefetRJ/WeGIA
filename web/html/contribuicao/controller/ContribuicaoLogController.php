@@ -100,7 +100,7 @@ class ContribuicaoLogController
                 exit();
             }
 
-            $servicoPagamento = new $classeService;
+            $servicoPagamento = new $classeService($this->pdo);
 
             //Verificar qual fuso horário será utilizado posteriormente
 
@@ -228,7 +228,7 @@ class ContribuicaoLogController
                 exit();
             }
 
-            $servicoPagamento = new $classeService;
+            $servicoPagamento = new $classeService($this->pdo);
 
             /*Controle de transação para que o log só seja registrado
             caso o serviço de pagamento tenha sido executado*/
@@ -375,11 +375,64 @@ class ContribuicaoLogController
 
                 $this->pdo->commit();
 
-                echo json_encode(['link' => WWW . 'html/contribuicao/' . $resultado['link']]);
+                $primeiraContribuicao = $resultado['contribuicoes']->getIterator()->current();
+                $uuidPrimeiraContribuicao = $primeiraContribuicao instanceof ContribuicaoLog
+                    ? $primeiraContribuicao->getUuid()
+                    : null;
+                $linkPdf = $uuidPrimeiraContribuicao !== null
+                    ? WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($uuidPrimeiraContribuicao)
+                    : WWW . 'html/contribuicao/' . $resultado['link'];
+
+                echo json_encode(['link' => $linkPdf]);
             }
         } catch (Exception $e) {
             Util::tratarException($e);
         }
+    }
+
+    public function downloadPdfPorId()
+    {
+        $identificador = trim((string) ($_GET['id'] ?? ''));
+        if ($identificador === '') {
+            http_response_code(400);
+            echo json_encode(['erro' => 'Identificador da contribuição inválido']);
+            return;
+        }
+
+        $daoContribuicao = new ContribuicaoLogDAO($this->pdo);
+        $uuid = \api\utils\UuidGenerator::parseV7($identificador);
+        if ($uuid !== null) {
+            $documento = $daoContribuicao->buscarDocumentoPorUuid($uuid->toString());
+            if (!is_array($documento) || empty($documento['documento'])) {
+                http_response_code(404);
+                echo json_encode(['erro' => 'Arquivo PDF não encontrado']);
+                return;
+            }
+
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="contribuicao_' . $uuid->toString() . '.pdf"');
+            echo $documento['documento'];
+            exit;
+        }
+
+        $nomeArquivo = trim((string) ($_GET['nomeArquivo'] ?? $identificador));
+        $nomeArquivoSeguro = basename($nomeArquivo);
+        if ($nomeArquivoSeguro !== $nomeArquivo || !preg_match('/\.pdf$/i', $nomeArquivoSeguro)) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'Nome de arquivo inválido']);
+            return;
+        }
+
+        $caminhoArquivo = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR . $nomeArquivoSeguro;
+        if (is_file($caminhoArquivo) && is_readable($caminhoArquivo)) {
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="' . $nomeArquivoSeguro . '"');
+            readfile($caminhoArquivo);
+            exit;
+        }
+
+        http_response_code(404);
+        echo json_encode(['erro' => 'Arquivo PDF não encontrado']);
     }
 
     /**
@@ -455,7 +508,7 @@ class ContribuicaoLogController
                 exit('Classe não encontrada');
             }
 
-            $servicoPagamento = new $classeService;
+            $servicoPagamento = new $classeService($this->pdo);
 
             //Verificar qual fuso horário será utilizado posteriormente
             $dataGeracao = date('Y-m-d');

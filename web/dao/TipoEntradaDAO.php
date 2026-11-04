@@ -21,7 +21,7 @@ class TipoEntradaDAO
 
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela tipo_entrada = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            throw $e;
         }
     }
 
@@ -52,7 +52,7 @@ class TipoEntradaDAO
             $stmt->bindParam(':id_tipo', $id_tipo);
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela tipo_entrada = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            throw $e;
         }
     }
     public function listarTodos()

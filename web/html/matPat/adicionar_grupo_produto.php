@@ -171,9 +171,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 													<input type="reset" class="btn btn-default">
 
-													<a href="<?= WWW ?>html/matPat/cadastro_produto.php" style="color: white; text-decoration: none;">
-														<button class="btn btn-info" type="button">Voltar</button>
-													</a>
+													<button onclick="history.back()" class="btn btn-info" type="button">Voltar</button>
 
 													<a href="<?= WWW ?>html/matPat/listar_grupo_produto.php" style="color: white; text-decoration: none;">
 														<button class="btn btn-success" type="button">Listar Grupo de Produto</button>

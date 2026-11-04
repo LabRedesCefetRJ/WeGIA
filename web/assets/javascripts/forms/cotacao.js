@@ -69,3 +69,55 @@
         });
     });
 }());
+
+// Condições habituais orientam a negociação; o orçamento guarda seus próprios vencimentos.
+(function () {
+    'use strict';
+    const mapa = {a_vista: 'avista', a_prazo: 'aprazo', parcelado: 'parcelado'};
+    const rotulos = {avista: 'À vista', aprazo: 'A prazo', parcelado: 'Parcelado'};
+    function atualizar(select, usarHabitual) {
+        const bloco = select.closest('.orcamento') || select.closest('form');
+        const fornecedor = bloco.querySelector('[name="id_fornecedor"], [name="id_fornecedor[]"]');
+        const prazo = bloco.querySelector('[name="vencimentos_pagamento"], [name="vencimentos_pagamento[]"]');
+        if (!fornecedor || !prazo) return;
+        const dados = (window.condicoesFornecedores || {})[fornecedor.value] || {};
+        const condicao = mapa[dados.condicao_pagamento] || '';
+        const dias = dados.vencimentos_pagamento || '';
+        bloco.querySelector('[data-condicao-habitual]').textContent = 'Condição habitual: ' +
+            (rotulos[condicao] || 'não informada') + (dias ? ' · ' + dias + ' dias' : '') +
+            '. A condição desta cotação pode ser alterada abaixo.';
+        if (usarHabitual) {
+            select.value = condicao;
+            prazo.value = dias;
+        }
+        const temPrazo = select.value === 'aprazo' || select.value === 'parcelado';
+        bloco.querySelector('[data-vencimentos-cotacao]').hidden = !temPrazo;
+        const form = select.form;
+        const legado = form.dataset.condicaoLegada === select.value &&
+            form.dataset.fornecedorLegado === fornecedor.value;
+        prazo.required = temPrazo && !legado;
+        if (legado && temPrazo && !prazo.value) {
+            bloco.querySelector('[data-condicao-habitual]').textContent +=
+                ' Este orçamento antigo não informou vencimentos; você pode adicioná-los.';
+        }
+        prazo.pattern = select.value === 'parcelado' ? '[0-9]{1,4}([ ]*/[ ]*[0-9]{1,4})+' : '[0-9]{1,4}';
+        if (!temPrazo) prazo.value = '';
+    }
+    const seletor = '[name="condicao_pagamento"], [name="condicao_pagamento[]"]';
+    document.querySelectorAll(seletor).forEach(function (select) { atualizar(select, false); });
+    document.addEventListener('change', function (event) {
+        if (event.target.matches('[name="id_fornecedor"], [name="id_fornecedor[]"]')) {
+            const bloco = event.target.closest('.orcamento') || event.target.closest('form');
+            const select = bloco.querySelector(seletor);
+            if (select) {
+                atualizar(select, true);
+                select.dispatchEvent(new Event('input', {bubbles: true}));
+            }
+        } else if (event.target.matches(seletor)) {
+            atualizar(event.target, false);
+        }
+    });
+    $('#modalEditarOrcamento, #modalAdicionarOrcamento').on('show.bs.modal', function () {
+        this.querySelectorAll(seletor).forEach(function (select) { atualizar(select, false); });
+    });
+}());
