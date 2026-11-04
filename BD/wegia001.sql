@@ -3489,32 +3489,42 @@ DO
     DELETE FROM jwt_blacklist
     WHERE expires_at <= NOW();
 
-  DROP EVENT IF EXISTS ev_contribuicao_documento_cleanup;
+DROP EVENT IF EXISTS ev_contribuicao_documento_cleanup;
 
-  DELIMITER $$
-  CREATE EVENT ev_contribuicao_documento_cleanup
-    ON SCHEDULE EVERY 1 DAY
-    STARTS TIMESTAMP(IF(CURTIME() < '03:00:00', CURRENT_DATE, CURRENT_DATE + INTERVAL 1 DAY), '03:00:00')
-    ON COMPLETION PRESERVE
-    ENABLE
-    COMMENT 'Remove documentos de contribuicoes vencidas ou sem associacao ativa'
-  DO
-  BEGIN
+DELIMITER $$
+
+CREATE EVENT ev_contribuicao_documento_cleanup
+ON SCHEDULE EVERY 1 DAY
+STARTS TIMESTAMP(
+    IF(
+        CURTIME() < '03:00:00',
+        CURRENT_DATE,
+        CURRENT_DATE + INTERVAL 1 DAY
+    ),
+    '03:00:00'
+)
+ON COMPLETION PRESERVE
+ENABLE
+COMMENT 'Remove documentos de contribuicoes vencidas ha 30 dias ou sem associacao ativa'
+DO
+BEGIN
+
     UPDATE wegia.contribuicao_log
     SET id_contribuicao_documento = NULL
-    WHERE data_vencimento < CURDATE()
+    WHERE data_vencimento <= CURDATE() - INTERVAL 30 DAY
       AND id_contribuicao_documento IS NOT NULL;
 
     DELETE FROM wegia.contribuicao_documento AS cd
     WHERE NOT EXISTS (
-      SELECT 1
-      FROM wegia.contribuicao_log AS cl
-      WHERE cl.id_contribuicao_documento = cd.id
-        AND cl.data_vencimento >= CURDATE()
+        SELECT 1
+        FROM wegia.contribuicao_log AS cl
+        WHERE cl.id_contribuicao_documento = cd.id
+          AND cl.data_vencimento > CURDATE() - INTERVAL 30 DAY
     );
-  END$$
-  DELIMITER ;
 
+END$$
+
+DELIMITER ;
 -- -----------------------------------------------------
 -- Módulo Projetos (revisado)
 -- -----------------------------------------------------
