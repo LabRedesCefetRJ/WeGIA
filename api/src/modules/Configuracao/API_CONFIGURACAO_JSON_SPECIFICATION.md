@@ -97,7 +97,7 @@ global: true
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
-| `descricao` | string | Sim | Descrição do modelo de documento. |
+| `descricao` | string | Sim | Descrição do modelo de documento, até 128 caracteres. |
 | `arquivo` | file | Sim | Arquivo do modelo no formato `.odt` ou `.docx`. |
 | `global` | boolean | Não | Só pode ser informado por administradores. Quando `true`, disponibiliza o modelo para todos os usuários do sistema. |
 
@@ -138,6 +138,113 @@ curl -X POST "http://localhost:8000/configuracao/documentos/modelo" \
   "error": "Apenas administradores podem criar modelos globais."
 }
 ```
+
+---
+
+## Atualizar Modelo de Documento
+
+### Endpoint
+```
+PUT /configuracao/documentos/modelo/{id}
+```
+
+### Autenticação e permissão
+**Obrigatório** - JWT. O proprietário pode atualizar seus próprios modelos. Administradores também podem atualizar modelos globais de outros funcionários.
+
+### Content-Type
+```http
+Content-Type: application/json
+```
+
+### Requisição
+Envie `descricao` (obrigatória) e, se desejar substituir o arquivo atual, `arquivo` com o nome e o conteúdo Base64. Sem arquivo, o arquivo existente é preservado. A descrição aceita até 128 caracteres.
+
+```json
+{
+  "descricao": "Modelo atualizado",
+  "arquivo": {
+    "nome": "modelo.odt",
+    "conteudo_base64": "UEsDB..."
+  }
+}
+```
+
+### Resposta com sucesso (200 OK)
+```json
+{
+  "success": true,
+  "message": "Modelo de documento atualizado com sucesso.",
+  "modelo": { "id": 1 }
+}
+```
+
+### Erros
+- `400`: ID, descrição ou arquivo inválido.
+- `403`: usuário sem permissão para atualizar o modelo.
+- `404`: modelo não encontrado.
+
+---
+
+## Alterar Globalidade do Modelo
+
+### Endpoint
+```
+PATCH /configuracao/documentos/modelo/{id}
+```
+
+### Autenticação e permissão
+**Obrigatório** - JWT e cargo de administrador.
+
+### Content-Type
+```http
+Content-Type: application/json
+```
+
+### Requisição
+```json
+{ "global": true }
+```
+
+O campo `global` é obrigatório e booleano.
+
+### Resposta com sucesso (200 OK)
+```json
+{
+  "success": true,
+  "message": "Globalidade do modelo alterada com sucesso.",
+  "modelo": { "id": 1, "global": true }
+}
+```
+
+### Erros
+- `400`: ID ou campo `global` inválido/ausente.
+- `403`: usuário não é administrador.
+- `404`: modelo não encontrado.
+
+---
+
+## Excluir Modelo de Documento
+
+### Endpoint
+```
+DELETE /configuracao/documentos/modelo/{id}
+```
+
+### Autenticação e permissão
+**Obrigatório** - JWT. O proprietário pode excluir seus próprios modelos. Administradores também podem excluir modelos globais de outros funcionários.
+
+### Resposta com sucesso (200 OK)
+```json
+{
+  "success": true,
+  "message": "Modelo de documento excluído com sucesso."
+}
+```
+
+### Erros
+- `403`: usuário sem permissão para excluir o modelo.
+- `404`: modelo não encontrado.
+- `409`: modelo vinculado a um ou mais pareceres e não pode ser excluído.
 
 ---
 

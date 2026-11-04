@@ -53,6 +53,27 @@ class DocumentoModeloRepository
         return $result === false ? null : $result;
     }
 
+    /**
+     * @return array{id:int, id_funcionario:int, global:int}|null
+     */
+    public function buscarModelo(int $id): ?array
+    {
+        $query = "
+            SELECT id, id_funcionario, global
+            FROM modelo_documento
+            WHERE id = :id
+            LIMIT 1
+        ";
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result === false ? null : $result;
+    }
+
     public function salvarModelo(string $descricao, string $conteudoArquivo, string $extensao, int $idFuncionario, bool $global): int|false
     {
         $query = "
@@ -76,5 +97,79 @@ class DocumentoModeloRepository
         $id = $this->pdo->lastInsertId();
 
         return $id !== false ? (int) $id : false;
+    }
+
+    public function atualizarModelo(int $id, string $descricao, ?string $conteudoArquivo = null, ?string $extensao = null): bool
+    {
+        if ($conteudoArquivo === null) {
+            $query = "
+                UPDATE modelo_documento
+                SET descricao = :descricao
+                WHERE id = :id
+            ";
+            $parametros = [
+                ':descricao' => $descricao,
+                ':id' => $id,
+            ];
+        } else {
+            $query = "
+                UPDATE modelo_documento
+                SET descricao = :descricao, documento = :documento, extensao = :extensao
+                WHERE id = :id
+            ";
+            $parametros = [
+                ':descricao' => $descricao,
+                ':documento' => $conteudoArquivo,
+                ':extensao' => $extensao,
+                ':id' => $id,
+            ];
+        }
+
+        $stmt = $this->pdo->prepare($query);
+
+        return $stmt->execute($parametros);
+    }
+
+    public function alterarGlobalidade(int $id, bool $global): bool
+    {
+        $query = "
+            UPDATE modelo_documento
+            SET `global` = :global
+            WHERE id = :id
+        ";
+
+        $stmt = $this->pdo->prepare($query);
+
+        return $stmt->execute([
+            ':global' => $global ? 1 : 0,
+            ':id' => $id,
+        ]);
+    }
+
+    public function excluirModelo(int $id): bool
+    {
+        $referencia = $this->pdo->prepare("
+            SELECT 1
+            FROM saude_parecer
+            WHERE id_modelo_documento = :id
+            LIMIT 1
+        ");
+        $referencia->execute([':id' => $id]);
+
+        if ($referencia->fetchColumn() !== false) {
+            throw new \RuntimeException('Não é possível excluir este modelo porque ele está vinculado a pareceres.', 409);
+        }
+
+        try {
+            $stmt = $this->pdo->prepare('DELETE FROM modelo_documento WHERE id = :id');
+
+            return $stmt->execute([':id' => $id]);
+        } catch (\PDOException $e) {
+            if ((int) ($e->errorInfo[1] ?? 0) === 1451) {
+                throw new \RuntimeException('Não é possível excluir este modelo porque ele está vinculado a pareceres.', 409, $e);
+            }
+
+            throw $e;
+        }
     }
 }

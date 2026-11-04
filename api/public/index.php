@@ -365,4 +365,13 @@ $app->get('/configuracao/documentos/modelo', [DocumentoModeloController::class, 
 $app->post('/configuracao/documentos/modelo', [DocumentoModeloController::class, 'salvarModelo'])
     ->add($container->get(AuthMiddleware::class));
 
+$app->put('/configuracao/documentos/modelo/{id}', [DocumentoModeloController::class, 'atualizarModelo'])
+    ->add($container->get(AuthMiddleware::class));
+
+$app->patch('/configuracao/documentos/modelo/{id}', [DocumentoModeloController::class, 'alterarGlobalidade'])
+    ->add($container->get(AuthMiddleware::class));
+
+$app->delete('/configuracao/documentos/modelo/{id}', [DocumentoModeloController::class, 'excluirModelo'])
+    ->add($container->get(AuthMiddleware::class));
+
 $app->run();

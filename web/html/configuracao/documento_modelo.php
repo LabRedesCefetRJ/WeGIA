@@ -170,7 +170,7 @@ try {
 					<div class="modal-body">
 						<div class="form-group">
 							<label for="descricaoModelo">Descrição</label>
-							<input class="form-control" type="text" id="descricaoModelo" name="descricao" maxlength="255" required>
+							<input class="form-control" type="text" id="descricaoModelo" name="descricao" maxlength="128" required>
 						</div>
 						<div class="form-group">
 							<label for="arquivoModelo">Arquivo (.odt ou .docx)</label>
@@ -185,6 +185,34 @@ try {
 					<div class="modal-footer">
 						<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
 						<button type="submit" class="btn btn-primary" id="salvarModelo">Salvar modelo</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<div class="modal fade" id="modalEditarModelo" tabindex="-1" role="dialog" aria-labelledby="modalEditarModeloLabel">
+		<div class="modal-dialog" role="document">
+			<form id="formEditarModelo" enctype="multipart/form-data">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title" id="modalEditarModeloLabel">Editar modelo de documento</h4>
+					</div>
+					<div class="modal-body">
+						<div class="form-group">
+							<label for="descricaoModeloEdicao">Descrição</label>
+							<input class="form-control" type="text" id="descricaoModeloEdicao" name="descricao" maxlength="128" required>
+						</div>
+						<div class="form-group">
+							<label for="arquivoModeloEdicao">Substituir arquivo (.odt ou .docx, opcional)</label>
+							<input class="form-control" type="file" id="arquivoModeloEdicao" name="arquivo" accept=".odt,.docx">
+							<p class="help-block">Deixe em branco para manter o arquivo atual.</p>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+						<button type="submit" class="btn btn-primary" id="atualizarModelo">Salvar alterações</button>
 					</div>
 				</div>
 			</form>
@@ -208,6 +236,11 @@ try {
 			const tbodyGlobal = document.getElementById('modelos-globais');
 			const formulario = document.getElementById('formNovoModelo');
 			const botaoSalvar = document.getElementById('salvarModelo');
+			const formularioEdicao = document.getElementById('formEditarModelo');
+			const botaoAtualizar = document.getElementById('atualizarModelo');
+			const descricaoEdicao = document.getElementById('descricaoModeloEdicao');
+			const arquivoEdicao = document.getElementById('arquivoModeloEdicao');
+			let modeloEmEdicao = null;
 
 			function exibirFeedback(mensagem, tipo) {
 				const alerta = document.createElement('div');
@@ -302,18 +335,94 @@ try {
 					botao.title = item.texto;
 					botao.setAttribute('aria-label', `${item.texto}: ${modelo.descricao}`);
 					botao.innerHTML = `<i class="fa ${item.icone}" aria-hidden="true"></i>`;
-					botao.addEventListener('click', () => informarAcaoEmDesenvolvimento(item.acao));
+					botao.addEventListener('click', () => {
+						if (item.acao === 'editar') {
+							abrirEdicaoModelo(modelo);
+						} else if (item.acao === 'excluir') {
+							excluirModelo(modelo);
+						} else {
+							alterarGlobalidadeModelo(modelo);
+						}
+					});
 					container.appendChild(botao);
 				});
 			}
 
-			function informarAcaoEmDesenvolvimento(acao) {
-				const mensagens = {
-					editar: 'A edição de modelos de documento ainda está em desenvolvimento na API.',
-					excluir: 'A exclusão de modelos de documento ainda está em desenvolvimento na API.',
-					globalidade: 'A alteração da globalidade ainda está em desenvolvimento na API.'
-				};
-				exibirFeedback(mensagens[acao], 'warning');
+			function abrirEdicaoModelo(modelo) {
+				modeloEmEdicao = modelo;
+				descricaoEdicao.value = modelo.descricao || '';
+				arquivoEdicao.value = '';
+				$('#modalEditarModelo').modal('show');
+			}
+
+			function converterArquivoParaBase64(arquivo) {
+				return new Promise((resolve, reject) => {
+					const leitor = new FileReader();
+					leitor.onload = () => {
+						if (typeof leitor.result !== 'string') {
+							reject(new Error('Não foi possível ler o arquivo selecionado.'));
+							return;
+						}
+
+						resolve(leitor.result.slice(leitor.result.indexOf(',') + 1));
+					};
+					leitor.onerror = () => reject(new Error('Não foi possível ler o arquivo selecionado.'));
+					leitor.readAsDataURL(arquivo);
+				});
+			}
+
+			async function alterarGlobalidadeModelo(modelo) {
+				const global = Number(modelo.global) !== 1;
+				const confirmacao = global
+					? `Disponibilizar "${modelo.descricao}" como modelo global?`
+					: `Tornar "${modelo.descricao}" um modelo pessoal?`;
+				if (!window.confirm(confirmacao)) {
+					return;
+				}
+
+				try {
+					const response = await authenticatedRequest(() => fetch(`${apiBase}/${modelo.id}`, {
+						method: 'PATCH',
+						credentials: 'include',
+						headers: {
+							'X-Client-Type': 'web',
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({ global })
+					}));
+					if (!response.ok) {
+						throw new Error(await mensagemErroResposta(response));
+					}
+
+					const resultado = await response.json();
+					exibirFeedback(resultado.message || 'Globalidade do modelo alterada com sucesso.', 'success');
+					await carregarModelos();
+				} catch (error) {
+					exibirFeedback(error.message || 'Não foi possível alterar a globalidade do modelo.', 'danger');
+				}
+			}
+
+			async function excluirModelo(modelo) {
+				if (!window.confirm(`Excluir o modelo "${modelo.descricao}"? Esta ação não pode ser desfeita.`)) {
+					return;
+				}
+
+				try {
+					const response = await authenticatedRequest(() => fetch(`${apiBase}/${modelo.id}`, {
+						method: 'DELETE',
+						credentials: 'include',
+						headers: { 'X-Client-Type': 'web' }
+					}));
+					if (!response.ok) {
+						throw new Error(await mensagemErroResposta(response));
+					}
+
+					const resultado = await response.json();
+					exibirFeedback(resultado.message || 'Modelo de documento excluído com sucesso.', 'success');
+					await carregarModelos();
+				} catch (error) {
+					exibirFeedback(error.message || 'Não foi possível excluir o modelo de documento.', 'danger');
+				}
 			}
 
 			function renderizarModelos(tbody, modelos, podeGerenciar) {
@@ -426,6 +535,56 @@ try {
 					exibirFeedback(error.message || 'Não foi possível salvar o modelo de documento.', 'danger');
 				} finally {
 					botaoSalvar.disabled = false;
+				}
+			});
+
+			formularioEdicao.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				if (!modeloEmEdicao) {
+					exibirFeedback('Selecione um modelo para editar.', 'warning');
+					return;
+				}
+
+				const arquivo = arquivoEdicao.files[0];
+				if (arquivo && !/\.(odt|docx)$/i.test(arquivo.name)) {
+					exibirFeedback('Selecione um arquivo no formato .odt ou .docx.', 'warning');
+					return;
+				}
+
+				const idModelo = modeloEmEdicao.id;
+				botaoAtualizar.disabled = true;
+				try {
+					const dados = { descricao: descricaoEdicao.value };
+					if (arquivo) {
+						dados.arquivo = {
+							nome: arquivo.name,
+							conteudo_base64: await converterArquivoParaBase64(arquivo)
+						};
+					}
+
+					const response = await authenticatedRequest(() => fetch(`${apiBase}/${idModelo}`, {
+						method: 'PUT',
+						credentials: 'include',
+						headers: {
+							'X-Client-Type': 'web',
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify(dados)
+					}));
+					if (!response.ok) {
+						throw new Error(await mensagemErroResposta(response));
+					}
+
+					const resultado = await response.json();
+					$('#modalEditarModelo').modal('hide');
+					formularioEdicao.reset();
+					modeloEmEdicao = null;
+					exibirFeedback(resultado.message || 'Modelo de documento atualizado com sucesso.', 'success');
+					await carregarModelos();
+				} catch (error) {
+					exibirFeedback(error.message || 'Não foi possível atualizar o modelo de documento.', 'danger');
+				} finally {
+					botaoAtualizar.disabled = false;
 				}
 			});
 
