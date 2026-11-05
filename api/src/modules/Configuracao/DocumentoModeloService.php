@@ -9,11 +9,16 @@ class DocumentoModeloService
 {
     private DocumentoModeloRepository $repository;
     private UserRepository $userRepository;
+    private DocumentoCorpoHtmlConverter $htmlConverter;
 
-    public function __construct(DocumentoModeloRepository $repository, UserRepository $userRepository)
-    {
+    public function __construct(
+        DocumentoModeloRepository $repository,
+        UserRepository $userRepository,
+        DocumentoCorpoHtmlConverter $htmlConverter
+    ) {
         $this->repository = $repository;
         $this->userRepository = $userRepository;
+        $this->htmlConverter = $htmlConverter;
     }
 
     /**
@@ -70,8 +75,9 @@ class DocumentoModeloService
         }
 
         [$conteudo, $extensao] = $this->obterConteudoArquivo($arquivo);
+        $bodyHtml = $this->htmlConverter->converterParaHtml($conteudo, $extensao);
 
-        $id = $this->repository->salvarModelo($descricao, $conteudo, $extensao, $idFuncionario, $global);
+        $id = $this->repository->salvarModelo($descricao, $conteudo, $bodyHtml, $extensao, $idFuncionario, $global);
         if ($id === false || $id <= 0) {
             throw new \RuntimeException('Não foi possível salvar o modelo de documento.', 500);
         }
@@ -90,7 +96,8 @@ class DocumentoModeloService
             $atualizado = $this->repository->atualizarModelo($id, $descricao);
         } else {
             [$conteudo, $extensao] = $this->obterConteudoArquivo($arquivo);
-            $atualizado = $this->repository->atualizarModelo($id, $descricao, $conteudo, $extensao);
+            $bodyHtml = $this->htmlConverter->converterParaHtml($conteudo, $extensao);
+            $atualizado = $this->repository->atualizarModelo($id, $descricao, $conteudo, $extensao, $bodyHtml);
         }
 
         if (!$atualizado) {

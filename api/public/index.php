@@ -36,6 +36,7 @@ use api\modules\Saude\SaudeMiddleware;
 use api\modules\Configuracao\DocumentoModeloController;
 use api\modules\Configuracao\DocumentoModeloService;
 use api\modules\Configuracao\DocumentoModeloRepository;
+use api\modules\Configuracao\DocumentoCorpoHtmlConverter;
 
 //configurações da API
 use api\middleware\CorsMiddleware;
@@ -148,10 +149,14 @@ $container = new AppContainer([
     DocumentoModeloRepository::class => function ($c) {
         return new DocumentoModeloRepository($c->get(PDO::class));
     },
+    DocumentoCorpoHtmlConverter::class => function () {
+        return new DocumentoCorpoHtmlConverter();
+    },
     DocumentoModeloService::class => function ($c) {
         return new DocumentoModeloService(
             $c->get(DocumentoModeloRepository::class),
-            $c->get(UserRepository::class)
+            $c->get(UserRepository::class),
+            $c->get(DocumentoCorpoHtmlConverter::class)
         );
     },
     DocumentoModeloController::class => function ($c) {

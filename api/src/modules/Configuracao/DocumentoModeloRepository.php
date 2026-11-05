@@ -74,11 +74,18 @@ class DocumentoModeloRepository
         return $result === false ? null : $result;
     }
 
-    public function salvarModelo(string $descricao, string $conteudoArquivo, string $extensao, int $idFuncionario, bool $global): int|false
+    public function salvarModelo(
+        string $descricao,
+        string $conteudoArquivo,
+        string $bodyHtml,
+        string $extensao,
+        int $idFuncionario,
+        bool $global
+    ): int|false
     {
         $query = "
-            INSERT INTO modelo_documento (id_funcionario, descricao, documento, extensao, global)
-            VALUES (:id_funcionario, :descricao, :documento, :extensao, :global)
+            INSERT INTO modelo_documento (id_funcionario, descricao, documento, body_html, extensao, `global`)
+            VALUES (:id_funcionario, :descricao, :documento, :body_html, :extensao, :global)
         ";
 
         $stmt = $this->pdo->prepare($query);
@@ -86,6 +93,7 @@ class DocumentoModeloRepository
             ':id_funcionario' => $idFuncionario,
             ':descricao' => $descricao,
             ':documento' => $conteudoArquivo,
+            ':body_html' => $bodyHtml,
             ':extensao' => $extensao,
             ':global' => $global ? 1 : 0,
         ]);
@@ -99,7 +107,13 @@ class DocumentoModeloRepository
         return $id !== false ? (int) $id : false;
     }
 
-    public function atualizarModelo(int $id, string $descricao, ?string $conteudoArquivo = null, ?string $extensao = null): bool
+    public function atualizarModelo(
+        int $id,
+        string $descricao,
+        ?string $conteudoArquivo = null,
+        ?string $extensao = null,
+        ?string $bodyHtml = null
+    ): bool
     {
         if ($conteudoArquivo === null) {
             $query = "
@@ -112,14 +126,19 @@ class DocumentoModeloRepository
                 ':id' => $id,
             ];
         } else {
+            if ($extensao === null || $bodyHtml === null) {
+                throw new \InvalidArgumentException('Extensão e conteúdo HTML são obrigatórios ao substituir o arquivo.');
+            }
+
             $query = "
                 UPDATE modelo_documento
-                SET descricao = :descricao, documento = :documento, extensao = :extensao
+                SET descricao = :descricao, documento = :documento, body_html = :body_html, extensao = :extensao
                 WHERE id = :id
             ";
             $parametros = [
                 ':descricao' => $descricao,
                 ':documento' => $conteudoArquivo,
+                ':body_html' => $bodyHtml,
                 ':extensao' => $extensao,
                 ':id' => $id,
             ];

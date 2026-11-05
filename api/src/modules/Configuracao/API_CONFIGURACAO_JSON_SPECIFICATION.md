@@ -85,7 +85,7 @@ Content-Type: multipart/form-data
 ```
 
 ### Descrição
-Cria um novo modelo de documento na tabela `modelo_documento` com a descrição informada, o arquivo enviado e o funcionário responsável pelo cadastro.
+Cria um novo modelo de documento na tabela `modelo_documento` com a descrição informada, o arquivo enviado, o HTML correspondente ao corpo do documento em `body_html` e o funcionário responsável pelo cadastro. A extração é feita com PHPWord para arquivos `.odt` e `.docx`; se o arquivo estiver inválido ou a conversão falhar, a operação é rejeitada.
 
 ### Requisição
 ```text
@@ -158,6 +158,8 @@ Content-Type: application/json
 
 ### Requisição
 Envie `descricao` (obrigatória) e, se desejar substituir o arquivo atual, `arquivo` com o nome e o conteúdo Base64. Sem arquivo, o arquivo existente é preservado. A descrição aceita até 128 caracteres.
+
+Quando um novo arquivo é enviado, seu conteúdo é convertido para o HTML interno do corpo e atualizado em `body_html`. Se a leitura ou conversão falhar, a atualização é rejeitada e os dados atuais permanecem inalterados.
 
 ```json
 {
