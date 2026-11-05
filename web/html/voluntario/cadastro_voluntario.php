@@ -7,10 +7,14 @@ if (!isset($_SESSION['usuario'])) {
     exit();
 }
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 13, 3);
 
 require_once ROOT . "/controle/VoluntarioControle.php";
 require_once ROOT . "/classes/Voluntario.php";
 require_once ROOT . "/html/personalizacao_display.php";
+require_once ROOT . "/dao/Conexao.php";
+
 $dataNascimentoMaxima = Voluntario::getDataNascimentoMaxima();
 $dataNascimentoMinima = Voluntario::getDataNascimentoMinima();
 
@@ -28,10 +32,16 @@ if (isset($_GET['cpf'])) {
     $cpfPrefilled = htmlspecialchars($_GET['cpf'], ENT_QUOTES, 'UTF-8');
 }
 
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+require_once ROOT . '/dao/PessoaDAO.php';
+$pessoaDAO = new PessoaDAO();
+$adm_configurado = $pessoaDAO->verificaAdmConfigurado($id_pessoa);
+
 // Teste da Issue #1587
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $situacao = $mysqli->query("SELECT * FROM situacao");
+$cargo = $mysqli->query("SELECT * FROM cargo");
 require_once ROOT . '/classes/Csrf.php';
 ?>
 <!DOCTYPE html>
@@ -52,15 +62,62 @@ require_once ROOT . '/classes/Csrf.php';
     <script src="../../assets/javascripts/theme.js"></script>
     <script src="../../assets/javascripts/theme.custom.js"></script>
     <script src="../../assets/javascripts/theme.init.js"></script>
+    <script src="<?php echo WWW; ?>Functions/cargos.js"></script>
+
+    <script>
+        function gerarSituacao() {
+            url = '../../dao/exibir_situacao.php';
+            $.ajax({
+                data: '',
+                type: "POST",
+                url: url,
+                async: true,
+                success: function(response) {
+                var situacoes = response;
+                $('#situacao').empty();
+                $('#situacao').append('<option selected disabled>Selecionar</option>');
+                $.each(situacoes, function(i, item) {
+                    $('#situacao').append('<option value="' + item.id_situacao + '">' + item.situacoes + '</option>');
+                });
+                },
+                dataType: 'json'
+            });
+        }
+        function adicionar_situacao() {
+            url = '../../dao/adicionar_situacao.php';
+            var situacao = window.prompt("Cadastre uma Nova Situação:");
+            if (!situacao) {
+                return
+            }
+            situacao = situacao.trim();
+            if (situacao == '') {
+                return
+            }
+
+            data = 'situacao=' + situacao;
+
+            console.log(data);
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: data,
+                success: function(response) {
+                gerarSituacao();
+                },
+                dataType: 'text'
+            })
+        }
+    </script>
+
     <script src="../../Functions/onlyNumbers.js"></script>
     <script src="../../Functions/onlyChars.js"></script>
     <script src="../../Functions/mascara.js"></script>
     <script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
 
     <style type="text/css">
-    .obrig {
-        color: rgb(255, 0, 0);
-    }
+        .obrig {
+            color: rgb(255, 0, 0);
+        }
     </style>
 </head>
 
@@ -75,63 +132,88 @@ require_once ROOT . '/classes/Csrf.php';
                 </header>
                 <div class="row" id="formulario">
                     <?php if ($erro): ?>
-                    <div style="color: red; font-weight: bold; text-align:center">
-                        <?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?>
-                    </div>
-                    <?php
-endif; ?>
+                        <div style="color: red; font-weight: bold; text-align:center">
+                            <?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?>
+                        </div>
+                        <?php
+                    endif; ?>
                     <div class="col-md-12 col-lg-12">
                         <form class="form-horizontal" method="POST" action="../../controle/control.php">
                             <div class="panel-body">
                                 <h4 class="mb-xlg">Informações Pessoais</h4>
                                 <h5 class="obrig">Campos Obrigatórios(*)</h5>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="profileFirstName">Nome<sup
+                                            class="obrig">*</sup></label>
                                     <div class="col-md-6">
-                                    <input type="text" class="form-control<?= isset($fieldErrors['nome']) ? ' is-invalid' : '' ?>" name="nome" id="nome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                    <p id="error_nome" class="help-block text-danger" style="display: <?= isset($fieldErrors['nome']) ? 'block' : 'none' ?>;">
-                                        <?= isset($fieldErrors['nome']) ? htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') : '' ?>
-                                    </p>
+                                        <input type="text"
+                                            class="form-control<?= isset($fieldErrors['nome']) ? ' is-invalid' : '' ?>"
+                                            name="nome" id="nome" onkeypress="return Onlychars(event)" required
+                                            value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                                        <p id="error_nome" class="help-block text-danger"
+                                            style="display: <?= isset($fieldErrors['nome']) ? 'block' : 'none' ?>;">
+                                            <?= isset($fieldErrors['nome']) ? htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') : '' ?>
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
                                     <div class="col-md-6">
-                                    <input type="text" class="form-control<?= isset($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                    <p id="error_sobrenome" class="help-block text-danger" style="display: <?= isset($fieldErrors['sobrenome']) ? 'block' : 'none' ?>;">
-                                        <?= isset($fieldErrors['sobrenome']) ? htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') : '' ?>
-                                    </p>
+                                        <input type="text"
+                                            class="form-control<?= isset($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>"
+                                            name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)"
+                                            required
+                                            value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                                        <p id="error_sobrenome" class="help-block text-danger"
+                                            style="display: <?= isset($fieldErrors['sobrenome']) ? 'block' : 'none' ?>;">
+                                            <?= isset($fieldErrors['sobrenome']) ? htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') : '' ?>
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="cpf">Número do CPF<sup
+                                            class="obrig">*</sup></label>
                                     <div class="col-md-6">
-                                    <input type="text" class="form-control<?= isset($fieldErrors['cpf']) ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##', this, event)" value="<?= htmlspecialchars($oldInput['cpf'] ?? ($cpf ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
+                                    <input type="text" class="form-control<?= isset($fieldErrors['cpf']) ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##', this, event)" value="<?= htmlspecialchars($oldInput['cpf'] ?? ($cpfPrefilled ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
                                     <p id="error_cpf" class="help-block text-danger" style="display: <?= isset($fieldErrors['cpf']) ? 'block' : 'none' ?>;">
                                         <?= isset($fieldErrors['cpf']) ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : '' ?>
                                     </p>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="profileLastName">Sexo<sup
+                                            class="obrig">*</sup></label>
                                     <div class="col-md-6">
-                                    <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= isset($oldInput['gender']) && $oldInput['gender'] === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                                    <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                                        <label><input type="radio" name="gender" id="radioM" value="m"
+                                                style="margin-top: 10px; margin-left: 15px;"
+                                                onclick="return exibir_reservista()" required
+                                                <?= isset($oldInput['gender']) && $oldInput['gender'] === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                                        <label><input type="radio" name="gender" id="radioF" value="f"
+                                                style="margin-top: 10px; margin-left: 15px;"
+                                                onclick="return esconder_reservista()" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'f' ? 'checked' : '' ?>><i class="fa fa-female"
+                                                style="font-size: 20px;"></i> </label>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup
+                                            class="obrig">*</sup></label>
                                     <div class="col-md-6">
-                                    <input type="date" name="nascimento" id="nascimento" class="form-control<?= isset($fieldErrors['nascimento']) ? ' is-invalid' : '' ?>" min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>" required value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                    <p id="error_nascimento" class="help-block text-danger" style="display: <?= isset($fieldErrors['nascimento']) ? 'block' : 'none' ?>;">
-                                        <?= isset($fieldErrors['nascimento']) ? htmlspecialchars($fieldErrors['nascimento'], ENT_QUOTES, 'UTF-8') : '' ?>
-                                    </p>
+                                        <input type="date" name="nascimento" id="nascimento"
+                                            class="form-control<?= isset($fieldErrors['nascimento']) ? ' is-invalid' : '' ?>"
+                                            min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>"
+                                            required
+                                            value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                                        <p id="error_nascimento" class="help-block text-danger"
+                                            style="display: <?= isset($fieldErrors['nascimento']) ? 'block' : 'none' ?>;">
+                                            <?= isset($fieldErrors['nascimento']) ? htmlspecialchars($fieldErrors['nascimento'], ENT_QUOTES, 'UTF-8') : '' ?>
+                                        </p>
                                     </div>
                                 </div>
                                 <hr>
                                 <h4 class="mb-xlg">Detalhes do Voluntariado</h4>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Data de Admissão<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label">Data de Admissão<sup
+                                            class="obrig">*</sup></label>
                                     <div class="col-md-6"><input type="date" class="form-control" name="data_admissao"
                                             required></div>
                                 </div>
@@ -141,14 +223,33 @@ endif; ?>
                                         <select class="form-control" name="situacao" required>
                                             <option selected disabled>Selecionar</option>
                                             <?php while ($row = $situacao->fetch_array(MYSQLI_NUM)) {
-    echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
-}?>
+                                                echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
+                                            } ?>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label" for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
+                                    <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge"style="margin-top: 0.75vw"></i></a>
+                                    <div class="col-md-6">
+                                        <select class="form-control" name="cargo" id="cargo" required>
+                                            <option selected disabled>Selecionar</option>
+                                            <?php
+                                            while ($row = $cargo->fetch_array(MYSQLI_NUM)) {
+                                                $selected = isset($oldInput['cargo']) && $oldInput['cargo'] == $row[0] ? ' selected' : '';
+                                                if ($adm_configurado != 1 && $row[0] == 1) {
+                                                    continue;
+                                                }
+                                                echo "<option value=\"" . htmlspecialchars($row[0]) . "\"" . $selected . ">" . htmlspecialchars($row[1]) . "</option>";
+                                            }
+                                            ?>
                                         </select>
                                     </div>
                                 </div>
                             </div>
                             <div class="panel-footer">
-                                <?= Csrf::inputField()?>
+                                <?= Csrf::inputField() ?>
                                 <input type="hidden" name="nomeClasse" value="VoluntarioControle">
                                 <input type="hidden" name="metodo" value="incluir">
                                 <button type="submit" class="btn btn-primary">Salvar</button>

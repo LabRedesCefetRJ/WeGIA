@@ -79,7 +79,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'UnidadeControle' => [22],
             'MemorandoControle' => [3],
             'DespachoControle' => [3],
-            'VoluntarioControle' => [11],
+            'VoluntarioControle' => [13],
             'NotificacaoControle' => [2, 5, 21, 22, 23, 24]
         ];
 

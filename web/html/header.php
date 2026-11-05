@@ -26,16 +26,24 @@ $stmtPessoa->close();
 
 
 // ===== Consulta cargo =====
+// Mesmo critério de PessoaDAO::getCargoPorPessoa(): o cargo de funcionário tem prioridade
 $sqlCargo = "
-    SELECT c.cargo, c.id_cargo
+    SELECT c.cargo, c.id_cargo, 1 AS prioridade
     FROM pessoa p
     JOIN funcionario f ON f.id_pessoa = p.id_pessoa
     JOIN cargo c ON c.id_cargo = f.id_cargo
     WHERE p.id_pessoa = ?
-";
+    UNION ALL
+    SELECT c.cargo, c.id_cargo, 2 AS prioridade
+    FROM pessoa p
+    JOIN voluntario v ON v.id_pessoa = p.id_pessoa
+    JOIN cargo c ON c.id_cargo = v.id_cargo
+    WHERE p.id_pessoa = ?
+    ORDER BY prioridade
+    LIMIT 1";
 
 $stmtCargo = $conexao->prepare($sqlCargo);
-$stmtCargo->bind_param("i", $id_pessoa);
+$stmtCargo->bind_param("ii", $id_pessoa, $id_pessoa);
 $stmtCargo->execute();
 
 $resultCargo = $stmtCargo->get_result();
