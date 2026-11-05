@@ -361,6 +361,12 @@ $app->get('/saude/especialidades', [SaudeController::class, 'getEspecialidades']
     ->add($container->get(AuthMiddleware::class));
 
 //Módulo de configuração
+$app->get('/configuracao/documentos/modelo/importaveis', [DocumentoModeloController::class, 'getModelosImportaveis'])
+    ->add($container->get(AuthMiddleware::class));
+
+$app->get('/configuracao/documentos/modelo/{id}/body', [DocumentoModeloController::class, 'getCorpoModeloImportavel'])
+    ->add($container->get(AuthMiddleware::class));
+
 $app->get('/configuracao/documentos/modelo/{id}/file', [DocumentoModeloController::class, 'getArquivoModelo'])
     ->add($container->get(AuthMiddleware::class));
 

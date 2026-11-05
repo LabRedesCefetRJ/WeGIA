@@ -47,6 +47,66 @@ curl -X GET "http://localhost:8000/configuracao/documentos/modelo" \
 
 ---
 
+## Listar Modelos Importáveis
+
+### Endpoint
+```
+GET /configuracao/documentos/modelo/importaveis
+```
+
+### Autenticação
+**Obrigatório** - JWT
+
+### Descrição
+Retorna metadados dos modelos que o funcionário autenticado pode importar: modelos próprios e modelos globais. Modelos sem `body_html` não são listados. O HTML não é incluído nesta resposta; ele é carregado somente para o modelo selecionado.
+
+### Resposta com sucesso (200 OK)
+```json
+[
+  {
+    "id": 1,
+    "descricao": "Modelo de avaliação inicial",
+    "global": 0
+  }
+]
+```
+
+### Erros
+- `401`: usuário não autenticado.
+- `403`: usuário não possui funcionário associado.
+
+---
+
+## Obter Conteúdo HTML de Modelo Importável
+
+### Endpoint
+```
+GET /configuracao/documentos/modelo/{id}/body
+```
+
+### Autenticação
+**Obrigatório** - JWT
+
+### Descrição
+Retorna o campo `body_html` somente se o modelo for do funcionário autenticado ou for global.
+
+### Resposta com sucesso (200 OK)
+```json
+{
+  "id": 1,
+  "descricao": "Modelo de avaliação inicial",
+  "body_html": "<div><p>Conteúdo do modelo</p></div>"
+}
+```
+
+### Erros
+- `400`: ID inválido.
+- `401`: usuário não autenticado.
+- `403`: usuário não possui funcionário associado.
+- `404`: modelo não existe, não está disponível para o usuário ou não possui conteúdo HTML.
+
+---
+
 ## Baixar Arquivo de Modelo de Documento
 
 ### Endpoint

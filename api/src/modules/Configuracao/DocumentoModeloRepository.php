@@ -33,6 +33,52 @@ class DocumentoModeloRepository
     }
 
     /**
+     * @return array<int, array{id:int, descricao:string, global:int}>
+     */
+    public function listarModelosImportaveis(int $idFuncionario): array
+    {
+        $query = "
+            SELECT id, descricao, `global`
+            FROM modelo_documento
+            WHERE (id_funcionario = :id_funcionario OR `global` = 1)
+              AND body_html IS NOT NULL
+              AND body_html <> ''
+            ORDER BY descricao ASC, id DESC
+        ";
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindValue(':id_funcionario', $idFuncionario, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $result === false ? [] : $result;
+    }
+
+    /**
+     * @return array{id:int, descricao:string, body_html:?string}|null
+     */
+    public function buscarModeloImportavel(int $id, int $idFuncionario): ?array
+    {
+        $query = "
+            SELECT id, descricao, body_html
+            FROM modelo_documento
+            WHERE id = :id
+              AND (id_funcionario = :id_funcionario OR `global` = 1)
+            LIMIT 1
+        ";
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->bindValue(':id_funcionario', $idFuncionario, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result === false ? null : $result;
+    }
+
+    /**
      * @return array{id:int, documento:?string, extensao:?string}|null
      */
     public function buscarArquivoModelo(int $id): ?array

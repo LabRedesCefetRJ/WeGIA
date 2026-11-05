@@ -30,6 +30,42 @@ class DocumentoModeloService
     }
 
     /**
+     * @return array<int, array{id:int, descricao:string, global:int}>
+     */
+    public function listarModelosImportaveis(int $idPessoa): array
+    {
+        $idFuncionario = $this->obterIdFuncionario($idPessoa);
+
+        return $this->repository->listarModelosImportaveis($idFuncionario);
+    }
+
+    /**
+     * @return array{id:int, descricao:string, body_html:string}
+     */
+    public function obterCorpoModeloImportavel(int $id, int $idPessoa): array
+    {
+        if ($id < 1) {
+            throw new \InvalidArgumentException('ID do modelo de documento inválido.', 400);
+        }
+
+        $idFuncionario = $this->obterIdFuncionario($idPessoa);
+        $modelo = $this->repository->buscarModeloImportavel($id, $idFuncionario);
+        if ($modelo === null) {
+            throw new \RuntimeException('Modelo importável não encontrado.', 404);
+        }
+
+        if (!is_string($modelo['body_html']) || $modelo['body_html'] === '') {
+            throw new \RuntimeException('O modelo selecionado não possui conteúdo HTML para importar.', 404);
+        }
+
+        return [
+            'id' => (int) $modelo['id'],
+            'descricao' => (string) $modelo['descricao'],
+            'body_html' => $modelo['body_html'],
+        ];
+    }
+
+    /**
      * @return array{conteudo:string, extensao:string, mime_type:string}
      */
     public function obterArquivoModelo(int $id): array
@@ -144,6 +180,20 @@ class DocumentoModeloService
         }
 
         return $modelo;
+    }
+
+    private function obterIdFuncionario(int $idPessoa): int
+    {
+        if ($idPessoa <= 0) {
+            throw new \InvalidArgumentException('Usuário autenticado não identificado.', 401);
+        }
+
+        $idFuncionario = $this->userRepository->findFuncionarioIdByPessoaId($idPessoa);
+        if ($idFuncionario === null) {
+            throw new \RuntimeException('Usuário não possui funcionário associado para importar modelos.', 403);
+        }
+
+        return $idFuncionario;
     }
 
     private function validarPermissaoGerenciamento(array $modelo, int $idPessoa): void

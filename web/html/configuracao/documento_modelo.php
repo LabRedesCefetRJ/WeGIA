@@ -1,13 +1,13 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-if(session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE)
 	session_start();
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../../index.php");
 	exit();
-}else{
+} else {
 	session_regenerate_id();
 }
 
@@ -51,6 +51,8 @@ try {
 	<link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
 	<link rel="stylesheet" href="../../assets/vendor/font-awesome/css/font-awesome.css" />
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
+	<link rel="stylesheet" href="../../node_modules/trix/dist/trix.css" />
+	<link rel="stylesheet" href="../../css/wegia-trix-editor.css" />
 
 	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon">
 
@@ -105,51 +107,83 @@ try {
 						<?php endif; ?>
 						<div class="panel panel-default">
 							<div class="panel-heading clearfix">
-								<h3 class="panel-title pull-left">Modelos pessoais</h3>
+								<h3 class="panel-title pull-left">
+									<button type="button" class="btn btn-link" data-toggle="collapse" data-target="#painelModelosPessoais" aria-expanded="true" aria-controls="painelModelosPessoais">
+										Modelos pessoais <i class="fa fa-chevron-up" aria-hidden="true"></i>
+									</button>
+								</h3>
 								<button type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target="#modalNovoModelo" <?php echo $idFuncionario > 0 ? '' : 'disabled'; ?>>
 									<i class="fa fa-plus"></i> Novo modelo
 								</button>
 							</div>
-							<div class="panel-body">
-								<p>Modelos criados por você. Modelos globais de sua autoria também aparecem nesta lista.</p>
-								<div class="table-responsive">
-									<table class="table table-striped table-bordered">
-										<thead>
-											<tr>
-												<th>Descrição</th>
-												<th>Formato</th>
-												<th>Data de cadastro</th>
-												<th>Ações</th>
-											</tr>
-										</thead>
-										<tbody id="modelos-pessoais">
-											<tr><td colspan="4" class="text-center">Carregando modelos...</td></tr>
-										</tbody>
-									</table>
+							<div id="painelModelosPessoais" class="panel-collapse collapse in">
+								<div class="panel-body">
+									<p>Modelos criados por você. Modelos globais de sua autoria também aparecem nesta lista.</p>
+									<div class="table-responsive">
+										<table class="table table-striped table-bordered">
+											<thead>
+												<tr>
+													<th>Descrição</th>
+													<th>Formato</th>
+													<th>Data de cadastro</th>
+													<th>Ações</th>
+												</tr>
+											</thead>
+											<tbody id="modelos-pessoais">
+												<tr>
+													<td colspan="4" class="text-center">Carregando modelos...</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
 								</div>
 							</div>
 						</div>
 						<div class="panel panel-default">
 							<div class="panel-heading">
-								<h3 class="panel-title">Modelos globais</h3>
+								<h3 class="panel-title">
+									<button type="button" class="btn btn-link" data-toggle="collapse" data-target="#painelModelosGlobais" aria-expanded="true" aria-controls="painelModelosGlobais">
+										Modelos globais <i class="fa fa-chevron-up" aria-hidden="true"></i>
+									</button>
+								</h3>
+							</div>
+							<div id="painelModelosGlobais" class="panel-collapse collapse in">
+								<div class="panel-body">
+									<p>Modelos globais criados por outros funcionários e disponíveis para todos.</p>
+									<div class="table-responsive">
+										<table class="table table-striped table-bordered">
+											<thead>
+												<tr>
+													<th>Descrição</th>
+													<th>Formato</th>
+													<th>Data de cadastro</th>
+													<th>Ações</th>
+												</tr>
+											</thead>
+											<tbody id="modelos-globais">
+												<tr>
+													<td colspan="4" class="text-center">Carregando modelos...</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<h3 class="panel-title">Teste do campo de edição</h3>
 							</div>
 							<div class="panel-body">
-								<p>Modelos globais criados por outros funcionários e disponíveis para todos.</p>
-								<div class="table-responsive">
-									<table class="table table-striped table-bordered">
-										<thead>
-											<tr>
-												<th>Descrição</th>
-												<th>Formato</th>
-												<th>Data de cadastro</th>
-												<th>Ações</th>
-											</tr>
-										</thead>
-										<tbody id="modelos-globais">
-											<tr><td colspan="4" class="text-center">Carregando modelos...</td></tr>
-										</tbody>
-									</table>
-								</div>
+								<p>Selecione um modelo importável para preencher o editor. O campo HTML nomeado pode ser incluído no envio do formulário.</p>
+								<form id="formTesteEditor">
+									<div class="form-group">
+										<label for="editor-doc-teste">Conteúdo do documento</label>
+										<div id="campo-editor-modelo"></div>
+									</div>
+									<button type="submit" style="margin-top: 10px;" class="btn btn-primary">Testar valor do campo</button>
+									<span id="feedback-editor-modelo" class="help-block" aria-live="polite"></span>
+								</form>
 							</div>
 						</div>
 					</div>
@@ -224,12 +258,14 @@ try {
 	</div>
 
 	<?php require_once "../../Functions/authenticatedRequest.php"; ?>
+	<script src="../../node_modules/trix/dist/trix.umd.min.js"></script>
+	<script src="../../Functions/wegiaTrixEditor.js"></script>
 	<script>
-		(function () {
+		(function() {
 			const configuracaoModelo = <?= json_encode([
-				'idFuncionario' => $idFuncionario,
-				'administrador' => $isAdministrador,
-			], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+											'idFuncionario' => $idFuncionario,
+											'administrador' => $isAdministrador,
+										], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 			const apiBase = apiServer + 'configuracao/documentos/modelo';
 			const feedback = document.getElementById('feedback-modelo');
 			const tbodyPessoal = document.getElementById('modelos-pessoais');
@@ -241,6 +277,27 @@ try {
 			const descricaoEdicao = document.getElementById('descricaoModeloEdicao');
 			const arquivoEdicao = document.getElementById('arquivoModeloEdicao');
 			let modeloEmEdicao = null;
+			const campoEditorPromise = WegiaTrixEditor.mount(document.getElementById('campo-editor-modelo'), {
+				id: 'editor-doc-teste',
+				name: 'body_html',
+				label: 'Conteúdo do documento',
+				placeholder: 'Escreva ou importe o conteúdo de um modelo...',
+				modelsUrl: `${apiBase}/importaveis`,
+				bodyUrl: apiBase,
+				request: authenticatedRequest
+			});
+
+			async function atualizarModelosImportacao() {
+				try {
+					const campoEditor = await campoEditorPromise;
+					await campoEditor.refresh();
+				} catch (error) {
+					exibirFeedback(
+						`A operação foi concluída, mas não foi possível atualizar a lista de importação: ${error.message}`,
+						'warning'
+					);
+				}
+			}
 
 			function exibirFeedback(mensagem, tipo) {
 				const alerta = document.createElement('div');
@@ -315,9 +372,16 @@ try {
 					return;
 				}
 
-				const acoes = [
-					{ texto: 'Editar', icone: 'fa-pencil', acao: 'editar' },
-					{ texto: 'Excluir', icone: 'fa-trash', acao: 'excluir' }
+				const acoes = [{
+						texto: 'Editar',
+						icone: 'fa-pencil',
+						acao: 'editar'
+					},
+					{
+						texto: 'Excluir',
+						icone: 'fa-trash',
+						acao: 'excluir'
+					}
 				];
 				if (configuracaoModelo.administrador) {
 					acoes.push({
@@ -373,9 +437,9 @@ try {
 
 			async function alterarGlobalidadeModelo(modelo) {
 				const global = Number(modelo.global) !== 1;
-				const confirmacao = global
-					? `Disponibilizar "${modelo.descricao}" como modelo global?`
-					: `Tornar "${modelo.descricao}" um modelo pessoal?`;
+				const confirmacao = global ?
+					`Disponibilizar "${modelo.descricao}" como modelo global?` :
+					`Tornar "${modelo.descricao}" um modelo pessoal?`;
 				if (!window.confirm(confirmacao)) {
 					return;
 				}
@@ -388,7 +452,9 @@ try {
 							'X-Client-Type': 'web',
 							'Content-Type': 'application/json'
 						},
-						body: JSON.stringify({ global })
+						body: JSON.stringify({
+							global
+						})
 					}));
 					if (!response.ok) {
 						throw new Error(await mensagemErroResposta(response));
@@ -411,7 +477,9 @@ try {
 					const response = await authenticatedRequest(() => fetch(`${apiBase}/${modelo.id}`, {
 						method: 'DELETE',
 						credentials: 'include',
-						headers: { 'X-Client-Type': 'web' }
+						headers: {
+							'X-Client-Type': 'web'
+						}
 					}));
 					if (!response.ok) {
 						throw new Error(await mensagemErroResposta(response));
@@ -419,6 +487,7 @@ try {
 
 					const resultado = await response.json();
 					exibirFeedback(resultado.message || 'Modelo de documento excluído com sucesso.', 'success');
+					await atualizarModelosImportacao();
 					await carregarModelos();
 				} catch (error) {
 					exibirFeedback(error.message || 'Não foi possível excluir o modelo de documento.', 'danger');
@@ -452,7 +521,9 @@ try {
 				const response = await authenticatedRequest(() => fetch(apiBase, {
 					method: 'GET',
 					credentials: 'include',
-					headers: { 'X-Client-Type': 'web' }
+					headers: {
+						'X-Client-Type': 'web'
+					}
 				}));
 				if (!response.ok) {
 					throw new Error(await mensagemErroResposta(response));
@@ -480,7 +551,9 @@ try {
 					const response = await authenticatedRequest(() => fetch(`${apiBase}/${modelo.id}/file`, {
 						method: 'GET',
 						credentials: 'include',
-						headers: { 'X-Client-Type': 'web' }
+						headers: {
+							'X-Client-Type': 'web'
+						}
 					}));
 					if (!response.ok) {
 						throw new Error(await mensagemErroResposta(response));
@@ -519,7 +592,9 @@ try {
 					const response = await authenticatedRequest(() => fetch(apiBase, {
 						method: 'POST',
 						credentials: 'include',
-						headers: { 'X-Client-Type': 'web' },
+						headers: {
+							'X-Client-Type': 'web'
+						},
 						body: dados
 					}));
 					if (!response.ok) {
@@ -531,6 +606,7 @@ try {
 					formulario.reset();
 					exibirFeedback(resultado.message || 'Modelo de documento salvo com sucesso.', 'success');
 					await carregarModelos();
+					await atualizarModelosImportacao();
 				} catch (error) {
 					exibirFeedback(error.message || 'Não foi possível salvar o modelo de documento.', 'danger');
 				} finally {
@@ -554,7 +630,9 @@ try {
 				const idModelo = modeloEmEdicao.id;
 				botaoAtualizar.disabled = true;
 				try {
-					const dados = { descricao: descricaoEdicao.value };
+					const dados = {
+						descricao: descricaoEdicao.value
+					};
 					if (arquivo) {
 						dados.arquivo = {
 							nome: arquivo.name,
@@ -581,6 +659,7 @@ try {
 					modeloEmEdicao = null;
 					exibirFeedback(resultado.message || 'Modelo de documento atualizado com sucesso.', 'success');
 					await carregarModelos();
+					await atualizarModelosImportacao();
 				} catch (error) {
 					exibirFeedback(error.message || 'Não foi possível atualizar o modelo de documento.', 'danger');
 				} finally {
@@ -591,6 +670,26 @@ try {
 			if (configuracaoModelo.idFuncionario < 1) {
 				exibirFeedback('Não foi possível identificar o vínculo de funcionário para gerenciar modelos pessoais.', 'danger');
 			}
+			campoEditorPromise.catch((error) => {
+				document.getElementById('feedback-editor-modelo').textContent =
+					error.message || 'Não foi possível iniciar o editor.';
+			});
+			document.getElementById('formTesteEditor').addEventListener('submit', (event) => {
+				event.preventDefault();
+				const valor = new FormData(event.currentTarget).get('body_html') || '';
+				document.getElementById('feedback-editor-modelo').textContent =
+					`Campo pronto para envio (${valor.length} caracteres HTML).`;
+			});
+
+			['painelModelosPessoais', 'painelModelosGlobais'].forEach((id) => {
+				$(`#${id}`).on('shown.bs.collapse hidden.bs.collapse', (event) => {
+					const aberto = event.type === 'shown';
+					const controle = document.querySelector(`[data-target="#${id}"]`);
+					controle.setAttribute('aria-expanded', String(aberto));
+					controle.querySelector('i').className = `fa fa-chevron-${aberto ? 'up' : 'down'}`;
+				});
+			});
+
 			carregarModelos().catch((error) => {
 				exibirFeedback(error.message || 'Não foi possível carregar os modelos de documento.', 'danger');
 			});

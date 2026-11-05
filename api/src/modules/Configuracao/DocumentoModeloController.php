@@ -43,6 +43,39 @@ class DocumentoModeloController
         }
     }
 
+    public function getModelosImportaveis(Request $request, Response $response): Response
+    {
+        try {
+            $idPessoa = (int) ($request->getAttribute('user_id') ?? 0);
+            $modelos = $this->documentoModeloService->listarModelosImportaveis($idPessoa);
+
+            $response->getBody()->write(json_encode($modelos, JSON_UNESCAPED_UNICODE));
+
+            return $response
+                ->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Throwable $e) {
+            return $this->responderErro($response, $e);
+        }
+    }
+
+    public function getCorpoModeloImportavel(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $id = $this->validarId($args['id'] ?? null);
+            $idPessoa = (int) ($request->getAttribute('user_id') ?? 0);
+            $modelo = $this->documentoModeloService->obterCorpoModeloImportavel($id, $idPessoa);
+
+            $response->getBody()->write(json_encode($modelo, JSON_UNESCAPED_UNICODE));
+
+            return $response
+                ->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Throwable $e) {
+            return $this->responderErro($response, $e);
+        }
+    }
+
     public function getArquivoModelo(Request $request, Response $response, array $args = []): Response
     {
         try {
