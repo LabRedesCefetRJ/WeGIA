@@ -597,6 +597,28 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 				</ul>
 			</li>
 			<!--fim agenda-->
+			<!--recepção-->
+			<li class="nav-parent nav-active" id="20">
+				<a>
+					<i class="fa-solid fa-concierge-bell" aria-hidden="true"></i>
+					<span>Recepção</span>
+				</a>
+				<ul class="nav nav-children">
+					<li>
+						<a href="<?= WWW ?>html/recepcao/pre_registro_entrada.php">
+							<i class="fa-solid fa-sign-in-alt"></i>
+							<span>Registro de Entrada</span>
+						</a>
+					</li>
+					<li>
+						<a href="<?= WWW ?>html/recepcao/registro_saida.php">
+							<i class="fa-solid fa-sign-out-alt"></i>
+							<span>Registro de Saída</span>
+						</a>
+					</li>
+				</ul>
+			</li>
+			<!--fim recepção-->
 			<li class="nav-parent nav-active visivel">
 				<a>
 					<i class="fa fa-cog" aria-hidden="true"></i>
