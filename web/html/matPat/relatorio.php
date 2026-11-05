@@ -136,6 +136,23 @@ unset($_SESSION['dados_filtros_relatorio']);
 		#s2id_produtoSelect.select2-container-active .select2-choice {
     		box-shadow: none !important;
 		}
+
+        #tipos-entrada-selecionados,
+        #tipos-saida-selecionados {
+            margin-top: 8px;
+        }
+
+        .tipo-selecionado {
+            display: inline-block;
+            margin: 0 10px 5px 0;
+        }
+
+        .tipo-selecionado button {
+            border: 0;
+            background: transparent;
+            color: #777;
+            padding: 2px 5px;
+        }
 	</style>
 </head>
 
@@ -250,10 +267,11 @@ unset($_SESSION['dados_filtros_relatorio']);
 							</div>
 
 							<div class="form-group" id='tipo-entrada'>
-								<label class="col-md-3 control-label">Tipo de Entrada</label>
+								<label class="col-md-3 control-label" for="tipoEntradaSelect">Tipos de Entrada</label>
 								<div class="col-md-8">
-									<select name="tipo" id="tipoEntradaSelect" onchange="controlarTiposContabilizar()">
-										<option value="">Todas as Opções</option>
+									<select id="tipoEntradaSelect" aria-describedby="ajuda-tipos-entrada">
+                                        <option value="">Todas as Opções</option>
+
 										<?php
 										foreach ($dadosFiltros['tipos_entrada'] as $value) {
 											echo ('
@@ -262,28 +280,16 @@ unset($_SESSION['dados_filtros_relatorio']);
 										}
 										?>
 									</select>
-								</div>
-							</div>
-
-							<div class="form-group" id="tiposEntrada-contabilizar">
-								<label class="col-md-3 control-label">Contabilizar no total</label>
-								<div class="col-md-6">
-									<small class="help-block">Selecione os tipos que devem compor o valor total do relatório.</small>
-									<?php foreach ($dadosFiltros['tipos_entrada'] as $value): ?>
-										<div class="checkbox">
-											<label>
-												<input type="checkbox" name="tiposEntrada[]" value="<?= (int) $value['id_tipo'] ?>"<?= $value['descricao'] === 'Doação' ? '' : ' checked' ?>>
-												<?= htmlspecialchars($value['descricao'], ENT_QUOTES, 'UTF-8') ?>
-											</label>
-										</div>
-									<?php endforeach; ?>
+									<select name="tiposEntrada[]" id="tiposEntradaValores" multiple hidden></select>
+                                    <div id="tipos-entrada-selecionados" aria-live="polite"></div>
+                                    <small class="help-block" id="ajuda-tipos-entrada">Selecione um ou mais tipos.</small>
 								</div>
 							</div>
 
 							<div class="form-group" id='tipo-saida' style="display: none;">
-								<label class="col-md-3 control-label">Tipo de Saida</label>
+								<label class="col-md-3 control-label" for="tipoSaidaSelect">Tipos de Saída</label>
 								<div class="col-md-8">
-									<select name="tipo" id="tipoSaidaSelect" onchange="controlarTiposContabilizar()">
+									<select id="tipoSaidaSelect" aria-describedby="ajuda-tipos-saida">
 										<option value="">Todas as Opções</option>
 										<?php
 										foreach ($dadosFiltros['tipos_saida'] as $value) {
@@ -293,21 +299,9 @@ unset($_SESSION['dados_filtros_relatorio']);
 										}
 										?>
 									</select>
-								</div>
-							</div>
-
-							<div class="form-group" id="tiposSaida-contabilizar">
-								<label class="col-md-3 control-label">Contabilizar no total</label>
-								<div class="col-md-6">
-									<small class="help-block">Selecione os tipos que devem compor o valor total do relatório.</small>
-									<?php foreach ($dadosFiltros['tipos_saida'] as $value): ?>
-										<div class="checkbox">
-											<label>
-												<input type="checkbox" name="tiposSaida[]" value="<?= (int) $value['id_tipo'] ?>" checked>
-												<?= htmlspecialchars($value['descricao'], ENT_QUOTES, 'UTF-8') ?>
-											</label>
-										</div>
-									<?php endforeach; ?>
+                                    <select name="tiposSaida[]" id="tiposSaidaValores" multiple hidden></select>
+                                    <div id="tipos-saida-selecionados" aria-live="polite"></div>
+                                    <small class="help-block" id="ajuda-tipos-saida">Selecione um ou mais tipos.</small>
 								</div>
 							</div>
 
@@ -378,13 +372,13 @@ unset($_SESSION['dados_filtros_relatorio']);
 							</div>
 
 							<div class="form-group">
-								<div class="center-content">
+								<div class="col-md-8 col-md-offset-3">
 									<input type="submit" value="Gerar" id="gerar" class="btn btn-primary" style="width: fit-content;">
 								</div>
 							</div>
 
 							<div class="form-group">
-								<div class="center-content">
+								<div class="col-md-8 col-md-offset-3">
 									<input type="submit" value="Gerar" id="gerar3" class="btn btn-primary" style="width: fit-content;">
 								</div>
 							</div>
@@ -452,7 +446,7 @@ unset($_SESSION['dados_filtros_relatorio']);
 							</div>
 
 							<div class="form-group">
-								<div class="center-content">
+								<div class="col-md-8 col-md-offset-3">
 									<input type="submit" value="Gerar" id="gerar2" class="btn btn-primary" style="width: fit-content;">
 								</div>
 							</div>
@@ -523,14 +517,6 @@ unset($_SESSION['dados_filtros_relatorio']);
         salvarFiltrosRelatorio();
     }
 
-    function controlarTiposContabilizar() {
-        const tipo = document.getElementById('tipo-relat').value;
-        document.getElementById('tiposEntrada-contabilizar').style.display =
-            tipo === 'entrada' && !document.getElementById('tipoEntradaSelect').value ? 'block' : 'none';
-        document.getElementById('tiposSaida-contabilizar').style.display =
-            tipo === 'saida' && !document.getElementById('tipoSaidaSelect').value ? 'block' : 'none';
-    }
-
     function controlarCampoMediaSaida() {
         const tipo = document.getElementById('tipo-relat').value;
         const almoxarifado = document.getElementById('almoxarifado1');
@@ -544,7 +530,6 @@ unset($_SESSION['dados_filtros_relatorio']);
             ['estoque', 'requisicao', 'itens_compra'].includes(tipo) ? 'block' : 'none';
         document.getElementById('modo-requisicao').style.display =
             tipo === 'requisicao' ? 'block' : 'none';
-        controlarTiposContabilizar();
     }
 
     function atualizarTipoRelatorio() {
@@ -557,12 +542,59 @@ unset($_SESSION['dados_filtros_relatorio']);
         principal: document.getElementById('form-relatorio'),
         produtoGrupo: document.getElementById('form-produto-grupo')
     };
+    function renderizarTipos(seletor, valores, listaId) {
+        const lista = document.getElementById(listaId);
+        lista.replaceChildren();
+        const selecionados = Array.from(valores.selectedOptions);
+        seletor.options[0].text = selecionados.length ? 'Adicionar outro tipo' : 'Todas as Opções';
+        // A opção de limpar a seleção continua disponível no dropdown.
+        let todos = seletor.querySelector('[data-todos]');
+        if (selecionados.length && !todos) {
+            todos = new Option('Todas as Opções', 'todos');
+            todos.dataset.todos = 'true';
+            seletor.add(todos, 1);
+        } else if (!selecionados.length && todos) {
+            todos.remove();
+        }
+        Array.from(seletor.options).forEach(opcao => {
+            opcao.disabled = selecionados.some(item => item.value === opcao.value);
+        });
+        seletor.value = '';
+        selecionados.forEach(opcao => {
+            const item = document.createElement('span');
+            item.className = 'tipo-selecionado';
+            item.appendChild(document.createTextNode(opcao.text));
+            const remover = document.createElement('button');
+            remover.type = 'button';
+            remover.textContent = '×';
+            remover.setAttribute('aria-label', 'Remover ' + opcao.text);
+            remover.addEventListener('click', function() {
+                opcao.selected = false;
+                renderizarTipos(seletor, valores, listaId);
+                salvarFiltrosRelatorio();
+            });
+            item.appendChild(remover);
+            lista.appendChild(item);
+        });
+    }
+
+    const seletoresTipos = [
+        ['tipoEntradaSelect', 'tiposEntradaValores', 'tipos-entrada-selecionados'],
+        ['tipoSaidaSelect', 'tiposSaidaValores', 'tipos-saida-selecionados']
+    ];
+    seletoresTipos.forEach(([seletorId, valoresId]) => {
+        const valores = document.getElementById(valoresId);
+        Array.from(document.getElementById(seletorId).options).forEach(opcao => {
+            if (opcao.value) valores.add(new Option(opcao.text, opcao.value));
+        });
+    });
+
     const chaveFiltros = 'filtrosRelatorio:<?= (int) $_SESSION['id_pessoa'] ?>';
 
     function chaveCampo(campo) {
-        if (campo.id === 'tipoEntradaSelect' || campo.id === 'tipoSaidaSelect') {
-            return campo.id;
-        }
+        if (['tipoEntradaSelect', 'tipoSaidaSelect'].includes(campo.id)) return '';
+        if (campo.id === 'tiposEntradaValores') return 'tipoEntradaSelect';
+        if (campo.id === 'tiposSaidaValores') return 'tipoSaidaSelect';
         return campo.name;
     }
 
@@ -573,7 +605,9 @@ unset($_SESSION['dados_filtros_relatorio']);
             const chave = chaveCampo(campo);
             if (!chave) return;
 
-            if (campo.type === 'checkbox') {
+            if (campo.multiple) {
+                valores[chave] = Array.from(campo.selectedOptions, opcao => opcao.value);
+            } else if (campo.type === 'checkbox') {
                 if (campo.name.endsWith('[]')) {
                     if (!Array.isArray(valores[chave])) valores[chave] = [];
                     if (campo.checked) valores[chave].push(campo.value);
@@ -615,7 +649,12 @@ unset($_SESSION['dados_filtros_relatorio']);
             if (ignorarProduto && chave === 'produto') return;
             const valor = valores[chave];
 
-            if (campo.type === 'checkbox') {
+            if (campo.multiple) {
+                const selecionados = Array.isArray(valor) ? valor : [valor];
+                Array.from(campo.options).forEach(opcao => {
+                    opcao.selected = selecionados.includes(opcao.value);
+                });
+            } else if (campo.type === 'checkbox') {
                 campo.checked = campo.name.endsWith('[]')
                     ? Array.isArray(valor) && valor.includes(campo.value)
                     : (Array.isArray(valor) ? valor.includes(campo.value) : valor === true || valor === 'on');
@@ -694,7 +733,23 @@ unset($_SESSION['dados_filtros_relatorio']);
         atualizarTipoRelatorio();
         restaurarFormulario(formularios.principal, principal);
         restaurarFormulario(formularios.produtoGrupo, produtoGrupo, true);
-        controlarTiposContabilizar();
+
+        seletoresTipos.forEach(([seletorId, valoresId, listaId]) => {
+            const seletor = document.getElementById(seletorId);
+            const valores = document.getElementById(valoresId);
+            renderizarTipos(seletor, valores, listaId);
+            seletor.addEventListener('change', function() {
+                if (!this.value || this.value === 'todos') {
+                    Array.from(valores.options).forEach(opcao => opcao.selected = false);
+                } else {
+                    Array.from(valores.options).forEach(opcao => {
+                        if (opcao.value === this.value) opcao.selected = true;
+                    });
+                }
+                renderizarTipos(seletor, valores, listaId);
+                salvarFiltrosRelatorio();
+            });
+        });
 
         if (produtoGrupo.almoxarifado) {
             produtoPendente = produtoGrupo.produto || null;

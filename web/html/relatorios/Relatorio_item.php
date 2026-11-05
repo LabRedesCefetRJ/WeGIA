@@ -82,6 +82,17 @@ class Item
                 $cont++;
             }
 
+            if (!$this->getTipo() && $this->getTiposEntrada()) {
+                $marcadores = [];
+                foreach ($this->getTiposEntrada() as $indice => $idTipo) {
+                    $marcador = ':tipoEntrada' . $indice;
+                    $marcadores[] = $marcador;
+                    $this->paramsExternos[$marcador] = $idTipo;
+                }
+                $params = $this->param($params, $cont) . ' tipo_entrada.id_tipo IN (' . implode(', ', $marcadores) . ') ';
+                $cont++;
+            }
+
             if ($this->getResponsavel()) {
                 $params = $this->param($params, $cont) . ' pessoa.id_pessoa = :idPessoa ';
                 $this->paramsExternos[':idPessoa'] = $this->getResponsavel();
@@ -164,7 +175,7 @@ class Item
     //analisar método
     private function saida()
     {
-        if ($this->hasValue()) {
+        if ($this->hasValue() || $this->getRelatorio() === 'saida') {
             $params = "WHERE isaida.qtd > 0 AND isaida.oculto = false AND saida.ativo = 1 AND almoxarifado.ativo = 1 AND produto.ativo = 1";
             $cont = 2;
 
@@ -177,6 +188,17 @@ class Item
             if ($this->getTipo()) {
                 $params = $this->param($params, $cont) . ' tipo_saida.id_tipo = :idTipo ';
                 $this->paramsExternos[':idTipo'] = $this->getTipo();
+                $cont++;
+            }
+
+            if (!$this->getTipo() && $this->getTiposSaida()) {
+                $marcadores = [];
+                foreach ($this->getTiposSaida() as $indice => $idTipo) {
+                    $marcador = ':tipoSaida' . $indice;
+                    $marcadores[] = $marcador;
+                    $this->paramsExternos[$marcador] = $idTipo;
+                }
+                $params = $this->param($params, $cont) . ' tipo_saida.id_tipo IN (' . implode(', ', $marcadores) . ') ';
                 $cont++;
             }
 
@@ -663,12 +685,6 @@ class Item
         $query = $this->query(); //<-- execução ocorre aqui
         $tot_val = 0;
 
-        $tipoRelatorio = $this->getRelatorio();
-
-        $tiposSelecionados = $tipoRelatorio === 'entrada'
-            ? $this->getTiposEntrada()
-            : $this->getTiposSaida();
-
         foreach ($query as $item) {
             if ($this->getRelatorio() == 'estoque' || $this->getRelatorio() == 'itens_compra') {
                 $class = '';
@@ -727,10 +743,6 @@ class Item
                         </tr>
                     ');
                 }
-            }
-
-            if (($tipoRelatorio === 'entrada' || $tipoRelatorio === 'saida') && !$this->getTipo() && !in_array((int) $item['id_tipo'], $tiposSelecionados, true)) {
-                continue;
             }
 
             $tot_val += $item['valor_total'];
@@ -1125,6 +1137,23 @@ class Item
 	    return $this;
     }
 
+    public static function normalizarTipos($tipos)
+    {
+        if (!is_array($tipos)) {
+            throw new InvalidArgumentException('Seleção de tipos inválida.');
+        }
+
+        $ids = [];
+        foreach ($tipos as $tipo) {
+            if ((!is_int($tipo) && !is_string($tipo))
+                || filter_var($tipo, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                throw new InvalidArgumentException('Seleção de tipos inválida.');
+            }
+            $ids[] = (int) $tipo;
+        }
+        return array_values(array_unique($ids));
+    }
+
     public function getTiposEntrada()
     {
         return $this->tiposEntrada;
@@ -1132,9 +1161,7 @@ class Item
 
     public function setTiposEntrada($tiposEntrada)
     {
-        $this->tiposEntrada = is_array($tiposEntrada)
-            ? array_map('intval', $tiposEntrada)
-            : [];
+        $this->tiposEntrada = self::normalizarTipos($tiposEntrada);
 
         return $this;
     }
@@ -1146,9 +1173,7 @@ class Item
 
     public function setTiposSaida($tiposSaida)
     {
-        $this->tiposSaida = is_array($tiposSaida)
-            ? array_map('intval', $tiposSaida)
-            : [];
+        $this->tiposSaida = self::normalizarTipos($tiposSaida);
 
         return $this;
     }

@@ -29,6 +29,19 @@ function quickQuery($query, $column)
 	$res = $res->fetchAll(PDO::FETCH_ASSOC);
 	return $res[0][$column];
 }
+
+ob_start();
+display_campo('Logo', 'file');
+$logoCadastrada = trim(ob_get_clean());
+$logoInstituicao = '';
+if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada, $partesLogo)) {
+    $imagemLogo = base64_decode($partesLogo[1], true);
+    $dadosLogo = $imagemLogo !== false ? @getimagesizefromstring($imagemLogo) : false;
+    if ($dadosLogo && strpos($dadosLogo['mime'], 'image/') === 0) {
+        $logoInstituicao = 'data:' . $dadosLogo['mime'] . ';base64,' . base64_encode($imagemLogo);
+    }
+}
+
 ?>
 <!doctype html>
 <html class="fixed">
@@ -129,6 +142,13 @@ function quickQuery($query, $column)
 
 
 
+<style>
+    .logo-relatorio { display: none; }
+    @media print {
+        .logo-relatorio { display: block; margin-bottom: 8px; break-inside: avoid; }
+        .logo-relatorio img { object-fit: contain; }
+    }
+</style>
 </head>
 
 <body>
@@ -157,6 +177,11 @@ function quickQuery($query, $column)
 				</header>
 				<!--start: page-->
 				<div class="tab-content">
+                    <?php if ($logoInstituicao !== ''): ?>
+                        <div class="logo-relatorio">
+                            <img src="<?= htmlspecialchars($logoInstituicao, ENT_QUOTES, 'UTF-8') ?>" alt="Logo da instituição" width="76" height="79">
+                        </div>
+                    <?php endif; ?>
 					<div class="descricao">
 						<p>
 							<li>

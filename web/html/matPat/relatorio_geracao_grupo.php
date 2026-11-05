@@ -39,6 +39,19 @@ $dataFim = $dadosRelatorio['data_fim'] ?? null;
 $modeloBrasileiro = 'd/m/Y';
 $dataInicioFormatada = !empty($dataInicio) ? date_format(date_create($dataInicio), $modeloBrasileiro) : null;
 $dataFimFormatada = !empty($dataFim) ? date_format(date_create($dataFim), $modeloBrasileiro) : null;
+
+ob_start();
+display_campo('Logo', 'file');
+$logoCadastrada = trim(ob_get_clean());
+$logoInstituicao = '';
+if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada, $partesLogo)) {
+    $imagemLogo = base64_decode($partesLogo[1], true);
+    $dadosLogo = $imagemLogo !== false ? @getimagesizefromstring($imagemLogo) : false;
+    if ($dadosLogo && strpos($dadosLogo['mime'], 'image/') === 0) {
+        $logoInstituicao = 'data:' . $dadosLogo['mime'] . ';base64,' . base64_encode($imagemLogo);
+    }
+}
+
 ?>
 <!doctype html>
 
@@ -230,6 +243,13 @@ $dataFimFormatada = !empty($dataFim) ? date_format(date_create($dataFim), $model
         }
     }
 </style>
+<style>
+    .logo-relatorio { display: none; }
+    @media print {
+        .logo-relatorio { display: block; margin-bottom: 8px; break-inside: avoid; }
+        .logo-relatorio img { object-fit: contain; }
+    }
+</style>
 </head>
 <body>
     <section class="body">
@@ -249,6 +269,11 @@ $dataFimFormatada = !empty($dataFim) ? date_format(date_create($dataFim), $model
                     </div>
                 </header>
                 <div class="tab-content">
+                    <?php if ($logoInstituicao !== ''): ?>
+                        <div class="logo-relatorio">
+                            <img src="<?= htmlspecialchars($logoInstituicao, ENT_QUOTES, 'UTF-8') ?>" alt="Logo da instituição" width="76" height="79">
+                        </div>
+                    <?php endif; ?>
                     <div class="descricao">
                         <h2>Geração de Grupo</h2>
                         <button style="float: right;" class="mb-xs mt-xs mr-xs btn btn-default print-button" onclick="window.print();">Imprimir</button>

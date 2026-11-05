@@ -27,8 +27,19 @@ $modoRequisicao = $_POST['modo_requisicao'] ?? 'movimentados';
 
 $mostrarZerados = isset($_POST['mostrarZerados']) && $_POST['mostrarZerados'] === 'on';
 
-$tiposEntrada = $_POST['tiposEntrada'] ?? [];
-$tiposSaida = $_POST['tiposSaida'] ?? [];
+try {
+    $tiposEntrada = $_POST['tipo_relatorio'] === 'entrada'
+        ? Item::normalizarTipos($_POST['tiposEntrada'] ?? []) : [];
+    $tiposSaida = $_POST['tipo_relatorio'] === 'saida'
+        ? Item::normalizarTipos($_POST['tiposSaida'] ?? []) : [];
+} catch (InvalidArgumentException $erro) {
+    http_response_code(400);
+    exit('Seleção de tipos inválida. Volte ao formulário e selecione os tipos novamente.');
+}
+
+// Nas movimentações, a lista de tipos é o único filtro de tipo.
+$tipoFiltro = in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque', 'itens_compra'], true)
+    ? ($_POST['categoria_produto'] ?? null) : null;
 
 $o_d = null;
 if ($_POST['tipo_relatorio'] == 'entrada') {
@@ -39,9 +50,7 @@ if ($_POST['tipo_relatorio'] == 'entrada') {
 $post = [
 	$_POST['tipo_relatorio'] != '' ? $_POST['tipo_relatorio'] : null,
 	$o_d != '' ? $o_d : null,
-	in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque', 'itens_compra'])
-	? (!empty($_POST['categoria_produto']) ? $_POST['categoria_produto'] : null)
-	: (!empty($_POST['tipo']) ? $_POST['tipo'] : null),
+	$tipoFiltro ?: null,
 	$_POST['responsavel'] != '' ? $_POST['responsavel'] : null,
 	[
 		'inicio' => $_POST['data_inicio'] != '' ? $_POST['data_inicio'] : null,
@@ -59,9 +68,7 @@ if(($_POST['tipo_relatorio'] ?? null) === 'itens_compra' && empty($_POST['almoxa
 $item = new Item(
 	$_POST['tipo_relatorio'],
 	$o_d,
-	in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque', 'itens_compra'])
-	? ($_POST['categoria_produto'] ?? null)
-	: ($_POST['tipo'] ?? null),
+	$tipoFiltro,
 	$tiposEntrada,
     $tiposSaida,
 	$_POST['responsavel'],
@@ -75,6 +82,20 @@ $item = new Item(
 	$modoRequisicao
 );
 
+
+// Reutiliza a logo da instalação, sem depender de uma imagem fixa.
+ob_start();
+display_campo('Logo', 'file');
+$logoCadastrada = trim(ob_get_clean());
+$logoInstituicao = '';
+if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada, $partesLogo)) {
+    $imagemLogo = base64_decode($partesLogo[1], true);
+    $dadosLogo = $imagemLogo !== false ? @getimagesizefromstring($imagemLogo) : false;
+    if ($dadosLogo && strpos($dadosLogo['mime'], 'image/') === 0) {
+        $logoInstituicao = 'data:' . $dadosLogo['mime'] . ';base64,' . base64_encode($imagemLogo);
+    }
+}
+
 function quickQuery($query, $parametro, $column)
 {
 	$pdo = Conexao::connect();
@@ -84,7 +105,7 @@ function quickQuery($query, $parametro, $column)
 	$stmt->bindValue($chave, $valor);
 	$stmt->execute();
 	$res = $stmt->fetchAll(PDO::FETCH_ASSOC);
-	return $res[0][$column];
+	return $res[0][$column] ?? null;
 }
 
 ?>
@@ -167,21 +188,6 @@ function quickQuery($query, $parametro, $column)
 		});
 	</script>
 
-	<script>
-		var homeIcon;
-		// Antes do navegador imprimir a página
-		window.onbeforeprint = function(event) {
-			homeIcon = $('#home-icon').children();
-			$('#home-icon').empty();
-			$('#home-icon').append($('<span />').text("<?php display_campo("Titulo", "str"); ?>"));
-		}
-
-		// Depois do navegador imprimir ou cancelar a impressão da página
-		window.onafterprint = function(event) {
-			$('#home-icon').empty();
-			$('#home-icon').append(homeIcon);
-		};
-	</script>
 
 	<!-- javascript tab management script -->
 
@@ -315,6 +321,33 @@ function quickQuery($query, $parametro, $column)
         		width: 1.61cm;
     		}
 		}
+
+        .logo-relatorio { display: none; }
+        @media print {
+            html, body, body > .body, body > .body > .inner-wrapper,
+            body > .body > .inner-wrapper > .content-body {
+                display: block !important;
+                position: static !important;
+                width: auto !important;
+                height: auto !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+            }
+            .tab-content > .descricao { display: block !important; padding: 0 0 10px; }
+            .logo-relatorio { display: block; margin-bottom: 8px; }
+            .logo-relatorio img { object-fit: contain; }
+            .descricao { break-inside: avoid; }
+            .descricao h3 { margin: 0 0 8px; }
+            .print-hide, .print-button { display: none !important; }
+            .table { width: 100%; font-size: 9pt; }
+            .table thead { display: table-header-group; }
+            .table tr { break-inside: avoid; }
+            .badge { background: transparent !important; color: #000 !important; border: 0; padding: 0; white-space: normal; }
+            .table-info { font-weight: bold; }
+            .folha-requisicao:last-child { page-break-after: auto; break-after: auto; }
+        }
 </style>
 
 </head>
@@ -345,6 +378,11 @@ function quickQuery($query, $parametro, $column)
 				</header>
 				<!--start: page-->
 				<div class="tab-content">
+                    <?php if ($logoInstituicao !== ''): ?>
+                        <div class="logo-relatorio">
+                            <img src="<?= htmlspecialchars($logoInstituicao, ENT_QUOTES, 'UTF-8') ?>" alt="Logo da instituição" width="76" height="79">
+                        </div>
+                    <?php endif; ?>
 					<div class="descricao">
 						<p>
 							<li>
@@ -352,7 +390,7 @@ function quickQuery($query, $parametro, $column)
 								if (isset($post[0])) {
 
 									if (DEBUG) {
-										echo "<pre>";
+										echo '<pre class="print-hide">';
 										var_dump("GET", $_GET);
 										var_dump("POST", $_POST, $post);
 										var_dump("INSTANCIAS", $item, $item->hasValue());
@@ -369,13 +407,16 @@ function quickQuery($query, $parametro, $column)
 										} else {
 											echo ("<ul>Origem: Todas</ul>");
 										}
-										if (isset($post[2])) {
-											$tipo = quickQuery("select descricao from tipo_entrada where id_tipo = :id_tipo;", [':id_tipo' => $post[2]], "descricao",);
-											echo ("<ul>Tipo: " . htmlspecialchars($tipo) . "</ul>");
-										} else {
-											echo ("<ul>Tipo: Todos</ul>");
-										}
-										if (isset($post[3])) {
+										if ($tiposEntrada) {
+                                        $nomesTipos = [];
+                                        foreach ($tiposEntrada as $idTipo) {
+                                            $nomesTipos[] = quickQuery("SELECT descricao FROM tipo_entrada WHERE id_tipo = :id", [':id' => $idTipo], 'descricao') ?? ('Tipo #' . $idTipo);
+                                        }
+                                        echo '<ul>Tipos: ' . htmlspecialchars(implode(', ', $nomesTipos), ENT_QUOTES, 'UTF-8') . '</ul>';
+                                    } else {
+                                        echo '<ul>Tipos: Todos</ul>';
+                                    }
+                                    if (isset($post[3])) {
 											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_pessoa;",  [':id_pessoa' => $post[3]], "nome");
 											echo ("<ul>Responsável: " . htmlspecialchars($responsavel) . "</ul>");
 										} else {
@@ -390,13 +431,16 @@ function quickQuery($query, $parametro, $column)
 										} else {
 											echo ("<ul>Destino: Todos</ul>");
 										}
-										if (isset($post[2])) {
-											$tipo = quickQuery("select descricao from tipo_saida where id_tipo = :id_tipo;", [':id_tipo' => $post[2]], "descricao");
-											echo ("<ul>Tipo: " . htmlspecialchars($tipo) . "</ul>");
-										} else {
-											echo ("<ul>Tipo: Todos</ul>");
-										}
-										if (isset($post[3])) {
+										if ($tiposSaida) {
+                                        $nomesTipos = [];
+                                        foreach ($tiposSaida as $idTipo) {
+                                            $nomesTipos[] = quickQuery("SELECT descricao FROM tipo_saida WHERE id_tipo = :id", [':id' => $idTipo], 'descricao') ?? ('Tipo #' . $idTipo);
+                                        }
+                                        echo '<ul>Tipos: ' . htmlspecialchars(implode(', ', $nomesTipos), ENT_QUOTES, 'UTF-8') . '</ul>';
+                                    } else {
+                                        echo '<ul>Tipos: Todos</ul>';
+                                    }
+                                    if (isset($post[3])) {
 											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_pessoa;", [':id_pessoa' => $post[3]], "nome");
 											echo ("<ul>Responsável: " . htmlspecialchars($responsavel) . "</ul>");
 										} else {
@@ -404,7 +448,14 @@ function quickQuery($query, $parametro, $column)
 										}
 									}
 
-									$modeloBrasileiro = 'd/m/Y';
+									if ($post[0] !== 'estoque' && empty($post[4]['inicio']) && empty($post[4]['fim'])) {
+                                        echo '<ul>Período: Todo o período</ul>';
+                                    }
+                                    if (in_array($post[0], ['saida', 'itens_compra'], true)) {
+                                        $medias = ['dia' => 'Por dia', 'mes' => 'Por mês', 'ano' => 'Por ano'];
+                                        echo '<ul>Média de saída: ' . htmlspecialchars($medias[$tipoMedia] ?? 'Por dia', ENT_QUOTES, 'UTF-8') . '</ul>';
+                                    }
+                                    $modeloBrasileiro = 'd/m/Y';
 
 									if (isset($post[4]['inicio'])) {
 										$dataInicio = $post[4]['inicio'];
@@ -520,7 +571,7 @@ function quickQuery($query, $parametro, $column)
 			</section>
 		</div>
 	</section>
-	<div align="right">
+	<div align="right" class="print-hide">
 		<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
 	</div>
 </body>
