@@ -13,6 +13,7 @@
 <div class="wrap-input100">
   <label for="email" class="label-input100">E-mail <span class="obrigatorio">*</span></label>
   <input type="text" class="input100" name="email" id="email" placeholder="Informe seu e-mail">
+  <small id="aviso-email-envio" class="hidden">Usado só para enviar este pagamento. Ele não fica salvo no seu cadastro.</small>
 </div>
 <div class="wrap-input100">
   <label for="telefone" class="label-input100">Telefone <span class="obrigatorio">*</span></label>

@@ -59,6 +59,9 @@ class ContribuicaoLogController
                 exit();
             }
 
+            // Sem e-mail cadastrado: usa o do formulário só pra este pagamento.
+            $socio = Util::aplicarEmailEnvio($socio);
+
             // Rota pública: o link só é entregue por e-mail. Confere antes de
             // emitir a cobrança no gateway, pra não criar um pagamento que o
             // sócio nunca vai receber.
@@ -203,6 +206,9 @@ class ContribuicaoLogController
                 echo json_encode(['erro' => 'Sócio não encontrado']);
                 exit();
             }
+
+            // Sem e-mail cadastrado: usa o do formulário só pra este pagamento.
+            $socio = Util::aplicarEmailEnvio($socio);
 
             // Rota pública: o link só é entregue por e-mail. Confere antes de
             // emitir a cobrança no gateway, pra não criar um pagamento que o
@@ -505,6 +511,9 @@ class ContribuicaoLogController
                 exit('Sócio não encontrado');
             }
 
+            // Sem e-mail cadastrado: usa o do formulário só pra este pagamento.
+            $socio = Util::aplicarEmailEnvio($socio);
+
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamento = $meioPagamentoDao->buscarPorNome($formaPagamento);
 
@@ -623,6 +632,9 @@ class ContribuicaoLogController
             if (is_null($socio)) {
                 throw new Exception('Sócio não encontrado', 400);
             }
+
+            // Sem e-mail cadastrado: usa o do formulário só pra este pagamento.
+            $socio = Util::aplicarEmailEnvio($socio);
 
             // Buscar meio de pagamento
             $meioPagamentoDao = new MeioPagamentoDAO();

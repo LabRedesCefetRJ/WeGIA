@@ -54,6 +54,9 @@ class RecorrenciaController
                 throw new Exception('Sócio não encontrado', 400);
             }
 
+            // Sem e-mail cadastrado: usa o do formulário só pra este pagamento.
+            $socio = Util::aplicarEmailEnvio($socio);
+
             // Buscar meio de pagamento
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamento = $meioPagamentoDao->buscarPorNome($formaPagamento);

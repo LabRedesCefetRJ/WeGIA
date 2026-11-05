@@ -529,6 +529,8 @@ function desbloquearCamposCadastro() {
         const wrapper = campo.closest('div.wrap-input100');
         if (wrapper) wrapper.classList.remove('hidden');
     });
+
+    document.getElementById('aviso-email-envio')?.classList.add('hidden');
 }
 
 /**
@@ -550,6 +552,12 @@ function bloquearCamposCompletos(camposFaltantes) {
         const wrapper = campo.closest('div.wrap-input100');
         if (wrapper) wrapper.classList.add('hidden');
     });
+
+    // Cadastro existente sem e-mail: o e-mail pedido serve só pro envio do
+    // pagamento e não é gravado (ver Util::aplicarEmailEnvio()).
+    if (camposFaltantes.includes('email')) {
+        document.getElementById('aviso-email-envio')?.classList.remove('hidden');
+    }
 }
 
 async function completarCadastroSocio() {

@@ -59,7 +59,9 @@ class SocioController
                 // enviados são só ignorados, sem erro, pra a resposta não
                 // revelar que o CPF pertence a alguém interno da instituição.
                 if (!isset($_SESSION['usuario']) && !(new SocioDAO($this->pdo))->verificarInternoPorDocumento($verificacaoExistenciaPessoa->getCpf())) {
-                    $camposInformados = $this->extrairCamposFaltantesPost($this->camposFaltantesPessoa($verificacaoExistenciaPessoa));
+                    $camposInformados = $this->semEmail(
+                        $this->extrairCamposFaltantesPost($this->camposFaltantesPessoa($verificacaoExistenciaPessoa))
+                    );
                 }
             } else {
                 $dados = $this->extrairPost();
@@ -398,9 +400,10 @@ class SocioController
      * Mesmo conjunto exigido em extrairPost()/extrairCamposFaltantesPost().
      *
      * O e-mail entra na lista porque o fluxo público só entrega o link do
-     * pagamento por e-mail: um sócio sem e-mail pode informá-lo pelo
-     * completarCadastroSocio(). Como essa rota só aceita os campos que estão
-     * faltando, um e-mail já cadastrado não pode ser trocado por ela.
+     * pagamento por e-mail: um sócio sem e-mail precisa informar um. Esse
+     * e-mail é só pro envio do pagamento (ver Util::aplicarEmailEnvio()) e
+     * nunca é gravado no cadastro pela rota pública — por isso continua
+     * faltando, e é pedido de novo, a cada contribuição.
      */
     private const CAMPOS_OBRIGATORIOS_SOCIO = ['nome', 'email', 'telefone', 'cep', 'rua', 'bairro', 'uf', 'cidade', 'numero'];
 
@@ -738,6 +741,18 @@ class SocioController
     }
 
     /**
+     * Tira o e-mail dos campos faltantes que seriam gravados: ele é validado
+     * junto com os outros, mas só serve pro envio do pagamento e não entra
+     * no cadastro (ver CAMPOS_OBRIGATORIOS_SOCIO).
+     */
+    private function semEmail(array $dados): array
+    {
+        unset($dados['email']);
+
+        return $dados;
+    }
+
+    /**
      * Versão de atualizarSocio() que atualiza somente os campos que
      * verificarCadastroSocio() acusou como faltantes, sem exigir o
      * formulário completo. Rota pública, usada no fluxo de contribuição.
@@ -774,14 +789,14 @@ class SocioController
                 return;
             }
 
-            $dados = $this->extrairCamposFaltantesPost($camposFaltantes);
+            $dados = $this->semEmail($this->extrairCamposFaltantesPost($camposFaltantes));
 
             // Funcionário/atendido não pode ter o cadastro alterado pela rota
             // pública. Como em criarSocio(), os campos são só ignorados, com a
             // mesma resposta (e a mesma validação acima) de qualquer sócio: um
             // 403 revelaria que o CPF é de alguém interno e travaria o
             // pagamento de quem já contribuiu uma vez com dados faltando.
-            if ($socioDao->verificarInternoPorDocumento($documento)) {
+            if (empty($dados) || $socioDao->verificarInternoPorDocumento($documento)) {
                 http_response_code(200);
                 echo json_encode(['mensagem' => 'Cadastro atualizado com sucesso!']);
                 return;

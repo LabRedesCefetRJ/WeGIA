@@ -1369,7 +1369,7 @@ class Util
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
 
         if (!$socio->getEmail()) {
-            return 'Não há um e-mail cadastrado para este CPF/CNPJ, então não é possível enviar o pagamento. Entre em contato com a instituição para atualizar seu cadastro.';
+            return 'Não há um e-mail cadastrado para este CPF/CNPJ. Informe um e-mail para receber o pagamento.';
         }
 
         $emailControle = new EmailControle($pdo);
@@ -1379,6 +1379,32 @@ class Util
         }
 
         return null;
+    }
+
+    /**
+     * Sócio sem e-mail cadastrado informa um e-mail no formulário de
+     * contribuição só pra receber este pagamento: ele é aplicado no objeto
+     * em memória (envio do link e dados do pagador no gateway) e nunca é
+     * gravado no cadastro. Quem já tem e-mail cadastrado não consegue
+     * trocar o destino por aqui — o campo do formulário é ignorado.
+     */
+    public static function aplicarEmailEnvio(Socio $socio): Socio
+    {
+        if ($socio->getEmail()) {
+            return $socio;
+        }
+
+        $email = trim((string) filter_input(INPUT_POST, 'email'));
+
+        if ($email === '') {
+            return $socio;
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('O e-mail informado não é válido.', 400);
+        }
+
+        return $socio->setEmail($email);
     }
 
     /**
