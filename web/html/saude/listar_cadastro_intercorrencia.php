@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE)
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
+	exit;
 } else {
 	session_regenerate_id();
 }
@@ -17,6 +18,7 @@ permissao($_SESSION['id_pessoa'], 5, 5);
 
 if (!isset($_SESSION['saude'])) {
 	header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=SaudeControle&nextPage=../html/saude/listar_cadastro_intercorrencia.php');
+	exit;
 }
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "../personalizacao_display.php";

@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -342,6 +343,7 @@ class VoluntarioControle
 
             $voluntarioDAO->alterarImagem($id_voluntario, $img);
             header("Location: ../html/voluntario/profile_voluntario.php?id_voluntario=" . urlencode($id_voluntario));
+            exit();
         } catch (Exception $e) {
             Util::tratarException($e);
         }

@@ -23,6 +23,7 @@ include_once ROOT . '/dao/TipoEntradaDAO.php';
 
 if (!isset($_SESSION['tipo_entrada'])) {
    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoEntradaControle&nextPage=' . WWW . 'html/matPat/listar_tipoEntrada.php');
+   exit;
 } else {
    $tipo = $_SESSION['tipo_entrada'];
    unset($_SESSION['tipo_entrada']);

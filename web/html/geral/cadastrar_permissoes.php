@@ -38,9 +38,11 @@ require_once '../geral/msg.php';
 
 if (!isset($_SESSION['almoxarifado'])) {
 	header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/geral/cadastrar_permissoes.php');
+	exit;
 }
 if (!isset($_SESSION['pessoas_com_cargo'])) {
 	header('Location: ../../controle/control.php?metodo=listarPessoasComCargo&nomeClasse=FuncionarioControle&nextPage=../html/geral/cadastrar_permissoes.php');
+	exit;
 }
 extract($_SESSION);
 

@@ -9,6 +9,7 @@ require_once 'PdfDownloadService.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
 class PagarMeBoletoService implements ApiBoletoServiceInterface
 {
     private PDO $pdo;
@@ -18,7 +19,7 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
         $this->pdo = $pdo ?? ConexaoDAO::conectar();
     }
 
-    public function gerarBoleto(ContribuicaoLog $contribuicaoLog)
+    public function gerarBoleto(ContribuicaoLog $contribuicaoLog, bool $porEmail = true)
     {
         //gerar um número para o documento
         $numeroDocumento = Util::gerarNumeroDocumento(16);
@@ -127,9 +128,14 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
                 $contribuicaoLog->setCodigo($idPagarMe);
                 $pdfInterno = $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
 
-                //envia resposta para o front-end
+                //envia resposta para o front-end. $porEmail vem de qual rota
+                //chamou (pública vs interna da equipe), não de sessão — quem
+                //decide é o método do controller que foi chamado, não quem
+                //está logado
                 $linkPdf = WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($contribuicaoLog->getUuid());
-                echo json_encode(['link' => $linkPdf]);
+                echo json_encode($porEmail
+                    ? Util::responderLinkGerado($linkPdf, $contribuicaoLog->getSocio(), 'boleto')
+                    : ['link' => $linkPdf]);
             } else {
                 throw new PaymentServiceException(
                     'Não foi possível gerar o boleto no momento. Tente novamente mais tarde.',
