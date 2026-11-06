@@ -816,7 +816,7 @@ class ContribuicaoController
             $socioDao->registrarLog($contribuicaoLog->getSocio(), 'Boleto gerado recentemente', \Util::getUserIp(), \Util::getUserAgent());
 
             ob_start();
-            $codigoApi = $servicoPagamento->gerarBoleto($contribuicaoLog);
+            $codigoApi = $servicoPagamento->gerarBoleto($contribuicaoLog, false); //solicitar link ao invés de e-mail
             $saidaServico = (string)ob_get_clean();
 
             $linkBoleto = $this->capturarLinkDaRespostaServico($saidaServico);
