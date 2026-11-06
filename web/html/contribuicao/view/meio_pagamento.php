@@ -7,6 +7,7 @@ ini_set('display_startup_erros', 0);
 session_start();
 if (!isset($_SESSION['usuario'])) {
     header("Location: ../../../index.php");
+    exit;
 }
 
 $config_path = "config.php";

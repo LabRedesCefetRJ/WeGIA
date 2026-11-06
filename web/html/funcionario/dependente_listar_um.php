@@ -1,8 +1,10 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 
 session_start();
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
+    exit;
 }
 
 // Verifica Permissão do Usuário

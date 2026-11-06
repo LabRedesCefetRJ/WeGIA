@@ -35,6 +35,7 @@ class EnderecoControle
         try {
             $enderecoDAO->incluirEndereco($endereco);
             header("Location: ../html/personalizacao.php");
+            exit;
         } catch (PDOException $e) {
             echo $e->getMessage();
         }  
@@ -67,6 +68,7 @@ class EnderecoControle
         try {
             $enderecoDAO->alterarEndereco($endereco);
             header("Location: ../html/personalizacao.php");
+            exit;
         } catch (PDOException $e) {
             echo $e->getMessage();
         } 

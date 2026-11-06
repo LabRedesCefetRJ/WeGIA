@@ -1217,7 +1217,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`contribuicao_log` (
     `uuid` BINARY(16) NOT NULL,
     `id_socio` INT(11) NOT NULL,
     `id_gateway` INT(11) DEFAULT NULL,
-    `id_meio_pagamento` INT(11) NOT NULL,
+    `id_meio_pagamento` INT(11) DEFAULT NULL,
     `id_recorrencia` INT(11) DEFAULT NULL,
     `id_contribuicao_documento` INT(11) DEFAULT NULL,
     `codigo` VARCHAR(255) NOT NULL UNIQUE,
@@ -2661,9 +2661,11 @@ CREATE TABLE IF NOT EXISTS voluntario (
  id_voluntario INT AUTO_INCREMENT PRIMARY KEY,
  id_pessoa INT NOT NULL,
  id_situacao INT NOT NULL,
+ id_cargo INT NULL DEFAULT NULL,
  data_admissao DATE NOT NULL,
  FOREIGN KEY (id_pessoa) REFERENCES pessoa(id_pessoa) ON DELETE CASCADE,
- FOREIGN KEY (id_situacao) REFERENCES situacao(id_situacao)
+ FOREIGN KEY (id_situacao) REFERENCES situacao(id_situacao),
+ FOREIGN KEY (id_cargo) REFERENCES cargo(id_cargo)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ------------------------------------------------------
@@ -3681,6 +3683,17 @@ CREATE TABLE IF NOT EXISTS `wegia`.`projeto_atendido` (
 
 
 -- -----------------------------------------------------
+-- Table `wegia`.`setor`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`setor` (
+  `id_setor` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(45) NOT NULL,
+  `status` INT NOT NULL,
+  PRIMARY KEY (`id_setor`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+
+-- -----------------------------------------------------
 -- Table `wegia`.`projeto_turma`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`projeto_turma` (
@@ -3745,3 +3758,76 @@ CREATE TABLE IF NOT EXISTS `wegia`.`projeto_turma_atendido` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`visitante`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`visitante` (
+  `id_visitante` INT NOT NULL AUTO_INCREMENT,
+  `id_pessoa` INT NOT NULL,
+  PRIMARY KEY (`id_visitante`),
+  INDEX `fk_visitante_pessoa_idx` (`id_pessoa` ASC),
+  CONSTRAINT `fk_visitante_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`visitado`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`visitado` (
+  `id_visitado` INT NOT NULL AUTO_INCREMENT,
+  `id_pessoa` INT NULL DEFAULT NULL,
+  `id_pet` INT NULL DEFAULT NULL,
+  `id_setor` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id_visitado`),
+  INDEX `fk_visitado_pessoa_idx` (`id_pessoa` ASC),
+  INDEX `fk_visitado_pet_idx` (`id_pet` ASC),
+  INDEX `fk_visitado_setor_idx` (`id_setor` ASC),
+  CONSTRAINT `fk_visitado_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_visitado_pet`
+    FOREIGN KEY (`id_pet`)
+    REFERENCES `wegia`.`pet` (`id_pet`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_visitado_setor`
+    FOREIGN KEY (`id_setor`)
+    REFERENCES `wegia`.`setor` (`id_setor`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`visita`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`visita` (
+  `id_visita` INT NOT NULL AUTO_INCREMENT,
+  `id_visitante` INT NOT NULL,
+  `id_visitado` INT NOT NULL,
+  `horario_entrada` DATETIME NOT NULL,
+  `horario_saida` DATETIME NULL DEFAULT NULL,
+  `status` VARCHAR(45) NULL DEFAULT NULL,
+  `descricao` VARCHAR(255) NULL DEFAULT NULL,
+  PRIMARY KEY (`id_visita`),
+  INDEX `fk_visita_visitante_idx` (`id_visitante` ASC),
+  INDEX `fk_visita_visitado_idx` (`id_visitado` ASC),
+  CONSTRAINT `fk_visita_visitante`
+    FOREIGN KEY (`id_visitante`)
+    REFERENCES `wegia`.`visitante` (`id_visitante`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_visita_visitado`
+    FOREIGN KEY (`id_visitado`)
+    REFERENCES `wegia`.`visitado` (`id_visitado`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -68,12 +69,14 @@ try {
 
         if (empty($msgVinc)) {
             header("Location: personalizacao_imagem.php?msg=success&del=" . count($idsParaExcluir));
+            exit;
         } else {
             header(
                 "Location: personalizacao_imagem.php?msg=warn&del="
                     . count($idsParaExcluir)
                     . "&locked=" . count($msgVinc)
             );
+            exit;
         }
     }
 
@@ -85,4 +88,5 @@ try {
         $pdo->rollBack();
 
     header("Location: personalizacao_imagem.php?msg=error&code=exception");
+    exit;
 }

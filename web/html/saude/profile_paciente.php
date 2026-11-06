@@ -53,6 +53,7 @@ $pdo = Conexao::connect();
 
 if (!isset($teste)) {
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/profile_paciente.php?id_fichamedica=' . $id_fichamedica . '&id=' . $id_fichamedica);
+  exit;
 }
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);

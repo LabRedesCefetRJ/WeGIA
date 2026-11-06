@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 Util::definirFusoHorario();
 if (session_status() === PHP_SESSION_NONE)
@@ -24,9 +25,11 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTOR
 permissao($id_pessoa, 61, 7);
 
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
 
 // Lógica para listar os adotantes
 try {
+	$conexao = Conexao::connect();
 	$conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 	$sqlListarAdotantes = "SELECT cpf, nome, sobrenome, sexo, telefone, data_nascimento, imagem, cep, 

@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 Util::definirFusoHorario();
 ini_set('display_errors', 1);
@@ -9,6 +10,7 @@ extract($_REQUEST);
 session_start();
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
+    exit;
 }
 
 // Verifica Permissão do Usuário
@@ -98,3 +100,4 @@ try {
 
 $idatendido_familiares = $_GET['idatendido_familiares'];
 header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+exit;

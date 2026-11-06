@@ -500,29 +500,30 @@ O fallback por arquivo histórico continua aceitando, por exemplo, `GET /contrib
 
 ## 4. POST `/contribuicoes/boleto`
 
-Gera um boleto de contribuição para o sócio autenticado via JWT. O fluxo usa o `user_id` do token para localizar o sócio e reaproveita os serviços de pagamento existentes.
+Gera um boleto de contribuição para o sócio associado ao usuário autenticado. O `user_id` obtido da autenticação localiza o sócio; o serviço e as regras de valor dependem da configuração do meio de pagamento.
 
-### Cabeçalhos
-- **Authorization** (obrigatório): `Bearer <token>`
-- **Content-Type** (obrigatório): `application/json`
+### Autenticação e cabeçalhos
+- Envie `Authorization: Bearer <JWT>` ou autentique-se pelo cookie `access_token`.
+- **Content-Type**: `application/json`.
 
 ### Corpo da Requisição
 ```json
 {
-  "valor": 50.0,
-  "dia": "2026-06-25"
+  "valor": 50.0
 }
 ```
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
-| `valor` | number | sim | Valor do boleto em reais |
-| `dia` | string | não | Data de vencimento no formato `YYYY-MM-DD`; se omitida, a API usa `+7 dias` |
+| `valor` | number | sim | Deve ser numérico e maior que zero. Também deve respeitar os limites mínimo e máximo configurados para o meio de pagamento, quando definidos. |
+| `dia` | string | não | Data de vencimento esperada no formato `YYYY-MM-DD`; omitida ou vazia, a API usa a data atual mais 7 dias. |
+
+> **Comportamento atual:** no PHP 8.2 ou superior, `DateTimeImmutable::getLastErrors()` retorna `false` para uma data válida sem avisos. Como o handler trata esse retorno como erro, o envio de `dia` resulta em `400 Data de vencimento inválida.`; omita o campo para usar o vencimento padrão.
 
 ### Resposta - 201 Created
 ```json
 {
-  "link": "https://...",
+  "link": "https://link-do-boleto-retornado-pelo-gateway",
   "codigo": "codigo-retornado-pelo-gateway",
   "contribuicao_id": "0190f5c2-7b00-7abc-8def-0123456789ab"
 }
@@ -534,13 +535,15 @@ Gera um boleto de contribuição para o sócio autenticado via JWT. O fluxo usa 
   "error": "Valor inválido."
 }
 ```
+Também pode retornar uma mensagem informando que o valor está abaixo ou acima do limite configurado, ou `Data de vencimento inválida.` quando `dia` for informado.
 
 ### Resposta - 401 Unauthorized
 ```json
 {
-  "error": "Usuário não identificado."
+  "error": "Token inválido"
 }
 ```
+O handler também retorna `Usuário não identificado.` se não houver `user_id` autenticado.
 
 ### Resposta - 404 Not Found
 ```json
@@ -548,6 +551,7 @@ Gera um boleto de contribuição para o sócio autenticado via JWT. O fluxo usa 
   "error": "Sócio não encontrado para o usuário autenticado."
 }
 ```
+Também pode retornar `Sócio não encontrado.`, `Meio de pagamento não encontrado.` ou `Gateway de pagamento não encontrado.`.
 
 ### Resposta - 502 Bad Gateway
 ```json
@@ -555,16 +559,18 @@ Gera um boleto de contribuição para o sócio autenticado via JWT. O fluxo usa 
   "error": "Não foi possível gerar o boleto."
 }
 ```
+### Resposta - 500 Internal Server Error
+Ocorre se o arquivo ou a classe do serviço de pagamento não estiver disponível, ou se houver outra exceção. O corpo contém `error`, com mensagens como `Arquivo de serviço de pagamento não encontrado.`, `Classe de serviço de pagamento não encontrada.` ou `Erro ao gerar boleto: <mensagem>`.
 
 ---
 
 ## 5. POST `/contribuicoes/carne`
 
-Gera um carnê de contribuição para o sócio autenticado via JWT. A rota usa o `user_id` do token para localizar o sócio e cria uma coleção de parcelas com base no valor, na quantidade de parcelas e no dia de vencimento informados.
+Gera um carnê de contribuição para o sócio associado ao usuário autenticado. O valor informado é o valor de cada parcela; as regras de valor dependem da configuração do meio de pagamento.
 
-### Cabeçalhos
-- **Authorization** (obrigatório): `Bearer <token>`
-- **Content-Type** (obrigatório): `application/json`
+### Autenticação e cabeçalhos
+- Envie `Authorization: Bearer <JWT>` ou autentique-se pelo cookie `access_token`.
+- **Content-Type**: `application/json`.
 
 ### Corpo da Requisição
 ```json
@@ -578,19 +584,22 @@ Gera um carnê de contribuição para o sócio autenticado via JWT. A rota usa o
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
-| `valor` | number | sim | Valor de cada parcela em reais |
+| `valor` | number | sim | Valor de cada parcela em reais. Deve ser numérico, maior que zero e respeitar os limites mínimo e máximo configurados, quando definidos. |
 | `parcelas` | integer | sim | Quantidade de parcelas, entre 2 e 12 |
 | `dia` | integer | sim | Dia de vencimento. Valores aceitos: 1, 5, 10, 15, 20 e 25 |
-| `tipoGeracao` | integer | não | Intervalo entre parcelas. Valores aceitos: 1, 2, 3 ou 6 meses |
+| `tipoGeracao` | integer | não | Intervalo entre parcelas em meses: 1, 2, 3 ou 6. Se omitido ou vazio, usa 1 mês. |
+
+As parcelas começam no mês atual se o dia informado for maior que o dia atual do mês; caso contrário, começam no mês seguinte. As parcelas seguintes respeitam o intervalo indicado por `tipoGeracao`.
 
 ### Resposta - 201 Created
 ```json
 {
-  "link": "http://localhost/~gabriel/WeGIA/web/html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=0190f5c2-7b00-7abc-8def-0123456789ab",
+  "link": "https://<base-da-aplicacao>/html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=0190f5c2-7b00-7abc-8def-0123456789ab",
   "parcelas": 6,
-  "contribuicao_id" : "0190f5c2-7b00-7abc-8def-0123456789ab"
+  "contribuicao_id": "0190f5c2-7b00-7abc-8def-0123456789ab"
 }
 ```
+`contribuicao_id` identifica a primeira contribuição do carnê e é também o UUID usado no link.
 
 ### Resposta - 400 Bad Request
 ```json
@@ -598,13 +607,15 @@ Gera um carnê de contribuição para o sócio autenticado via JWT. A rota usa o
   "error": "A quantidade de parcelas deve ser um número entre 2 e 12."
 }
 ```
+Outras mensagens de validação possíveis: `Valor inválido.`, `Dia de vencimento inválido.`, `O tipo de geração é inválido.` e mensagens de valor abaixo/acima dos limites configurados.
 
 ### Resposta - 401 Unauthorized
 ```json
 {
-  "error": "Usuário não identificado."
+  "error": "Token inválido"
 }
 ```
+O handler também retorna `Usuário não identificado.` se não houver `user_id` autenticado.
 
 ### Resposta - 404 Not Found
 ```json
@@ -612,6 +623,7 @@ Gera um carnê de contribuição para o sócio autenticado via JWT. A rota usa o
   "error": "Sócio não encontrado para o usuário autenticado."
 }
 ```
+Também pode retornar `Sócio não encontrado.`, `Meio de pagamento não encontrado.` ou `Gateway de pagamento não encontrado.`.
 
 ### Resposta - 502 Bad Gateway
 ```json
@@ -619,16 +631,18 @@ Gera um carnê de contribuição para o sócio autenticado via JWT. A rota usa o
   "error": "Não foi possível gerar o carnê."
 }
 ```
+### Resposta - 500 Internal Server Error
+Pode ocorrer se o arquivo ou a classe do serviço não estiver disponível, se não for possível preparar o carnê ou se houver outra exceção. O corpo contém `error`, com mensagens como `Não foi possível preparar o carnê.` ou `Erro ao gerar carnê: <mensagem>`.
 
 ---
 
 ## 6. POST `/contribuicoes/pix`
 
-Gera um QR Code Pix para o sócio autenticado via JWT. A rota usa o `user_id` do token para localizar o sócio e reaproveita os serviços de pagamento existentes.
+Gera uma cobrança Pix para o sócio associado ao usuário autenticado. As regras de valor e o conteúdo do QR Code dependem da configuração do meio de pagamento e do serviço de gateway utilizado.
 
-### Cabeçalhos
-- **Authorization** (obrigatório): `Bearer <token>`
-- **Content-Type** (obrigatório): `application/json`
+### Autenticação e cabeçalhos
+- Envie `Authorization: Bearer <JWT>` ou autentique-se pelo cookie `access_token`.
+- **Content-Type**: `application/json`.
 
 ### Corpo da Requisição
 ```json
@@ -639,17 +653,18 @@ Gera um QR Code Pix para o sócio autenticado via JWT. A rota usa o `user_id` do
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
-| `valor` | number | sim | Valor do Pix em reais |
+| `valor` | number | sim | Valor em reais. Deve ser numérico, maior que zero e respeitar os limites mínimo e máximo configurados, quando definidos. |
 
 ### Resposta - 201 Created
 ```json
 {
-  "qrcode": "base64-do-qrcode",
+  "qrcode": "conteúdo do QR Code retornado pelo serviço do gateway",
   "copiaCola": "texto-pix-copia-e-cola",
   "codigo": "codigo-retornado-pelo-gateway",
   "contribuicao_id": "0190f5c2-7b00-7abc-8def-0123456789ab"
 }
 ```
+O formato de `qrcode` depende do gateway configurado (por exemplo, pode ser uma imagem codificada em Base64). `codigo` é o identificador retornado pelo gateway.
 
 ### Resposta - 400 Bad Request
 ```json
@@ -657,13 +672,15 @@ Gera um QR Code Pix para o sócio autenticado via JWT. A rota usa o `user_id` do
   "error": "Valor inválido."
 }
 ```
+Também pode informar que o valor está abaixo ou acima dos limites configurados.
 
 ### Resposta - 401 Unauthorized
 ```json
 {
-  "error": "Usuário não identificado."
+  "error": "Token inválido"
 }
 ```
+O handler também retorna `Usuário não identificado.` se não houver `user_id` autenticado.
 
 ### Resposta - 404 Not Found
 ```json
@@ -671,6 +688,7 @@ Gera um QR Code Pix para o sócio autenticado via JWT. A rota usa o `user_id` do
   "error": "Sócio não encontrado para o usuário autenticado."
 }
 ```
+Também pode retornar `Sócio não encontrado.`, `Meio de pagamento não encontrado.` ou `Gateway de pagamento não encontrado.`.
 
 ### Resposta - 502 Bad Gateway
 ```json
@@ -678,29 +696,31 @@ Gera um QR Code Pix para o sócio autenticado via JWT. A rota usa o `user_id` do
   "error": "Não foi possível gerar o Pix."
 }
 ```
+### Resposta - 500 Internal Server Error
+Ocorre se o arquivo ou a classe do serviço de pagamento não estiver disponível, ou se houver outra exceção. O corpo contém `error`, com mensagens como `Arquivo de serviço de pagamento não encontrado.`, `Classe de serviço de pagamento não encontrada.` ou `Erro ao gerar Pix: <mensagem>`.
 
 ---
 
 ## 7. POST `/contribuicoes/credito`
 
-Processa um pagamento com cartão de crédito para o sócio autenticado via JWT. A rota usa o `user_id` do token para localizar o sócio e reaproveita os serviços de pagamento existentes.
+Processa um pagamento com cartão de crédito para o sócio associado ao usuário autenticado. Envie o token de cartão já criado pelo fluxo de tokenização do gateway; o backend não recebe os dados completos do cartão. As regras de valor dependem da configuração do meio de pagamento.
 
-### Cabeçalhos
-- **Authorization** (obrigatório): `Bearer <token>`
-- **Content-Type** (obrigatório): `application/json`
+### Autenticação e cabeçalhos
+- Envie `Authorization: Bearer <JWT>` ou autentique-se pelo cookie `access_token`.
+- **Content-Type**: `application/json`.
 
 ### Corpo da Requisição
 ```json
 {
   "valor": 50.0,
-  "card_token": "token_card_plataform_241wsdf"
+  "card_token": "token-de-cartao-retornado-pelo-gateway"
 }
 ```
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
-| `valor` | number | sim | Valor da contribuição em reais ||
-| `card_token` | string | sim | Identificador do cartão na plataforma de pagamento |
+| `valor` | number | sim | Valor em reais. Deve ser numérico, maior que zero e respeitar os limites mínimo e máximo configurados, quando definidos. |
+| `card_token` | string | sim | Token de cartão não vazio, previamente obtido no gateway. |
 
 ### Resposta - 201 Created
 ```json
@@ -715,16 +735,18 @@ Processa um pagamento com cartão de crédito para o sócio autenticado via JWT.
 ### Resposta - 400 Bad Request
 ```json
 {
-  "error": "Número de cartão inválido."
+  "error": "Os dados do cartão são obrigatórios."
 }
 ```
+Também pode retornar `Valor inválido.` ou uma mensagem de valor abaixo/acima dos limites configurados. O código verifica se `card_token` está presente e não vazio; recusas do gateway não são descritas como erro de validação do número do cartão.
 
 ### Resposta - 401 Unauthorized
 ```json
 {
-  "error": "Usuário não identificado."
+  "error": "Token inválido"
 }
 ```
+O handler também retorna `Usuário não identificado.` se não houver `user_id` autenticado.
 
 ### Resposta - 404 Not Found
 ```json
@@ -732,6 +754,7 @@ Processa um pagamento com cartão de crédito para o sócio autenticado via JWT.
   "error": "Sócio não encontrado para o usuário autenticado."
 }
 ```
+Também pode retornar `Sócio não encontrado.`, `Meio de pagamento não encontrado.` ou `Gateway de pagamento não encontrado.`.
 
 ### Resposta - 502 Bad Gateway
 ```json
@@ -739,53 +762,59 @@ Processa um pagamento com cartão de crédito para o sócio autenticado via JWT.
   "error": "Não foi possível processar o cartão de crédito."
 }
 ```
+Este status indica que o serviço não retornou o identificador da transação.
+### Resposta - 500 Internal Server Error
+Ocorre se o arquivo ou a classe do serviço de pagamento não estiver disponível, ou se houver outra exceção. O corpo contém `error`, com mensagens como `Arquivo de serviço de pagamento não encontrado.`, `Classe de serviço de pagamento não encontrada.` ou `Erro ao processar cartão de crédito: <mensagem>`.
 
 ---
 
 ## 8. POST `/contribuicoes/recorrencia`
 
-Cria uma assinatura recorrente para o sócio autenticado via JWT. A rota usa o `user_id` do token para localizar o sócio e reaproveita os serviços de pagamento existentes.
+Cria uma assinatura mensal para o sócio associado ao usuário autenticado. Envie o token de cartão já criado pelo fluxo de tokenização do gateway; o backend não recebe os dados completos do cartão. As regras de valor dependem da configuração do meio de pagamento.
 
-### Cabeçalhos
-- **Authorization** (obrigatório): `Bearer <token>`
-- **Content-Type** (obrigatório): `application/json`
+### Autenticação e cabeçalhos
+- Envie `Authorization: Bearer <JWT>` ou autentique-se pelo cookie `access_token`.
+- **Content-Type**: `application/json`.
 
 ### Corpo da Requisição
 ```json
 {
   "valor": 50.0,
-  "card_token": "token_card_plataform_241wsdf"
+  "card_token": "token-de-cartao-retornado-pelo-gateway"
 }
 ```
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
-| `valor` | number | sim | Valor da assinatura em reais |
-| `card_token` | string | sim | Identificador do cartão na plataforma de pagamento |
+| `valor` | number | sim | Valor mensal em reais. Deve ser numérico, maior que zero e respeitar os limites mínimo e máximo configurados, quando definidos. |
+| `card_token` | string | sim | Token de cartão não vazio, previamente obtido no gateway. |
 
 ### Resposta - 201 Created
 ```json
 {
   "sucesso": true,
-  "mensagem": "Assinatura criada com sucesso! Cobranças mensais no dia 22.",
+  "mensagem": "Assinatura criada com sucesso! Cobranças mensais no dia <dia atual>.",
   "assinatura_id": "sub_123",
   "recorrencia_id": 123
 }
 ```
+O dia de cobrança informado na mensagem é o dia do mês em que a assinatura foi criada; não é um dia fixo configurado na API.
 
 ### Resposta - 400 Bad Request
 ```json
 {
-  "error": "Número de cartão inválido."
+  "error": "Os dados do cartão são obrigatórios."
 }
 ```
+Também pode retornar `Valor inválido.`, `Meio de pagamento indisponível.` ou uma mensagem de valor abaixo/acima dos limites configurados. O código verifica se `card_token` está presente e não vazio.
 
 ### Resposta - 401 Unauthorized
 ```json
 {
-  "error": "Usuário não identificado."
+  "error": "Token inválido"
 }
 ```
+O handler também retorna `Usuário não identificado.` se não houver `user_id` autenticado.
 
 ### Resposta - 404 Not Found
 ```json
@@ -793,6 +822,7 @@ Cria uma assinatura recorrente para o sócio autenticado via JWT. A rota usa o `
   "error": "Sócio não encontrado para o usuário autenticado."
 }
 ```
+Também pode retornar `Sócio não encontrado.`, `Meio de pagamento não encontrado.` ou `Gateway de pagamento não encontrado.`.
 
 ### Resposta - 502 Bad Gateway
 ```json
@@ -800,6 +830,10 @@ Cria uma assinatura recorrente para o sócio autenticado via JWT. A rota usa o `
   "error": "Não foi possível criar a assinatura."
 }
 ```
+Este status indica que o serviço não retornou o identificador da assinatura.
+
+### Resposta - 500 Internal Server Error
+Pode ocorrer se o arquivo ou a classe do serviço não estiver disponível, se não for possível criar o registro da recorrência ou se houver outra exceção. O corpo contém `error`, com mensagens como `Arquivo de serviço de pagamento não encontrado.`, `Classe de serviço de pagamento não encontrada.`, `Não foi possível criar a recorrência.` ou `Erro ao criar assinatura: <mensagem>`.
 
 ## GET /contribuicoes/payments_rules
 
