@@ -1217,7 +1217,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`contribuicao_log` (
     `uuid` BINARY(16) NOT NULL,
     `id_socio` INT(11) NOT NULL,
     `id_gateway` INT(11) DEFAULT NULL,
-    `id_meio_pagamento` INT(11) NOT NULL,
+    `id_meio_pagamento` INT(11) DEFAULT NULL,
     `id_recorrencia` INT(11) DEFAULT NULL,
     `id_contribuicao_documento` INT(11) DEFAULT NULL,
     `codigo` VARCHAR(255) NOT NULL UNIQUE,
