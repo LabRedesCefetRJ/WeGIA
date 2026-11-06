@@ -1426,7 +1426,7 @@ class Util
         }
 
         $mensagem = sprintf(
-            '<p>Prezado(a) %s,</p><p>Seu %s foi gerado com sucesso. Acesse pelo link abaixo:</p><p><a href="%s">%s</a></p>',
+            '<p>Prezado(a) %s,</p><p>Seu %s foi gerado com sucesso, agradecemos pelo interesse em contribuir com nossa instituição. Acesse pelo link abaixo:</p><p><a href="%s">%s</a></p></p><p>Caso você não tenha solicitado este documento, ignore este email.</p>',
             htmlspecialchars($socio->getNome()),
             $tipoDocumento,
             htmlspecialchars($link),
