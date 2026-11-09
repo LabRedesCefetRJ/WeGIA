@@ -23,7 +23,8 @@ class ProcessoAceitacaoControle
     {
         $idProcesso = (int)($_POST['id_processo'] ?? 0);
         $idStatus   = (int)($_POST['id_status'] ?? 0);
-        $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
+        $descricao  = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
+        $abrirModalAtendido = ($_POST['abrir_modal_atendido'] ?? '') === '1';
 
         if ($idProcesso <= 0 || $idStatus <= 0) {
             $_SESSION['mensagem_erro'] = 'Processo ou status inválido.';
@@ -33,9 +34,25 @@ class ProcessoAceitacaoControle
 
         try {
             $dao = new ProcessoAceitacaoDAO($this->pdo);
-            $dao->alterar($idProcesso, $idStatus, $descricao);
+
+            if ($descricao === null) {
+                $dao->atualizarStatus($idProcesso, $idStatus);
+            } else {
+                $dao->alterar($idProcesso, $idStatus, $descricao);
+            }
 
             $_SESSION['msg'] = 'Status do processo atualizado com sucesso.';
+
+            if ($abrirModalAtendido && $idStatus === 2 && $dao->getIdAtendido($idProcesso) === false) {
+                $resumo = $dao->buscarResumoPorId($idProcesso);
+                if ($resumo) {
+                    $_SESSION['modal_cadastrar_atendido'] = [
+                        'id_processo' => (int)$resumo['id'],
+                        'nome'        => trim($resumo['nome'] . ' ' . $resumo['sobrenome']),
+                    ];
+                }
+            }
+
             header("Location: ../html/atendido/processo_aceitacao.php?status-processo=" . htmlspecialchars($idStatus));
             exit();
         } catch (Exception $e) {

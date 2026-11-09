@@ -96,6 +96,13 @@ $processoAceitacao = $idPessoaAtendido > 0 ? $processoAceitacaoDAO->buscarProces
 $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEtapasPorProcesso((int)$processoAceitacao['id']) : [];
 
 require_once "../../controle/AtendidoControle.php";
+
+$stmtProcessoAceitacao = $pdo->prepare("SELECT descricao FROM processo_aceitacao pa JOIN pessoa p ON(p.id_pessoa = pa.id_pessoa) JOIN atendido a ON(p.id_pessoa = a.pessoa_id_pessoa) WHERE a.idatendido = :idAtendido");
+$stmtProcessoAceitacao->bindParam(':idAtendido', $id);
+$stmtProcessoAceitacao->execute();
+
+$descricao = $stmtProcessoAceitacao->fetchColumn();
+$descricao = str_replace(['&#13;&#10;', '&#10;', '&#13;'], "\n", $descricao);
 ?>
 
 <!doctype html>
@@ -284,7 +291,6 @@ require_once "../../controle/AtendidoControle.php";
 
     $(function() {
       var interno = <?php echo $_SESSION['atendido'] ?>;
-      console.log(interno);
       $.each(interno, function(i, item) {
         if (i = 1) {
           $("#formulario").append($("<input type='hidden' name='idatendido' value='" + item.id + "'>"));
@@ -1406,6 +1412,22 @@ require_once "../../controle/AtendidoControle.php";
                             </a>
                           </div>
                         <?php else: ?>
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-none">
+                              <thead>
+                                <tr>
+                                  <th class="panel-title">Descrição</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr>
+                                  <td style="white-space: pre-wrap;"><?= htmlspecialchars($descricao ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                          <br>
+
                           <div class="table-responsive">
                             <table class="table table-bordered table-striped mb-none">
                               <thead>
