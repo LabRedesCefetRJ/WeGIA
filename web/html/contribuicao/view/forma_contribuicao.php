@@ -82,6 +82,17 @@ $meiosDePagamentoArray = $meioPagamentoController->buscaTodos();
                 <?php endif; ?>
             </div>
         </div>
+        <section id="video-demonstration-section" aria-label="Vídeo sobre as contribuições" style="display:none; margin: 24px auto; max-width: 760px;">
+            <div style="position:relative; width:100%; padding-bottom:56.25%; height:0;">
+                <iframe
+                    id="video-demonstration-frame"
+                    title="Vídeo sobre as contribuições"
+                    style="position:absolute; inset:0; width:100%; height:100%; border:0;"
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </section>
         <div id="contact-container"></div>
 
         
@@ -96,6 +107,36 @@ $meiosDePagamentoArray = $meioPagamentoController->buscaTodos();
 
 <script src="../vendor/select2/select2.min.js"></script>
 <script src="../public/js/mascara.js"></script>
+<script>
+    const contributionApiBaseUrl = <?= json_encode(rtrim(API_BASE_URL, '/') . '/', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+    (async function loadVideoDemonstration() {
+        try {
+            const response = await fetch(`${contributionApiBaseUrl}socios/video_demonstration`);
+            if (!response.ok) {
+                throw new Error(`A API retornou o status ${response.status}`);
+            }
+
+            const configuration = await response.json();
+            if (typeof configuration.value !== 'string' || configuration.value.trim() === '') {
+                return;
+            }
+
+            const videoUrl = new URL(configuration.value);
+            if (!['http:', 'https:'].includes(videoUrl.protocol)) {
+                throw new Error('A URL de vídeo configurada não utiliza HTTP ou HTTPS.');
+            }
+
+            videoUrl.searchParams.set('autoplay', '1');
+            videoUrl.searchParams.set('mute', '1');
+
+            document.getElementById('video-demonstration-frame').src = videoUrl.toString();
+            document.getElementById('video-demonstration-section').style.display = 'block';
+        } catch (error) {
+            console.error('Não foi possível carregar o vídeo de demonstração.', error);
+        }
+    })();
+</script>
 <?php
 require_once './templates/footer.php';
 ?>
