@@ -28,6 +28,7 @@ class DocumentoControle
 			$documento->setIdDocumento($id_documento);
 			$docuDAO->alterar($documento);
 			header('Location: ../controle/control.php?metodo=listarUm&nomeClasse=AtendidoControle&nextPage=../html/atendido/Profile_Atendido.php?id=' . $id);
+			exit;
 		} catch (Exception $e) {
 			echo 'Erro ao tentar alterar documentação: ' . $e->getMessage();
 		}
@@ -39,6 +40,7 @@ class DocumentoControle
 		try {
 			$docuDAO->excluir($id_documento);
 			header('Location: ../controle/control.php?metodo=listarUm&nomeClasse=AtendidoControle&nextPage=../html/atendido/Profile_Atendido.php?id=' . $id);
+			exit;
 		} catch (Exception $e) {
 			echo $e->getMessage();
 		}

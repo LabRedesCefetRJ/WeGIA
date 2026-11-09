@@ -123,15 +123,17 @@ class VoluntarioDAO
                 $stmtPessoa->execute();
             }
 
-            $sqlVoluntario = "INSERT INTO voluntario (id_pessoa, id_situacao, data_admissao) VALUES (:id_pessoa, :id_situacao, :data_admissao)";
+            $sqlVoluntario = "INSERT INTO voluntario (id_pessoa, id_situacao, data_admissao, id_cargo) VALUES (:id_pessoa, :id_situacao, :data_admissao, :id_cargo)";
             $stmtVoluntario = $this->pdo->prepare($sqlVoluntario);
 
             $situacao = $voluntario->getId_situacao();
             $dataAdmissao = $voluntario->getData_admissao();
+            $cargo = $voluntario->getId_cargo();
 
             $stmtVoluntario->bindParam(':id_pessoa', $idPessoa);
             $stmtVoluntario->bindParam(':id_situacao', $situacao);
             $stmtVoluntario->bindParam(':data_admissao', $dataAdmissao);
+            $stmtVoluntario->bindParam(':id_cargo', $cargo);
 
             $stmtVoluntario->execute();
             $idVoluntario = $this->pdo->lastInsertId();
@@ -145,7 +147,7 @@ class VoluntarioDAO
         }
     }
 
-    public function incluirExistente($cpf, $situacao, $data_admissao)
+    public function incluirExistente($cpf, $situacao, $data_admissao, $cargo)
     {
         $this->pdo->beginTransaction();
 
@@ -159,11 +161,12 @@ class VoluntarioDAO
                 throw new PDOException('Pessoa não encontrada.');
             }
 
-            $sqlVoluntario = "INSERT INTO voluntario (id_pessoa, id_situacao, data_admissao) VALUES (:id_pessoa, :id_situacao, :data_admissao)";
+            $sqlVoluntario = "INSERT INTO voluntario (id_pessoa, id_situacao, data_admissao, id_cargo) VALUES (:id_pessoa, :id_situacao, :data_admissao, :id_cargo)";
             $stmtVoluntario = $this->pdo->prepare($sqlVoluntario);
             $stmtVoluntario->bindParam(':id_pessoa', $idPessoa);
             $stmtVoluntario->bindParam(':id_situacao', $situacao);
             $stmtVoluntario->bindParam(':data_admissao', $data_admissao);
+            $stmtVoluntario->bindParam(':id_cargo', $cargo);
             $stmtVoluntario->execute();
             $idVoluntario = $this->pdo->lastInsertId();
 
@@ -333,17 +336,19 @@ class VoluntarioDAO
         $this->pdo->beginTransaction();
         try {
             $sql = "UPDATE voluntario 
-                    SET data_admissao = :data_admissao, id_situacao = :id_situacao 
+                    SET data_admissao = :data_admissao, id_situacao = :id_situacao, id_cargo = :id_cargo
                     WHERE id_voluntario = :id";
             $stmt = $this->pdo->prepare($sql);
 
             $id = $voluntario->getId_voluntario();
             $data = $voluntario->getData_admissao();
             $situacao = $voluntario->getId_situacao();
+            $cargo = $voluntario->getId_cargo();
 
             $stmt->bindParam(':id', $id);
             $stmt->bindParam(':data_admissao', $data);
             $stmt->bindParam(':id_situacao', $situacao);
+            $stmt->bindParam(':id_cargo', $cargo);
 
             $stmt->execute();
             $this->pdo->commit();

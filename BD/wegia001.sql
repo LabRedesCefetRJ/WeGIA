@@ -1017,110 +1017,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`tabela_imagem_campo` (
     REFERENCES `wegia`.`imagem` (`id_imagem`))
 ENGINE = InnoDB;
 
-/*
--- REMOVIDO - PAGAMENTOS USANDO O GATEWAY BOLETOBANCÁRIO.COM TOTALMENTE DESATIVADO --
--- -----------------------------------------------------
--- Table `wegia`.`sistema_pagamento`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`sistema_pagamento` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `nome_sistema` VARCHAR(256) NOT NULL,
-  PRIMARY KEY (`id`))
-ENGINE = InnoDB;
 
-
--- -----------------------------------------------------
--- Table `wegia`.`doacao_boleto_regras`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`doacao_boleto_regras` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `min_boleto_uni` DECIMAL(10,2) NOT NULL,
-  `max_dias_venc` INT(11) NOT NULL,
-  `juros` DECIMAL(10,2) NOT NULL,
-  `multa` DECIMAL(10,2) NOT NULL,
-  `max_parcela` DECIMAL(10,2) NOT NULL,
-  `min_parcela` DECIMAL(10,2) NOT NULL,
-  `agradecimento` LONGTEXT NOT NULL,
-  `dias_boleto_a_vista` INT(11) NOT NULL,
-  `dias_venc_carne_op1` INT(11) NOT NULL,
-  `dias_venc_carne_op2` INT(11) NOT NULL,
-  `dias_venc_carne_op3` INT(11) NOT NULL,
-  `dias_venc_carne_op4` INT(11) NOT NULL,
-  `dias_venc_carne_op5` INT(11) NOT NULL,
-  `dias_venc_carne_op6` INT(11) NOT NULL,
-  PRIMARY KEY (`id`))
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `wegia`.`doacao_boleto_info`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`doacao_boleto_info` (
-  `id` INT(11) NOT NULL,
-  `api` VARCHAR(256) NOT NULL,
-  `token_api` VARCHAR(256) NOT NULL,
-  `sandbox` VARCHAR(256) NOT NULL,
-  `token_sandbox` VARCHAR(256) NOT NULL,
-  `id_sistema` INT(11) NOT NULL,
-  `id_regras` INT(11) NOT NULL,
-  INDEX `id_sistema` (`id_sistema` ASC),
-  INDEX `id_regras` (`id_regras` ASC),
-  CONSTRAINT `doacao_boleto_info_ibfk_1`
-    FOREIGN KEY (`id_sistema`)
-    REFERENCES `wegia`.`sistema_pagamento` (`id`),
-  CONSTRAINT `doacao_boleto_info_ibfk_2`
-    FOREIGN KEY (`id_regras`)
-    REFERENCES `wegia`.`doacao_boleto_regras` (`id`))
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `wegia`.`doacao_cartao_avulso`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`doacao_cartao_avulso` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `url` VARCHAR(256) NOT NULL,
-  `id_sistema` INT(11) NOT NULL,
-  INDEX `id_sistema` (`id_sistema` ASC),
-  PRIMARY KEY (`id`),
-  CONSTRAINT `doacao_cartao_avulso_ibfk_1`
-    FOREIGN KEY (`id_sistema`)
-    REFERENCES `wegia`.`sistema_pagamento` (`id`))
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `wegia`.`doacao_cartao_mensal`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`doacao_cartao_mensal` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `link` VARCHAR(256) NOT NULL,
-  `valor` DECIMAL(10,2) NULL DEFAULT NULL,
-  `id_sistema` INT(11) NOT NULL,
-  INDEX `id_sistema` (`id_sistema` ASC),
-  PRIMARY KEY (`id`),
-  CONSTRAINT `doacao_cartao_mensal_ibfk_1`
-    FOREIGN KEY (`id_sistema`)
-    REFERENCES `wegia`.`sistema_pagamento` (`id`))
-ENGINE = InnoDB;
-
-
-CREATE TABLE IF NOT EXISTS doacao_pix_tipos(
-ID INT PRIMARY KEY AUTO_INCREMENT,
-TIPO VARCHAR(50) NOT NULL)
-ENGINE = InnoDB;
-
-CREATE TABLE IF NOT EXISTS doacao_pix(
-ID INT PRIMARY KEY AUTO_INCREMENT,
-CHAVE VARCHAR(50),
-TIPO_CHAVE INT,
-ID_SISTEMA INT,
-FOREIGN KEY (TIPO_CHAVE) REFERENCES doacao_pix_tipos(ID),
-FOREIGN KEY (ID_SISTEMA) REFERENCES sistema_pagamento(ID))
-ENGINE = InnoDB;
-*/
-
--- Novas tabelas para o módulo contribuição --
 -- -----------------------------------------------------
 -- Table `wegia`.`contribuicao_gatewayPagamento`
 -- -----------------------------------------------------
@@ -1217,7 +1114,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`contribuicao_log` (
     `uuid` BINARY(16) NOT NULL,
     `id_socio` INT(11) NOT NULL,
     `id_gateway` INT(11) DEFAULT NULL,
-    `id_meio_pagamento` INT(11) NOT NULL,
+    `id_meio_pagamento` INT(11) DEFAULT NULL,
     `id_recorrencia` INT(11) DEFAULT NULL,
     `id_contribuicao_documento` INT(11) DEFAULT NULL,
     `codigo` VARCHAR(255) NOT NULL UNIQUE,
@@ -2661,9 +2558,11 @@ CREATE TABLE IF NOT EXISTS voluntario (
  id_voluntario INT AUTO_INCREMENT PRIMARY KEY,
  id_pessoa INT NOT NULL,
  id_situacao INT NOT NULL,
+ id_cargo INT NULL DEFAULT NULL,
  data_admissao DATE NOT NULL,
  FOREIGN KEY (id_pessoa) REFERENCES pessoa(id_pessoa) ON DELETE CASCADE,
- FOREIGN KEY (id_situacao) REFERENCES situacao(id_situacao)
+ FOREIGN KEY (id_situacao) REFERENCES situacao(id_situacao),
+ FOREIGN KEY (id_cargo) REFERENCES cargo(id_cargo)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ------------------------------------------------------
@@ -3223,51 +3122,6 @@ END$$
 
 DELIMITER ;
 
--- Em desuso por conta do novo módulo contribuição
--- -----------------------------------------------------
--- procedure registradoacao
--- -----------------------------------------------------
-
--- DELIMITER $$
--- USE `wegia`$$
--- CREATE PROCEDURE `registradoacao`(
--- 	IN `nome` VARCHAR(100), 
---     IN `sobrenome` VARCHAR(100), 
---     IN `cpf` VARCHAR(40), 
---     IN `telefone` VARCHAR(25), 
---     IN `data_nascimento` DATE, 
---     IN `cep` VARCHAR(20), 
---     IN `estado` VARCHAR(5), 
---     IN `cidade` VARCHAR(40), 
---     IN `bairro` VARCHAR(40), 
---     IN `logradouro` VARCHAR(40), 
---     IN `numero_endereco` VARCHAR(11), 
---     IN `complemento` VARCHAR(50),
---     IN `id_sociostatus` INT(11),
---     IN `id_sociotipo` INT(11),
---     IN `email` VARCHAR(256),
---     IN `ip` VARCHAR(256),
---     IN `data` DATE,
---     IN `hora` TIME,
---     IN `id_sistema` INT(11),
---     IN `valor_boleto` DECIMAL(10,2),
---     IN `data_venc_boleto` DATE
--- )
--- begin
-
--- insert ignore into pessoa(nome,sobrenome,cpf,telefone,data_nascimento,cep,estado,cidade, bairro, logradouro, numero_endereco,
--- complemento)
--- values(nome, sobrenome, cpf, telefone,data_nascimento,cep,estado,cidade,bairro,logradouro,numero_endereco,complemento);
-
--- insert ignore into socio(id_pessoa, id_sociostatus, id_sociotipo, email)
--- values ((SELECT id_pessoa FROM pessoa WHERE pessoa.cpf=cpf limit 1), id_sociostatus, id_sociotipo, email);
-
--- insert into log_contribuicao(id_socio, ip, data, hora, id_sistema, valor_boleto, data_venc_boleto)
--- values((SELECT id_socio FROM socio, pessoa WHERE pessoa.id_pessoa=socio.id_pessoa AND pessoa.cpf=cpf limit 1), ip, data, hora, id_sistema, valor_boleto, data_venc_boleto);
-
--- END$$
-
--- DELIMITER ;
 
 -- -----------------------------------------------------
 -- procedure insregras
@@ -3681,6 +3535,17 @@ CREATE TABLE IF NOT EXISTS `wegia`.`projeto_atendido` (
 
 
 -- -----------------------------------------------------
+-- Table `wegia`.`setor`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`setor` (
+  `id_setor` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(45) NOT NULL,
+  `status` INT NOT NULL,
+  PRIMARY KEY (`id_setor`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+
+-- -----------------------------------------------------
 -- Table `wegia`.`projeto_turma`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`projeto_turma` (
@@ -3745,3 +3610,76 @@ CREATE TABLE IF NOT EXISTS `wegia`.`projeto_turma_atendido` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`visitante`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`visitante` (
+  `id_visitante` INT NOT NULL AUTO_INCREMENT,
+  `id_pessoa` INT NOT NULL,
+  PRIMARY KEY (`id_visitante`),
+  INDEX `fk_visitante_pessoa_idx` (`id_pessoa` ASC),
+  CONSTRAINT `fk_visitante_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`visitado`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`visitado` (
+  `id_visitado` INT NOT NULL AUTO_INCREMENT,
+  `id_pessoa` INT NULL DEFAULT NULL,
+  `id_pet` INT NULL DEFAULT NULL,
+  `id_setor` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id_visitado`),
+  INDEX `fk_visitado_pessoa_idx` (`id_pessoa` ASC),
+  INDEX `fk_visitado_pet_idx` (`id_pet` ASC),
+  INDEX `fk_visitado_setor_idx` (`id_setor` ASC),
+  CONSTRAINT `fk_visitado_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_visitado_pet`
+    FOREIGN KEY (`id_pet`)
+    REFERENCES `wegia`.`pet` (`id_pet`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_visitado_setor`
+    FOREIGN KEY (`id_setor`)
+    REFERENCES `wegia`.`setor` (`id_setor`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`visita`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`visita` (
+  `id_visita` INT NOT NULL AUTO_INCREMENT,
+  `id_visitante` INT NOT NULL,
+  `id_visitado` INT NOT NULL,
+  `horario_entrada` DATETIME NOT NULL,
+  `horario_saida` DATETIME NULL DEFAULT NULL,
+  `status` VARCHAR(45) NULL DEFAULT NULL,
+  `descricao` VARCHAR(255) NULL DEFAULT NULL,
+  PRIMARY KEY (`id_visita`),
+  INDEX `fk_visita_visitante_idx` (`id_visitante` ASC),
+  INDEX `fk_visita_visitado_idx` (`id_visitado` ASC),
+  CONSTRAINT `fk_visita_visitante`
+    FOREIGN KEY (`id_visitante`)
+    REFERENCES `wegia`.`visitante` (`id_visitante`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_visita_visitado`
+    FOREIGN KEY (`id_visitado`)
+    REFERENCES `wegia`.`visitado` (`id_visitado`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

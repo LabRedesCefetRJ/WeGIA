@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 
     function fecharConexao(mysqli_stmt $stmt, mysqli $conexao){
         mysqli_stmt_close($stmt);
@@ -55,8 +56,10 @@
 
         fecharConexao($stmt, $conexao);
         header("Location: ../../sucesso.php");
+        exit;
     }else{
         fecharConexao($stmt, $conexao);
         header("Location: ./tags.php?msg_e=Erro ao modificar tag.");
+        exit;
     }
 ?>

@@ -18,6 +18,7 @@ permissao($_SESSION['id_pessoa'], 5, 5);
 
 if (!isset($_SESSION['saude'])) {
 	header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=SaudeControle&nextPage=../html/saude/listar_sinais_vitais.php');
+	exit;
 }
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)

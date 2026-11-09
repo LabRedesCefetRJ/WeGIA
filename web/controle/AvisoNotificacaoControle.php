@@ -78,6 +78,7 @@ class AvisoNotificacaoControle
                $avisoNotificacaoDAO = new AvisoNotificacaoDAO();
                $avisoNotificacaoDAO->alterarStatus($idNotificacao);
                header("Location: ../html/saude/intercorrencia_visualizar.php");
+               exit;
           } catch (Exception $e) {
                Util::tratarException($e);
           }

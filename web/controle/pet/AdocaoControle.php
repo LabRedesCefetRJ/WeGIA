@@ -46,6 +46,7 @@ class AdocaoControle {
         }
 
         header('Location: ../../html/pet/profile_pet.php?id_pet=' . $id_pet);
+        exit;
     }
 }
 

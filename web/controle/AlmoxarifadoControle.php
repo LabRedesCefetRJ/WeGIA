@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -31,6 +32,7 @@ class AlmoxarifadoControle
             (preg_match($regex, $nextPage) || preg_match($regexCadastroOrigem, $nextPage))
                 ? header('Location:' . $nextPage)
                 : header('Location:' . WWW . 'html/home.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -51,6 +53,7 @@ class AlmoxarifadoControle
 
             $nextPage = $_GET['nextPage'];
             header("Location: $nextPage");
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -73,6 +76,7 @@ class AlmoxarifadoControle
             $_SESSION['link'] = WWW . "html/matPat/adicionar_almoxarifado.php";
 
             header("Location: " . WWW . "html/matPat/adicionar_almoxarifado.php");
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -100,6 +104,7 @@ class AlmoxarifadoControle
             $almoxarifadoDAO->excluir($idAlmoxarifado);
 
             header('Location: ' . WWW . 'html/matPat/listar_almox.php');
+            exit;
         } catch (PDOException $e) {
             if ($e->getCode() === '23000') {
                 $_SESSION['erro'] = "Não é possível excluir este almoxarifado pois existem registros vinculados (almoxarife, entrada ou saída).";
@@ -136,6 +141,7 @@ class AlmoxarifadoControle
             $_SESSION['msg'] = "Almoxarifado alterado com sucesso";
 
             header('Location: ' . WWW . 'html/matPat/listar_almox.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -147,6 +153,7 @@ class AlmoxarifadoControle
         $_SESSION['almoxarifado'] = $dao->listarArquivados();
 
         header('Location: ' . WWW . 'html/matPat/listar_almox.php?tipo=arquivado');
+        exit;
     }
 
     public function arquivar()
@@ -166,6 +173,7 @@ class AlmoxarifadoControle
         $_SESSION['msg'] = "Almoxarifado arquivado com sucesso.";
 
         header('Location: ' . WWW . 'html/matPat/listar_almox.php');
+        exit;
     }
 
     public function desarquivar()
@@ -185,5 +193,6 @@ class AlmoxarifadoControle
         $_SESSION['msg'] = "Almoxarifado restaurado com sucesso.";
 
         header('Location: ' . WWW . 'html/matPat/listar_almox.php?tipo=arquivado');
+        exit;
     }
 }

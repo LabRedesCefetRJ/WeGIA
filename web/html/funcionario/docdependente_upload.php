@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 //Refatorar para estrutura MVC
 if (session_status() === PHP_SESSION_NONE)
     session_start();
@@ -71,9 +72,11 @@ if ($_POST) {
         $prep->execute();
 
         header("Location: ./profile_dependente.php?id_dependente=$id_dependente");
+        exit;
     } catch (Exception $e) {
         Util::tratarException($e);
     }
 } else {
     header("Location: ../informacao_funcionario.php");
+    exit;
 }
