@@ -36,21 +36,7 @@ $nomeAlmoxarifado = $dadosRelatorio['nome_almoxarifado'] ?? 'Não registrado';
 $dataInicio = $dadosRelatorio['data_inicio'] ?? null;
 $dataFim = $dadosRelatorio['data_fim'] ?? null;
 
-$modeloBrasileiro = 'd/m/Y';
-$dataInicioFormatada = !empty($dataInicio) ? date_format(date_create($dataInicio), $modeloBrasileiro) : null;
-$dataFimFormatada = !empty($dataFim) ? date_format(date_create($dataFim), $modeloBrasileiro) : null;
-
-ob_start();
-display_campo('Logo', 'file');
-$logoCadastrada = trim(ob_get_clean());
-$logoInstituicao = '';
-if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada, $partesLogo)) {
-    $imagemLogo = base64_decode($partesLogo[1], true);
-    $dadosLogo = $imagemLogo !== false ? @getimagesizefromstring($imagemLogo) : false;
-    if ($dadosLogo && strpos($dadosLogo['mime'], 'image/') === 0) {
-        $logoInstituicao = 'data:' . $dadosLogo['mime'] . ';base64,' . base64_encode($imagemLogo);
-    }
-}
+require_once ROOT . '/html/relatorios/RelatorioMatPat.php';
 
 ?>
 <!doctype html>
@@ -162,96 +148,10 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
         });
     </script>
 
-
-    <script>
-        var homeIcon;
-
-        window.onbeforeprint = function() {
-
-            homeIcon = $('#home-icon').children();
-
-            $('#home-icon').empty();
-
-            $('#home-icon').append(
-                $('<span />').text(
-                    "<?php display_campo("Titulo", "str"); ?>"
-                )
-            );
-        }
-
-        window.onafterprint = function() {
-
-            $('#home-icon').empty();
-
-            $('#home-icon').append(homeIcon);
-        };
-    </script>
-
-    <style>
-    .produto-relatorio {
-        margin-bottom: 8px;
-    }
-
-    .produto-resumo {
-        padding: 10px 8px;
-        border-bottom: 1px solid #ddd;
-    }
-
-    @media print {
-        .print-hide,
-        .print-button {
-            display: none !important;
-        }      
-
-        .categoria-relatorio {
-            display: block !important;
-        }
-
-        .categoria-relatorio .panel-heading {
-            display: block !important;
-        }
-
-        .categoria-relatorio .panel-collapse {
-            display: block !important;
-            height: auto !important;
-            visibility: visible !important;
-        }
-
-        .produto-relatorio {
-            display: block !important;
-            margin-bottom: 20px;
-            page-break-inside: avoid;
-        }
-
-        .produto-relatorio .detalhes-produto {
-            display: block !important;
-            height: auto !important;
-            visibility: visible !important;
-        }
-
-        .produto-relatorio table {
-            page-break-inside: auto;
-        }
-
-        .produto-relatorio tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
-        }
-
-        .produto-relatorio thead {
-            display: table-header-group;
-        }
-    }
-</style>
-<style>
-    .logo-relatorio { display: none; }
-    @media print {
-        .logo-relatorio { display: block; margin-bottom: 8px; break-inside: avoid; }
-        .logo-relatorio img { object-fit: contain; }
-    }
-</style>
+    <link rel="stylesheet" href="<?= WWW ?>css/relatorio-matpat.css">
+<script src="<?= WWW ?>assets/javascripts/relatorio-matpat.js" defer></script>
 </head>
-<body>
+<body class="relatorio-matpat">
     <section class="body">
         <div id="header" class="print-hide"></div>
         <div class="inner-wrapper">
@@ -269,36 +169,15 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
                     </div>
                 </header>
                 <div class="tab-content">
-                    <?php if ($logoInstituicao !== ''): ?>
-                        <div class="logo-relatorio">
-                            <img src="<?= htmlspecialchars($logoInstituicao, ENT_QUOTES, 'UTF-8') ?>" alt="Logo da instituição" width="76" height="79">
-                        </div>
-                    <?php endif; ?>
-                    <div class="descricao">
-                        <h2>Geração de Grupo</h2>
-                        <button style="float: right;" class="mb-xs mt-xs mr-xs btn btn-default print-button" onclick="window.print();">Imprimir</button>
-                    </div>
-                    <table class="table table-striped">
-                        <thead class="thead-dark"><tr><th scope="col" colspan="7" style="font-size: large;">INFORMAÇÕES DO GRUPO</th></tr></thead>
-                        <tbody>
-                            <tr><td>GRUPO: <?= htmlspecialchars($nomeGrupo) ?></td></tr>
-                            <tr><td>ALMOXARIFADO: <?= htmlspecialchars($nomeAlmoxarifado) ?></td></tr>
-                            <tr><td>
-                                PERÍODO DO RELATÓRIO:
-                                <?php
-                                if (empty($dataInicio) && empty($dataFim)) {
-                                    echo 'TODAS AS DATAS';
-                                } elseif (!empty($dataInicio) && !empty($dataFim)) {
-                                    echo '<br>A partir do dia: ' . htmlspecialchars($dataInicioFormatada) . '<br>Até: ' . htmlspecialchars($dataFimFormatada);
-                                } elseif (!empty($dataInicio)) {
-                                    echo 'A partir do dia: ' . htmlspecialchars($dataInicioFormatada);
-                                } elseif (!empty($dataFim)) {
-                                    echo 'Até: ' . htmlspecialchars($dataFimFormatada);
-                                }
-                                ?>
-                            </td></tr>
-                        </tbody>
-                    </table>
+
+                    <?php
+                    $resumo = [
+                        'Grupo' => $nomeGrupo,
+                        'Almoxarifado' => $nomeAlmoxarifado,
+                        'Período' => RelatorioMatPat::periodo($dataInicio, $dataFim),
+                    ];
+                    ob_start();
+                    ?>
                     <div class="panel-group">
                         <?php if (empty($produtosPorCategoria)) { ?>
                             <div class="alert alert-info">Nenhum produto encontrado para este grupo.</div>
@@ -316,7 +195,7 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
                                         <small><?= count($produtosCategoria) ?> <?= count($produtosCategoria) === 1 ? 'produto' : 'produtos' ?></small>
                                     </div>
                                     <div class="col-md-2 text-right">
-                                        <button type="button" class="btn btn-default btn-sm" data-toggle="collapse" data-target="#<?= $idCategoria ?>">Ver produtos <i class="fa fa-chevron-down"></i></button>
+                                        <button type="button" class="btn btn-default btn-sm print-hide" data-toggle="collapse" data-target="#<?= $idCategoria ?>">Ver produtos <i class="fa fa-chevron-down"></i></button>
                                     </div>
                                 </div>
                             </header>
@@ -376,7 +255,6 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
                                                     </tbody>
                                                 </table>
 
-
                                                 <table class="table table-striped">
                                                     <thead class="thead-dark">
                                                         <tr><th colspan="3" style="font-size: large;">SAÍDAS</th></tr>
@@ -406,16 +284,22 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
                                                     </tbody>
                                                 </table>
                                             </div>
+                                        </div>
                                     <?php } ?>
                                 </div>
                             </div>
                         </section>
                         <?php } ?>
                     </div>
+                    <?php
+                    $relatorio = new RelatorioMatPat($resumo, ob_get_clean(), 'Relatório de Grupo', 'grupo');
+                    echo $relatorio->getHtml();
+                    ?>
+                </div>
                 </section>
             </div>
         </section>
-    <div align="right">
+    <div align="right" class="print-hide">
         <iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
     </div>
 </body>

@@ -30,17 +30,7 @@ function quickQuery($query, $column)
 	return $res[0][$column];
 }
 
-ob_start();
-display_campo('Logo', 'file');
-$logoCadastrada = trim(ob_get_clean());
-$logoInstituicao = '';
-if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada, $partesLogo)) {
-    $imagemLogo = base64_decode($partesLogo[1], true);
-    $dadosLogo = $imagemLogo !== false ? @getimagesizefromstring($imagemLogo) : false;
-    if ($dadosLogo && strpos($dadosLogo['mime'], 'image/') === 0) {
-        $logoInstituicao = 'data:' . $dadosLogo['mime'] . ';base64,' . base64_encode($imagemLogo);
-    }
-}
+require_once ROOT . '/html/relatorios/RelatorioMatPat.php';
 
 ?>
 <!doctype html>
@@ -122,36 +112,15 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 		});
 	</script>
 
-	<script>
-		var homeIcon;
-		// Antes do navegador imprimir a página
-		window.onbeforeprint = function(event) {
-			homeIcon = $('#home-icon').children();
-			$('#home-icon').empty();
-			$('#home-icon').append($('<span />').text("<?php display_campo("Titulo", "str"); ?>"));
-		}
-
-		// Depois do navegador imprimir ou cancelar a impressão da página
-		window.onafterprint = function(event) {
-			$('#home-icon').empty();
-			$('#home-icon').append(homeIcon);
-		};
-	</script>
-
 	<!-- javascript tab management script -->
 
 
 
-<style>
-    .logo-relatorio { display: none; }
-    @media print {
-        .logo-relatorio { display: block; margin-bottom: 8px; break-inside: avoid; }
-        .logo-relatorio img { object-fit: contain; }
-    }
-</style>
+<link rel="stylesheet" href="<?= WWW ?>css/relatorio-matpat.css">
+<script src="<?= WWW ?>assets/javascripts/relatorio-matpat.js" defer></script>
 </head>
 
-<body>
+<body class="relatorio-matpat">
 	<section class="body">
 		<div id="header" class="print-hide"></div>
 		<!-- end: header -->
@@ -177,19 +146,6 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 				</header>
 				<!--start: page-->
 				<div class="tab-content">
-                    <?php if ($logoInstituicao !== ''): ?>
-                        <div class="logo-relatorio">
-                            <img src="<?= htmlspecialchars($logoInstituicao, ENT_QUOTES, 'UTF-8') ?>" alt="Logo da instituição" width="76" height="79">
-                        </div>
-                    <?php endif; ?>
-					<div class="descricao">
-						<p>
-							<li>
-								<h2>Geração de Produto</h2>
-							</li>
-						</p>
-						<button style="float: right;" class="mb-xs mt-xs mr-xs btn btn-default print-button" onclick="window.print();">Imprimir</button>
-					</div>
 
 					<?php
 					$pdo = Conexao::connect();
@@ -256,7 +212,7 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 
 						if ($idProduto && $idAlmoxarifado) {
 							$stmt = $pdo->prepare("
-								SELECT 
+								SELECT
 									ientrada.id_entrada,
 									entrada.data AS data_entrada,
 									entrada.hora AS hora_entrada,
@@ -274,30 +230,30 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 									estoque.qtd AS estoque_atual,  -- Estoque atual da tabela estoque
 									entrada.id_entrada AS id_entrada,  -- Adicionando id_entrada
 									saida.id_saida AS id_saida  -- Adicionando id_saida
-								FROM 
+								FROM
 									ientrada
-								JOIN 
+								JOIN
 									entrada ON ientrada.id_entrada = entrada.id_entrada
-								JOIN 
+								JOIN
 									almoxarifado ON entrada.id_almoxarifado = almoxarifado.id_almoxarifado
-								JOIN 
+								JOIN
 									produto ON ientrada.id_produto = produto.id_produto
-								LEFT JOIN 
+								LEFT JOIN
 									categoria_produto ON produto.id_categoria_produto = categoria_produto.id_categoria_produto
-								LEFT JOIN 
+								LEFT JOIN
 									isaida ON isaida.id_produto = ientrada.id_produto
-								LEFT JOIN 
+								LEFT JOIN
 									saida ON isaida.id_saida = saida.id_saida
-								LEFT JOIN 
+								LEFT JOIN
 									tipo_entrada ON entrada.id_tipo = tipo_entrada.id_tipo
-								LEFT JOIN 
+								LEFT JOIN
 									tipo_saida ON saida.id_tipo = tipo_saida.id_tipo
 								LEFT JOIN
-									estoque ON estoque.id_produto = produto.id_produto 
+									estoque ON estoque.id_produto = produto.id_produto
 									AND estoque.id_almoxarifado = almoxarifado.id_almoxarifado
-								LEFT JOIN 
+								LEFT JOIN
 									unidade ON unidade.id_unidade = produto.id_unidade
-								WHERE 
+								WHERE
 									almoxarifado.id_almoxarifado = :idAlmoxarifado
 									AND produto.id_produto = :idProduto
 						");
@@ -315,7 +271,7 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 					try {
 						if ($idProduto && $idAlmoxarifado) {
 							$query = "
-									SELECT 
+									SELECT
 										entrada.data AS data_entrada,
 										entrada.hora AS hora_entrada,
 										almoxarifado.descricao_almoxarifado,
@@ -325,24 +281,24 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 										ientrada.qtd AS quantidade_entrada,
 										tipo_entrada.descricao AS descricao_tipo_entrada,
 										estoque.qtd AS estoque_atual
-									FROM 
+									FROM
 										ientrada
-									JOIN 
+									JOIN
 										entrada ON ientrada.id_entrada = entrada.id_entrada
-									JOIN 
+									JOIN
 										almoxarifado ON entrada.id_almoxarifado = almoxarifado.id_almoxarifado
-									JOIN 
+									JOIN
 										produto ON ientrada.id_produto = produto.id_produto
-									LEFT JOIN 
+									LEFT JOIN
 										categoria_produto ON produto.id_categoria_produto = categoria_produto.id_categoria_produto
-									LEFT JOIN 
+									LEFT JOIN
 										unidade ON unidade.id_unidade = produto.id_unidade
-									LEFT JOIN 
+									LEFT JOIN
 										tipo_entrada ON entrada.id_tipo = tipo_entrada.id_tipo
 									LEFT JOIN
-										estoque ON estoque.id_produto = produto.id_produto 
+										estoque ON estoque.id_produto = produto.id_produto
 										AND estoque.id_almoxarifado = almoxarifado.id_almoxarifado
-									WHERE 
+									WHERE
     									almoxarifado.id_almoxarifado = :idAlmoxarifado
     									AND produto.id_produto = :idProduto
     									AND produto.ativo = 1
@@ -380,10 +336,9 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 						echo "Não registrado" . $e->getMessage();
 					}
 
-
 					try {
 						$query = "
-								SELECT 
+								SELECT
 									saida.data AS data_saida,
 									saida.hora AS hora_saida,
 									almoxarifado.descricao_almoxarifado,
@@ -392,21 +347,21 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 									unidade.descricao_unidade as unidade,
 									isaida.qtd AS quantidade_saida,
 									tipo_saida.descricao AS descricao_tipo_saida
-								FROM 
+								FROM
 									isaida
-								JOIN 
+								JOIN
 									saida ON isaida.id_saida = saida.id_saida
-								JOIN 
+								JOIN
 									almoxarifado ON saida.id_almoxarifado = almoxarifado.id_almoxarifado
-								JOIN 
+								JOIN
 									produto ON isaida.id_produto = produto.id_produto
-								LEFT JOIN 
+								LEFT JOIN
 									categoria_produto ON produto.id_categoria_produto = categoria_produto.id_categoria_produto
-								LEFT JOIN 
+								LEFT JOIN
 									unidade ON unidade.id_unidade = produto.id_unidade
-								LEFT JOIN 
+								LEFT JOIN
 									tipo_saida ON saida.id_tipo = tipo_saida.id_tipo
-								WHERE 
+								WHERE
     								almoxarifado.id_almoxarifado = :idAlmoxarifado
     								AND produto.id_produto = :idProduto
     								AND produto.ativo = 1
@@ -447,6 +402,21 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 
 					?>
 
+                    <?php
+                    $consultaResumo = $pdo->prepare('SELECT descricao FROM produto WHERE id_produto = :id');
+                    $consultaResumo->execute([':id' => $idProduto]);
+                    $nomeProduto = $consultaResumo->fetchColumn() ?: 'Não registrado';
+                    $consultaResumo = $pdo->prepare('SELECT descricao_almoxarifado FROM almoxarifado WHERE id_almoxarifado = :id');
+                    $consultaResumo->execute([':id' => $idAlmoxarifado]);
+                    $nomeAlmoxarifado = $consultaResumo->fetchColumn() ?: 'Não registrado';
+                    $resumo = [
+                        'Produto' => $nomeProduto,
+                        'Almoxarifado' => $nomeAlmoxarifado,
+                        'Período' => RelatorioMatPat::periodo($dataInicio, $dataFim),
+                    ];
+                    ob_start();
+                    ?>
+
 					<table class="table table-striped">
 						<thead class="thead-dark">
 							<tr>
@@ -454,12 +424,6 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 							</tr>
 						</thead>
 						<tbody>
-							<tr>
-								<td>PRODUTO: <?php echo !empty($entradas[0]['descricao']) ? htmlspecialchars($entradas[0]['descricao']) : 'Não registrado'; ?></td>
-							</tr>
-							<tr>
-								<td>ALMOXARIFADO: <?php echo !empty($entradas[0]['descricao_almoxarifado']) ? htmlspecialchars($entradas[0]['descricao_almoxarifado']) : 'Não registrado'; ?></td>
-							</tr>
 							<tr>
 								<td>CATEGORIA: <?php echo !empty($entradas[0]['descricao_categoria']) ? htmlspecialchars($entradas[0]['descricao_categoria']) : 'Não registrado'; ?></td>
 							</tr>
@@ -469,23 +433,7 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 							<tr>
 								<td>ESTOQUE ATUAL: <?php echo !empty($entradas[0]['estoque_atual']) ? htmlspecialchars($entradas[0]['estoque_atual']) : 'Não registrado'; ?></td>
 							</tr>
-							<tr>
-								<td>PERÍODO DO RELATÓRIO:
-									<?php
-									if (empty($dataInicio) && empty($dataFim)) {
-										echo "TODAS AS DATAS";
-									} elseif (!empty($dataInicio) && !empty($dataFim)) {
-										echo "<br> A partir do dia: " . $dataInicioFormatada . "<br>" . "Até: " . $dataFimFormatada;
-									} elseif (!empty($dataInicio)) {
-										echo "A partir do dia: " . $dataInicioFormatada;
-									} elseif (!empty($dataFim)) {
-										echo "Até: " . $dataFimFormatada;
-									} else {
-										echo 'Não registrado';
-									}
-									?>
-								</td>
-							</tr>
+
 						</tbody>
 					</table>
 
@@ -544,13 +492,16 @@ if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada
 						</tbody>
 					</table>
 
-
+                    <?php
+                    $relatorio = new RelatorioMatPat($resumo, ob_get_clean(), 'Relatório de Produto', 'produto');
+                    echo $relatorio->getHtml();
+                    ?>
 				</div>
 				<!--end: page-->
 			</section>
 		</div>
 	</section>
-	<div align="right">
+	<div align="right" class="print-hide">
 		<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
 	</div>
 </body>

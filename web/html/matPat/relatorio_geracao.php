@@ -82,19 +82,7 @@ $item = new Item(
 	$modoRequisicao
 );
 
-
-// Reutiliza a logo da instalação, sem depender de uma imagem fixa.
-ob_start();
-display_campo('Logo', 'file');
-$logoCadastrada = trim(ob_get_clean());
-$logoInstituicao = '';
-if (preg_match('~^data:image(?:/[a-z0-9.+-]+)?;base64,(.+)$~is', $logoCadastrada, $partesLogo)) {
-    $imagemLogo = base64_decode($partesLogo[1], true);
-    $dadosLogo = $imagemLogo !== false ? @getimagesizefromstring($imagemLogo) : false;
-    if ($dadosLogo && strpos($dadosLogo['mime'], 'image/') === 0) {
-        $logoInstituicao = 'data:' . $dadosLogo['mime'] . ';base64,' . base64_encode($imagemLogo);
-    }
-}
+require_once ROOT . '/html/relatorios/RelatorioMatPat.php';
 
 function quickQuery($query, $parametro, $column)
 {
@@ -191,168 +179,11 @@ function quickQuery($query, $parametro, $column)
 
 	<!-- javascript tab management script -->
 
-	<style>
-		.folha-requisicao {
-    		width: 100%;
-    		max-width: 28.2cm;
-    		margin: 0 auto 20px auto;
-    		page-break-after: always;
-    		font-family: Arial, sans-serif;
-		}
-
-		.cabecalho-requisicao {
-    		text-align: center;
-    		font-size: 20px;
-    		font-weight: bold;
-    		margin-bottom: 2px;
-		}
-
-		.instrucao-requisicao {
-    		text-align: center;
-    		font-size: 9px;
-    		margin-bottom: 8px;
-		}
-
-		.tabela-requisicao {
-    		width: 100%;
-    		border-collapse: collapse;
-    		table-layout: fixed;
-		}
-
-		.tabela-requisicao td {
-    		border: 1px solid #999;
-    		padding: 2px;
-    		vertical-align: top;
-		}
-
-		.produto-requisicao {
-    		width: 9%;
-    		font-size: 10px;
-    		font-weight: bold;
-    		vertical-align: middle !important;
-    		overflow-wrap: break-word;
-    		word-break: normal;
-		}
-
-		.produto-requisicao-manual {
-    		padding: 4px !important;
-    		vertical-align: middle !important;
-		}
-
-		.texto-produto-manual {
-    		font-size: 9px;
-    		font-weight: bold;
-    		line-height: 1.1;
-    		margin-bottom: 8px;
-		}
-
-		.linha-produto-manual {
-    		width: 100%;
-    		height: 10px;
-    		border-bottom: 1px solid #555;
-		}
-
-		.dia-requisicao {
-    		width: 5.6875%;
-    		height: 0.78cm;
-    		font-size: 8px;
-    		font-weight: bold;
-    		text-align: left;
-    		vertical-align: top;
-		}
-
-		.dia-azul {
-    		background-color: #eaf5ff;
-		}
-
-		.total-requisicao {
-    		background-color: #f2f2f2;
-		}
-
-		.rodape-requisicao {
-    		text-align: right;
-    		font-size: 8px;
-    		color: #999;
-    		margin-top: 4px;
-		}
-
-		@media print {
-   			@page {
-        		size: A4 landscape;
-        		margin: 0.35cm;
-    		}
-
-    		.print-hide,
-    		.descricao,
-    		h4,
-    		.print-button {
-        		display: none !important;
-    		}
-
-    		body {
-        		margin: 0;
-        		padding: 0;
-    		}
-
-    		.content-body,
-    		.inner-wrapper,
-    		.tab-content {
-        		margin: 0 !important;
-        		padding: 0 !important;
-        		width: 100% !important;
-    		}
-
-    		.folha-requisicao {
-        		width: 28.2cm;
-        		max-width: 28.2cm;
-        		margin: 0 auto;
-        		page-break-after: always;
-    		}
-
-    		.tabela-requisicao {
-        		width: 28.2cm;
-    		}
-
-    		.produto-requisicao {
-        		width: 2.43cm;
-    		}
-
-    		.dia-requisicao {
-        		width: 1.61cm;
-    		}
-		}
-
-        .logo-relatorio { display: none; }
-        @media print {
-            html, body, body > .body, body > .body > .inner-wrapper,
-            body > .body > .inner-wrapper > .content-body {
-                display: block !important;
-                position: static !important;
-                width: auto !important;
-                height: auto !important;
-                min-height: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                overflow: visible !important;
-            }
-            .tab-content > .descricao { display: block !important; padding: 0 0 10px; }
-            .logo-relatorio { display: block; margin-bottom: 8px; }
-            .logo-relatorio img { object-fit: contain; }
-            .descricao { break-inside: avoid; }
-            .descricao h3 { margin: 0 0 8px; }
-            .print-hide, .print-button { display: none !important; }
-            .table { width: 100%; font-size: 9pt; }
-            .table thead { display: table-header-group; }
-            .table tr { break-inside: avoid; }
-            .badge { background: transparent !important; color: #000 !important; border: 0; padding: 0; white-space: normal; }
-            .table-info { font-weight: bold; }
-            .folha-requisicao:last-child { page-break-after: auto; break-after: auto; }
-        }
-</style>
-
+	<link rel="stylesheet" href="<?= WWW ?>css/relatorio-matpat.css">
+<script src="<?= WWW ?>assets/javascripts/relatorio-matpat.js" defer></script>
 </head>
 
-<body>
+<body class="relatorio-matpat relatorio-pagina-paisagem">
 	<section class="body">
 		<div id="header" class="print-hide"></div>
 		<!-- end: header -->
@@ -378,149 +209,51 @@ function quickQuery($query, $parametro, $column)
 				</header>
 				<!--start: page-->
 				<div class="tab-content">
-                    <?php if ($logoInstituicao !== ''): ?>
-                        <div class="logo-relatorio">
-                            <img src="<?= htmlspecialchars($logoInstituicao, ENT_QUOTES, 'UTF-8') ?>" alt="Logo da instituição" width="76" height="79">
-                        </div>
-                    <?php endif; ?>
-					<div class="descricao">
-						<p>
-							<li>
-								<?php
-								if (isset($post[0])) {
 
-									if (DEBUG) {
-										echo '<pre class="print-hide">';
-										var_dump("GET", $_GET);
-										var_dump("POST", $_POST, $post);
-										var_dump("INSTANCIAS", $item, $item->hasValue());
-										echo "</pre>";
-									}
-
-									$tipoRelatorio = htmlspecialchars($post[0]) == 'itens_compra' ? 'itens de compra' : htmlspecialchars($post[0]);
-									echo ("<h3>Relatório de " . $tipoRelatorio . "</h3>");
-
-									if ($post[0] == 'entrada') {
-										if (isset($post[1])) {
-											$origem = quickQuery("select nome_origem from origem where id_origem =  :id_origem;", [':id_origem' => $post[1]], "nome_origem");
-											echo ("<ul>Origem: " . htmlspecialchars($origem) . "</ul>");
-										} else {
-											echo ("<ul>Origem: Todas</ul>");
-										}
-										if ($tiposEntrada) {
-                                        $nomesTipos = [];
-                                        foreach ($tiposEntrada as $idTipo) {
-                                            $nomesTipos[] = quickQuery("SELECT descricao FROM tipo_entrada WHERE id_tipo = :id", [':id' => $idTipo], 'descricao') ?? ('Tipo #' . $idTipo);
-                                        }
-                                        echo '<ul>Tipos: ' . htmlspecialchars(implode(', ', $nomesTipos), ENT_QUOTES, 'UTF-8') . '</ul>';
-                                    } else {
-                                        echo '<ul>Tipos: Todos</ul>';
-                                    }
-                                    if (isset($post[3])) {
-											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_pessoa;",  [':id_pessoa' => $post[3]], "nome");
-											echo ("<ul>Responsável: " . htmlspecialchars($responsavel) . "</ul>");
-										} else {
-											echo ("<ul>Responsável: Todos</ul>");
-										}
-									}
-
-									if ($post[0] == 'saida') {
-										if (isset($post[1])) {
-											$destino = quickQuery("select nome_destino from destino where id_destino =  :id_destino;", [':id_destino' => $post[1]], "nome_destino");
-											echo ("<ul>Destino: " . htmlspecialchars($destino) . "</ul>");
-										} else {
-											echo ("<ul>Destino: Todos</ul>");
-										}
-										if ($tiposSaida) {
-                                        $nomesTipos = [];
-                                        foreach ($tiposSaida as $idTipo) {
-                                            $nomesTipos[] = quickQuery("SELECT descricao FROM tipo_saida WHERE id_tipo = :id", [':id' => $idTipo], 'descricao') ?? ('Tipo #' . $idTipo);
-                                        }
-                                        echo '<ul>Tipos: ' . htmlspecialchars(implode(', ', $nomesTipos), ENT_QUOTES, 'UTF-8') . '</ul>';
-                                    } else {
-                                        echo '<ul>Tipos: Todos</ul>';
-                                    }
-                                    if (isset($post[3])) {
-											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_pessoa;", [':id_pessoa' => $post[3]], "nome");
-											echo ("<ul>Responsável: " . htmlspecialchars($responsavel) . "</ul>");
-										} else {
-											echo ("<ul>Responsável: Todos</ul>");
-										}
-									}
-
-									if ($post[0] !== 'estoque' && empty($post[4]['inicio']) && empty($post[4]['fim'])) {
-                                        echo '<ul>Período: Todo o período</ul>';
-                                    }
-                                    if (in_array($post[0], ['saida', 'itens_compra'], true)) {
-                                        $medias = ['dia' => 'Por dia', 'mes' => 'Por mês', 'ano' => 'Por ano'];
-                                        echo '<ul>Média de saída: ' . htmlspecialchars($medias[$tipoMedia] ?? 'Por dia', ENT_QUOTES, 'UTF-8') . '</ul>';
-                                    }
-                                    $modeloBrasileiro = 'd/m/Y';
-
-									if (isset($post[4]['inicio'])) {
-										$dataInicio = $post[4]['inicio'];
-										$dataInicioFormatada = date_format(date_create($dataInicio), $modeloBrasileiro);
-										echo ("<ul>A partir de: " . htmlspecialchars($dataInicioFormatada) . "</ul>");
-									}
-
-									if (isset($post[4]['fim'])) {
-										$dataFim = $post[4]['fim'];
-										$dataFimFormatada = date_format(date_create($dataFim), $modeloBrasileiro);
-										echo ("<ul>Até: " . htmlspecialchars($dataFimFormatada) . "</ul>");
-									}
-
-									if (!empty($_POST['data_inicio']) && !empty($_POST['data_fim']) && $_POST['data_inicio'] > $_POST['data_fim']) {
-										echo ("<ul style='color: red;'>Aviso: A data de início é maior que a data de fim.</ul>");
-										exit();
-									}
-
-									if (isset($post[5])) {
-										$almoxarifado = quickQuery("select descricao_almoxarifado from almoxarifado where id_almoxarifado = :id_almoxarifado;", [':id_almoxarifado' => $post[5]], "descricao_almoxarifado");
-										echo ("<ul>Almoxarifado: " . htmlspecialchars($almoxarifado) . "</ul>"); 
-									} else {
-										echo ("<ul>Almoxarifado: Todos</ul>");
-									}
-
-									if ($post[0] === 'requisicao') {
-										$modelosRequisicao = [
-											'movimentados' => 'Produtos mais movimentados',
-											'completo' => 'Todos os produtos em estoque'
-										];
-
-										echo (
-											"<ul>Modelo da requisição: " .
-											htmlspecialchars($modelosRequisicao[$modoRequisicao] ?? 'Produtos mais movimentados') .
-											"</ul>"
-										);
-
-										if ($modoRequisicao === 'movimentados') {
-											echo ("<ul>Critério: produtos com saída total igual ou superior a 10 no período selecionado.</ul>");
-										}
-									} else {
-										if ($post[0] === 'estoque') {
-											if ($post[6]) {
-												echo ("<ul>Mostrando produtos fora de estoque</ul>");
-											} else {
-												echo ("<ul>Ocultando produtos fora de estoque</ul>");
-											}
-										}
-									}
-
-									if($post[0] == 'estoque' || $post[0] == 'requisicao' || $post[0] == 'itens_compra') {
-										if (isset($post[2])) {
-											$categoriaProduto = quickQuery("select descricao_categoria from categoria_produto where id_categoria_produto = :id_categoria_produto;", [':id_categoria_produto' => $post[2]], "descricao_categoria");
-											echo ("<ul>Categoria de Produto: " . htmlspecialchars($categoriaProduto) . "</ul>");
-										} else {
-											echo ("<ul>Categoria de Produto: Todos</ul>");
-										}
-									}
-								}
-								?>
-							</li>
-						</p>
-						<button style="float: right;" class="mb-xs mt-xs mr-xs btn btn-default print-button" onclick="window.print();">Imprimir</button>
-					</div>
-					<?php if ($_POST['tipo_relatorio'] == 'requisicao') { ?>
+					<?php
+                    $filtros = [];
+                    if (in_array($post[0], ['entrada', 'saida'], true)) {
+                        $entrada = $post[0] === 'entrada';
+                        $filtros[$entrada ? 'Origem' : 'Destino'] = $post[1]
+                            ? ($entrada
+                                ? quickQuery('SELECT nome_origem FROM origem WHERE id_origem = :id', [':id' => $post[1]], 'nome_origem')
+                                : quickQuery('SELECT nome_destino FROM destino WHERE id_destino = :id', [':id' => $post[1]], 'nome_destino'))
+                            : ($entrada ? 'Todas' : 'Todos');
+                        $nomesTipos = [];
+                        foreach ($entrada ? $tiposEntrada : $tiposSaida as $idTipo) {
+                            $nomesTipos[] = quickQuery('SELECT descricao FROM ' . ($entrada ? 'tipo_entrada' : 'tipo_saida') . ' WHERE id_tipo = :id', [':id' => $idTipo], 'descricao') ?? ('Tipo #' . $idTipo);
+                        }
+                        $filtros[$entrada ? 'Tipos de entrada' : 'Tipos de saída'] = $nomesTipos ? implode(', ', $nomesTipos) : 'Todos';
+                        $filtros['Responsável'] = $post[3]
+                            ? quickQuery('SELECT nome FROM pessoa WHERE id_pessoa = :id', [':id' => $post[3]], 'nome') : 'Todos';
+                    }
+                    if ($post[0] !== 'estoque') {
+                        if (!empty($post[4]['inicio']) && !empty($post[4]['fim']) && $post[4]['inicio'] > $post[4]['fim']) {
+                            exit('Aviso: A data de início é maior que a data de fim.');
+                        }
+                        $filtros['Período'] = RelatorioMatPat::periodo($post[4]['inicio'], $post[4]['fim']);
+                    }
+                    $filtros['Almoxarifado'] = $post[5]
+                        ? quickQuery('SELECT descricao_almoxarifado FROM almoxarifado WHERE id_almoxarifado = :id', [':id' => $post[5]], 'descricao_almoxarifado') : 'Todos';
+                    if (in_array($post[0], ['estoque', 'requisicao', 'itens_compra'], true)) {
+                        $filtros['Categoria de produto'] = $post[2]
+                            ? quickQuery('SELECT descricao_categoria FROM categoria_produto WHERE id_categoria_produto = :id', [':id' => $post[2]], 'descricao_categoria') : 'Todas';
+                    }
+                    if ($post[0] === 'estoque') {
+                        $filtros['Produtos fora de estoque'] = $post[6] ? 'Mostrar' : 'Ocultar';
+                    }
+                    if (in_array($post[0], ['saida', 'itens_compra'], true)) {
+                        $filtros['Média de saída'] = ['dia' => 'Por dia', 'mes' => 'Por mês', 'ano' => 'Por ano'][$tipoMedia] ?? 'Por dia';
+                    }
+                    if ($post[0] === 'requisicao') {
+                        $filtros['Modelo da requisição'] = $modoRequisicao === 'completo' ? 'Todos os produtos em estoque' : 'Produtos mais movimentados';
+                        if ($modoRequisicao !== 'completo') {
+                            $filtros['Critério'] = 'Saída total igual ou superior a 10 no período selecionado';
+                        }
+                    }
+                    ob_start();
+                    ?>
+                    <?php if ($_POST['tipo_relatorio'] == 'requisicao') { ?>
 
     					<?php $item->displayRequisicao(); ?>
 
@@ -532,7 +265,7 @@ function quickQuery($query, $parametro, $column)
 						<thead class="thead-dark">
 							<tr>
 								<th scope="col" width="11%">Quantidade</th>
-								<?php 
+								<?php
 								if($_POST['tipo_relatorio'] == 'itens_compra'){
 									echo ('<th scope="col" width="14%">Quantidade mínima</th>');
 								}
@@ -546,14 +279,14 @@ function quickQuery($query, $parametro, $column)
 									echo ('<th scope="col" width="14%">' . htmlspecialchars($labelMedia[$tipoMedia] ?? 'Média por dia') . '</th>');
 								}?>
 								<th scope="col">Descrição</th>
-								<?php 
+								<?php
 								if ($_POST['tipo_relatorio'] != 'estoque' && $_POST['tipo_relatorio'] != 'requisicao' && $_POST['tipo_relatorio'] != 'itens_compra') {
 									echo ('<th scope="col" width="12%">Tipo</th>');
 									echo ('<th scope="col" width="12%">Data de Registro</th>');
 									echo ('<th scope="col" width="12%">Valor Unitário</th>');
 								} else {
 									echo ('<th scope="col" width="14%">Preço Médio</th>');
-								} 	
+								}
 								?>
 								<th scope="col" width="14%" class="tot">Tipo de Unidade</th>
 								<th scope="col" width="14%" class="tot">Total</th>
@@ -566,6 +299,16 @@ function quickQuery($query, $parametro, $column)
 						</tbody>
 					</table>
 					<?php } ?>
+                    <?php
+                    $corpoRelatorio = ob_get_clean();
+                    $titulos = [
+                        'entrada' => 'Relatório de Entradas', 'saida' => 'Relatório de Saídas',
+                        'estoque' => 'Relatório de Estoque', 'itens_compra' => 'Relatório de Itens de Compra',
+                        'requisicao' => 'Ficha de Requisição',
+                    ];
+                    $relatorio = new RelatorioMatPat($filtros, $corpoRelatorio, $titulos[$post[0]] ?? 'Relatório', $post[0]);
+                    echo $relatorio->getHtml();
+                    ?>
 				</div>
 				<!--end: page-->
 			</section>
