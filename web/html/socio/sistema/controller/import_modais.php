@@ -337,7 +337,7 @@ try {
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">×</span></button>
-        <h4 class="modal-title">Sócios aniversariantes do mês</h4>
+        <h4 class="modal-title">Sócios aniversariantes</h4>
       </div>
       <div class="modal-body">
         <!-- <div class="alert alert-success alert-dismissible">
@@ -345,11 +345,67 @@ try {
                 <h4><i class="icon fa fa-warning"></i> Lista de sócios: </h4>
                 Dê os parabéns!
               </div> -->
-        <div class="box box-success box_aniversario">
+        <div class="box box-info box_aniversario">
           <div class="box-header with-border">
-            <h3 class="box-title">Lista dos sócios aniversariantes</h3>
+            <h3 class="box-title">Opções do relatório</h3>
           </div>
           <div class="box-body box_aniversario">
+            <div class="row">
+              <div class="form-group col-sm-4">
+                <label for="modo_filtro_aniversariantes">Filtrar por</label>
+                <select id="modo_filtro_aniversariantes" class="form-control">
+                  <option value="mes">Mês</option>
+                  <option value="intervalo">Intervalo de datas</option>
+                </select>
+              </div>
+              <div class="form-group col-sm-4" id="filtro_mes_aniversariantes">
+                <label for="mes_aniversariantes">Mês dos aniversários</label>
+                <select id="mes_aniversariantes" class="form-control">
+                  <?php
+                  $meses = [
+                    1 => 'Janeiro',
+                    2 => 'Fevereiro',
+                    3 => 'Março',
+                    4 => 'Abril',
+                    5 => 'Maio',
+                    6 => 'Junho',
+                    7 => 'Julho',
+                    8 => 'Agosto',
+                    9 => 'Setembro',
+                    10 => 'Outubro',
+                    11 => 'Novembro',
+                    12 => 'Dezembro'
+                  ];
+                  foreach ($meses as $numeroMes => $nomeMes) {
+                    $selecionado = (int) date('n') === $numeroMes ? ' selected' : '';
+                    echo '<option value="' . $numeroMes . '"' . $selecionado . '>' .
+                      htmlspecialchars($nomeMes, ENT_QUOTES, 'UTF-8') . '</option>';
+                  }
+                  ?>
+                </select>
+              </div>
+              <div id="filtro_intervalo_aniversariantes" class="col-sm-8" style="display: none;">
+                <div class="row">
+                  <div class="form-group col-sm-6">
+                    <label for="inicio_aniversariantes">Data inicial</label>
+                    <input type="date" id="inicio_aniversariantes" class="form-control">
+                  </div>
+                  <div class="form-group col-sm-6">
+                    <label for="fim_aniversariantes">Data final</label>
+                    <input type="date" id="fim_aniversariantes" class="form-control">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="erro_filtro_aniversariantes" class="text-danger" role="alert" style="display: none;"></div>
+          </div>
+        </div>
+        <div class="box box-success box_aniversario">
+          <div class="box-header with-border">
+            <h3 class="box-title">Lista de aniversariantes</h3>
+          </div>
+          <div class="box-body box_aniversario">
+            <p id="media_idade_aniversariantes" aria-live="polite"></p>
             <table id="tb_aniversario" class="table table-hover" style="width: 100%">
               <thead>
                 <tr>
@@ -361,38 +417,130 @@ try {
               </thead>
               <tbody>
                 <?php
-                $mes_atual = date("m");
-                $ano_atual = date("Y");
-                $query = mysqli_query($conexao, "SELECT *, s.id_socio as socioid, DATE_FORMAT(p.data_nascimento, '%d/%m') as aniversario FROM socio AS s LEFT JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa  WHERE p.data_nascimento LIKE '%-$mes_atual-%'");
+                $query = mysqli_query(
+                  $conexao,
+                  "SELECT s.id_socio AS socioid, p.nome, p.sobrenome, p.email, p.telefone, p.data_nascimento
+                   FROM socio AS s
+                   INNER JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa
+                   WHERE p.data_nascimento IS NOT NULL AND p.data_nascimento <> '0000-00-00'"
+                );
+                $hoje = new DateTimeImmutable('today');
+                $dddValidos = [
+                  '11',
+                  '12',
+                  '13',
+                  '14',
+                  '15',
+                  '16',
+                  '17',
+                  '18',
+                  '19',
+                  '21',
+                  '22',
+                  '24',
+                  '27',
+                  '28',
+                  '31',
+                  '32',
+                  '33',
+                  '34',
+                  '35',
+                  '37',
+                  '38',
+                  '41',
+                  '42',
+                  '43',
+                  '44',
+                  '45',
+                  '46',
+                  '47',
+                  '48',
+                  '49',
+                  '51',
+                  '53',
+                  '54',
+                  '55',
+                  '61',
+                  '62',
+                  '63',
+                  '64',
+                  '65',
+                  '66',
+                  '67',
+                  '68',
+                  '69',
+                  '71',
+                  '73',
+                  '74',
+                  '75',
+                  '77',
+                  '79',
+                  '81',
+                  '82',
+                  '83',
+                  '84',
+                  '85',
+                  '86',
+                  '87',
+                  '88',
+                  '89',
+                  '91',
+                  '92',
+                  '93',
+                  '94',
+                  '95',
+                  '96',
+                  '97',
+                  '98',
+                  '99'
+                ];
                 while ($resultado = mysqli_fetch_array($query)) {
-
-                  $id = htmlspecialchars($resultado['socioid']);
-                  $cpf_cnpj = htmlspecialchars($resultado['cpf']);
-                  $nome_s = htmlspecialchars($resultado['nome'] . " " . $resultado['sobrenome']);
-                  $email = htmlspecialchars($resultado['email']);
-                  $telefone = htmlspecialchars($resultado['telefone']);
-                  $data_nascimento = explode('-', $resultado['data_nascimento']);
-                  $dataFormatada = $data_nascimento['2'] . '/' . $data_nascimento['1'];
-                  $idade = intval($ano_atual - $data_nascimento['0']);
-                  if ($resultado['logradouro'] == "") {
-                    $endereco = "Endereço não informado/incompleto.";
-                  } else {
-                    $endereco = htmlspecialchars($resultado['logradouro']) . " " . htmlspecialchars($resultado['numero_endereco']) . ", " . htmlspecialchars($resultado['bairro']) . ", " . htmlspecialchars($resultado['cidade']) . " - " . htmlspecialchars($resultado['estado']);
-                  }
-                  if (strlen($telefone) == 14) {
-                    $tel_url = preg_replace("/[^0-9]/", "", $telefone);
-                    $telefone = "<a target='_blank' href='http://wa.me/55$tel_url'>$telefone</a>";
-                  }
-                  if (strlen($cpf_cnpj) == 14) {
-                    $pessoa = "fisica";
-                    $fisica++;
-                  } else {
-                    $pessoa = "juridica";
-                    $juridica++;
+                  $dataNascimentoOriginal = $resultado['data_nascimento'];
+                  $dataNascimento = DateTimeImmutable::createFromFormat('!Y-m-d', $dataNascimentoOriginal);
+                  if (!$dataNascimento || $dataNascimento->format('Y-m-d') !== $dataNascimentoOriginal) {
+                    continue;
                   }
 
-                  $del_json = json_encode(array("id" => $id, "nome" => $nome_s, "pessoa" => $pessoa));
-                  echo ("<tr><td onclick='detalhar_socio($id);' style='cursor: pointer' class='$class'>$nome_s</td><td><a href='mailto:$email'>$email</a></td><td>$telefone</td><td>$dataFormatada, $idade anos \u{1F382}</td></tr>");
+                  $id = (int) $resultado['socioid'];
+                  $nomeCompleto = trim(($resultado['nome'] ?? '') . ' ' . ($resultado['sobrenome'] ?? ''));
+                  $nome = htmlspecialchars($nomeCompleto, ENT_QUOTES, 'UTF-8');
+                  $aniversario = $dataNascimento->format('m-d');
+                  $dataFormatada = $dataNascimento->format('d/m');
+                  $idade = $dataNascimento <= $hoje ? $dataNascimento->diff($hoje)->y : null;
+                  $idadeAtributo = $idade === null ? '' : (string) $idade;
+                  $idadeTexto = $idade === null ? 'Idade indisponível' : $idade . ' anos';
+
+                  $emailOriginal = trim((string) ($resultado['email'] ?? ''));
+                  $email = htmlspecialchars($emailOriginal, ENT_QUOTES, 'UTF-8');
+                  $emailHtml = filter_var($emailOriginal, FILTER_VALIDATE_EMAIL)
+                    ? "<a href='mailto:$email'>$email</a>"
+                    : $email;
+
+                  $telefoneOriginal = trim((string) ($resultado['telefone'] ?? ''));
+                  $telefoneDigitos = preg_replace('/\D+/', '', $telefoneOriginal);
+                  if (strlen($telefoneDigitos) === 12 || strlen($telefoneDigitos) === 13) {
+                    if (substr($telefoneDigitos, 0, 2) === '55') {
+                      $telefoneDigitos = substr($telefoneDigitos, 2);
+                    }
+                  }
+                  $ddd = substr($telefoneDigitos, 0, 2);
+                  $telefoneValido = in_array($ddd, $dddValidos, true)
+                    && in_array(strlen($telefoneDigitos), [10, 11], true);
+                  if ($telefoneValido) {
+                    $numeroLocal = substr($telefoneDigitos, 2);
+                    $telefoneFormatado = strlen($numeroLocal) === 9
+                      ? '(' . $ddd . ') ' . substr($numeroLocal, 0, 5) . '-' . substr($numeroLocal, 5)
+                      : '(' . $ddd . ') ' . substr($numeroLocal, 0, 4) . '-' . substr($numeroLocal, 4);
+                    $telefoneHtml = "<a target='_blank' rel='noopener noreferrer' href='https://wa.me/55$telefoneDigitos'>" .
+                      htmlspecialchars($telefoneFormatado, ENT_QUOTES, 'UTF-8') . '</a>';
+                  } else {
+                    $telefoneHtml = htmlspecialchars($telefoneOriginal, ENT_QUOTES, 'UTF-8');
+                  }
+
+                  echo "<tr data-aniversario='$aniversario' data-idade='$idadeAtributo'>";
+                  echo "<td onclick='detalhar_socio($id);' style='cursor: pointer'>$nome</td>";
+                  echo "<td>$emailHtml</td><td>$telefoneHtml</td>";
+                  echo "<td data-order='$aniversario'>$dataFormatada, $idadeTexto &#127874;</td></tr>";
                 }
                 ?>
               </tbody>
@@ -421,7 +569,7 @@ try {
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">×</span></button>
-            <h4 class="modal-title">Sócios aniversariantes do mês</h4>
+            <h4 class="modal-title">Aniversariantes</h4>
           </div>
           <div class="modal-body">
 
