@@ -3,25 +3,50 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnMensal = document.getElementById('btn-doacao-mensal');
     const opcoesUnica = document.getElementById('opcoes-unica');
     const opcoesMensal = document.getElementById('opcoes-mensal');
+    let doacaoUnicaSelecionada = false;
+
+    [opcoesUnica, opcoesMensal].forEach((opcoes) => {
+        opcoes.addEventListener('animationend', (event) => {
+            if (event.animationName === 'contribution-options-reveal') {
+                opcoes.classList.remove('contribution-options-enter');
+            }
+        });
+    });
+
+    function exibirOpcoesComAnimacao(opcoes, display = 'block') {
+        opcoes.style.display = display;
+        opcoes.classList.remove('contribution-options-enter');
+        void opcoes.offsetWidth;
+        opcoes.classList.add('contribution-options-enter');
+    }
 
     //Função para alternar entre doação única e mensal
     function alterarTipoDoacao(unica) {
+        if (unica === doacaoUnicaSelecionada) {
+            return;
+        }
+
+        doacaoUnicaSelecionada = unica;
         if (unica) {
             //Mostrar doação única
             btnUnica.classList.remove('btn-outline-primary');
             btnUnica.classList.add('btn-primary');
+            btnUnica.setAttribute('aria-pressed', 'true');
             btnMensal.classList.remove('btn-primary');
             btnMensal.classList.add('btn-outline-primary');
-            opcoesUnica.style.display = 'block';
+            btnMensal.setAttribute('aria-pressed', 'false');
+            exibirOpcoesComAnimacao(opcoesUnica, 'flex');
             opcoesMensal.style.display = 'none';
         } else {
             //Mostrar doação mensal
             btnMensal.classList.remove('btn-outline-primary');
             btnMensal.classList.add('btn-primary');
+            btnMensal.setAttribute('aria-pressed', 'true');
             btnUnica.classList.remove('btn-primary');
             btnUnica.classList.add('btn-outline-primary');
+            btnUnica.setAttribute('aria-pressed', 'false');
             opcoesUnica.style.display = 'none';
-            opcoesMensal.style.display = 'block';
+            exibirOpcoesComAnimacao(opcoesMensal);
         }
     }
 
@@ -91,7 +116,10 @@ document.addEventListener('DOMContentLoaded', function () {
             alert.role = 'alert';
 
             const title = document.createElement('strong');
-            title.textContent = 'Precisa de ajuda?';
+            const titleIcon = document.createElement('i');
+            titleIcon.className = 'fa fa-life-ring me-2';
+            titleIcon.setAttribute('aria-hidden', 'true');
+            title.append(titleIcon, document.createTextNode('Precisa de ajuda?'));
 
             alert.appendChild(title);
             alert.appendChild(document.createElement('br'));

@@ -1,9 +1,11 @@
-<div id="dia-vencimento" class="wrap-input100 validate-input bg1">
-    <span class="label-input100">Escolha uma data de vencimento <span class="obrigatorio">*</span></span><br>
-    <input type = 'radio' value ='1' name = 'dia' id='dia1'><span style='margin-right: 1.5em'>1</span>
-    <input type = 'radio' value ='5' name = 'dia' id='dia5'><span style='margin-right: 1.5em'>5</span>
-    <input type = 'radio' value ='10' name = 'dia' id='dia10'><span style='margin-right: 1.5em'>10</span>
-    <input type = 'radio' value ='15' name = 'dia' id='dia15'><span style='margin-right: 1.5em'>15</span>
-    <input type = 'radio' value ='20' name = 'dia' id='dia20'><span style='margin-right: 1.5em'>20</span>
-    <input type = 'radio' value ='25' name = 'dia' id='dia25'><span style='margin-right: 1.5em'>25</span>
-</div>
+<fieldset id="dia-vencimento" class="wrap-input100 validate-input bg1 contribution-field">
+    <legend class="form-label"><i class="fa fa-calendar" aria-hidden="true"></i> Escolha o dia de vencimento <span class="obrigatorio">*</span></legend>
+    <div class="d-flex flex-wrap gap-2">
+        <?php foreach ([1, 5, 10, 15, 20, 25] as $dia): ?>
+            <div class="form-check form-check-inline contribution-day-choice">
+                <input class="form-check-input" type="radio" value="<?= $dia ?>" name="dia" id="dia<?= $dia ?>">
+                <label class="form-check-label" for="dia<?= $dia ?>"><?= $dia ?></label>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</fieldset>

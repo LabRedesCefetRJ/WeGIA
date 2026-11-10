@@ -92,17 +92,30 @@ $captchaGoogle = new CaptchaGoogleService();
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script type="text/javascript" src="../../../Functions/onlyNumbers.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <?php if (!empty($useBootstrap5Contribution)): ?>
+        <script src="../../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+    <?php else: ?>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <?php endif; ?>
 
-    <link rel="stylesheet" type="text/css" href="../public/css/index.css">
+    <?php if (empty($useBootstrap5Contribution)): ?>
+        <link rel="stylesheet" type="text/css" href="../public/css/index.css">
+    <?php endif; ?>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://fonts.googleapis.com/css?family=Bitter&display=swap" rel="stylesheet">
     <!--
 =========================================================================================-->
 
-    <link rel="stylesheet" type="text/css" href="../vendor/bootstrap/css/bootstrap.min.css">
+    <?php if (!empty($useBootstrap5Contribution)): ?>
+        <link rel="stylesheet" type="text/css" href="../../../node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <?php else: ?>
+        <link rel="stylesheet" type="text/css" href="../vendor/bootstrap/css/bootstrap.min.css">
+    <?php endif; ?>
+    <?php if (!empty($useBootstrap5Contribution)): ?>
+        <link rel="stylesheet" type="text/css" href="../public/css/index.css">
+    <?php endif; ?>
     <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="../vendor/font-awesome-4.7.0/css/font-awesome.min.css">
     <!--===============================================================================================-->
@@ -220,4 +233,4 @@ $captchaGoogle = new CaptchaGoogleService();
 
 </head>
 
-<body>
+<body<?= !empty($useBootstrap5Contribution) ? ' class="contribution-refresh"' : '' ?>>

@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // em vez de deixar o campo em branco silenciosamente.
             if (plataformas.value !== plataformaId) {
                 console.error('Erro ao selecionar a plataforma com ID:', plataformaId);
-                alert('A plataforma atualmente vinculada a este meio de pagamento não é mais compatível com ele. Selecione uma nova plataforma antes de salvar.');
+                mostrarAlertaBootstrap('A plataforma atualmente vinculada a este meio de pagamento não é mais compatível com ele. Selecione uma nova plataforma antes de salvar.', 'warning');
             } else {
                 console.log('Plataforma selecionada:', plataformas.options[plataformas.selectedIndex].textContent);
             }
