@@ -39,6 +39,14 @@ class OrigemControle
             }
             $entrada[$campo] = trim($valor);
         }
+        $limitesIdentificacao = ['telefone' => 16, 'cpf' => 14, 'cnpj' => 18];
+        $rotulosIdentificacao = ['telefone' => 'Telefone', 'cpf' => 'CPF', 'cnpj' => 'CNPJ'];
+        foreach ($limitesIdentificacao as $campo => $limite) {
+            $this->campoErro = $campo;
+            if (mb_strlen($entrada[$campo], 'UTF-8') > $limite) {
+                throw new InvalidArgumentException($rotulosIdentificacao[$campo] . ': informe no máximo ' . $limite . ' caracteres.');
+            }
+        }
         $nome = $entrada['nome'];
         $telefone = $entrada['telefone'];
         $cpf = $entrada['cpf'];
@@ -96,6 +104,10 @@ class OrigemControle
                 throw new InvalidArgumentException($rotulos[$campo] . ': informe no máximo ' . $limite . ' caracteres.');
             }
             $dados[$campo] = $valor === '' ? null : $valor;
+        }
+        $this->campoErro = 'numero';
+        if ($dados['numero'] !== null && !preg_match('/^[0-9]+$/D', $dados['numero'])) {
+            throw new InvalidArgumentException('Número: informe apenas números.');
         }
         $this->campoErro = 'email';
         if ($dados['email'] !== null && !filter_var($dados['email'], FILTER_VALIDATE_EMAIL)) {

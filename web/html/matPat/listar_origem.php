@@ -193,6 +193,16 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
       });
 </script>
     <link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/processo-compra.css">
+   <style>
+      #datatable-default {
+         table-layout: fixed;
+         width: 100%;
+      }
+      #datatable-default td {
+         overflow-wrap: anywhere;
+         word-wrap: break-word;
+      }
+   </style>
 </head>
 
 <body class="processo-compra">
@@ -298,13 +308,13 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                         <div class="form-group">
                            <label>CNPJ</label>
                            <p class="help-block">Comece pelo CNPJ para preencher os campos vazios automaticamente.</p>
-                           <input type="text" class="form-control" name="cnpj" id="edit_cnpj" aria-describedby="edit-cnpj-status">
+                           <input maxlength="18" type="text" class="form-control" name="cnpj" id="edit_cnpj" aria-describedby="edit-cnpj-status">
                            <small id="edit-cnpj-status" role="status" aria-live="polite"></small>
                         </div>
 
                         <div class="form-group">
                            <label>CPF</label>
-                           <input type="text" class="form-control" name="cpf" id="edit_cpf">
+                           <input maxlength="14" type="text" class="form-control" name="cpf" id="edit_cpf">
                         </div>
 
                         <div class="form-group">
@@ -314,7 +324,7 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
 
                         <div class="form-group">
                            <label>Telefone</label>
-                           <input type="text" class="form-control" name="telefone" id="edit_telefone">
+                           <input maxlength="16" type="text" class="form-control" name="telefone" id="edit_telefone">
                         </div>
 
                         <div class="row">
@@ -349,7 +359,7 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                                     <div class="col-sm-3">
                                         <div class="form-group" style="margin-left: 0; margin-right: 0;">
                                             <label for="edit_numero">Número</label>
-                                            <input type="text" class="form-control" name="numero" id="edit_numero" maxlength="20">
+                                            <input type="text" class="form-control" name="numero" inputmode="numeric" pattern="[0-9]+" title="Informe apenas números." oninput="this.value = this.value.replace(/[^0-9]/g, '')" id="edit_numero" maxlength="20">
                                         </div>
                                     </div>
                                 </div>
