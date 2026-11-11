@@ -2092,7 +2092,7 @@ CREATE TABLE `wegia`.`modelo_documento` (
   `id_funcionario` INT(11) NOT NULL,
   `descricao` VARCHAR(128) NULL,
   `documento` LONGBLOB NULL,
-  `body_html` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+  `body_html` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
   `extensao` VARCHAR(32) NULL,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
