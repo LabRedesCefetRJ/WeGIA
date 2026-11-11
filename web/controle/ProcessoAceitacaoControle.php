@@ -1,5 +1,4 @@
 <?php
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -10,6 +9,14 @@ require_once ROOT . '/dao/ProcessoAceitacaoDAO.php';
 require_once ROOT . '/classes/Util.php';
 require_once ROOT . '/dao/Conexao.php';
 require_once ROOT . '/html/geral/msg.php';
+
+/*id_status definidos no insert inicial de pa_status (wegia001.sql):
+    1 => 'Em Andamento'
+    2 => 'Concluído'
+    3 => 'Cancelado'
+    4 => 'Aguardando Aprovação'
+*/
+const id_statusConcluido = 2;
 
 class ProcessoAceitacaoControle
 {
@@ -42,8 +49,8 @@ class ProcessoAceitacaoControle
             }
 
             $_SESSION['msg'] = 'Status do processo atualizado com sucesso.';
-
-            if ($abrirModalAtendido && $idStatus === 2 && $dao->getIdAtendido($idProcesso) === false) {
+            
+            if ($abrirModalAtendido && $idStatus === id_statusConcluido && $dao->getIdAtendido($idProcesso) === false) {
                 $resumo = $dao->buscarResumoPorId($idProcesso);
                 if ($resumo) {
                     $_SESSION['modal_cadastrar_atendido'] = [
