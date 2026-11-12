@@ -1,33 +1,10 @@
 <?php
 
 use api\Container\AppContainer;
-use api\contracts\services\SocioServiceInterface;
-use api\contracts\services\EmailVerificationServiceInterface;
-use api\modules\Socio\SocioController;
-use api\modules\Socio\SocioService;
-use api\modules\Socio\EmailVerificationService;
-use api\modules\Socio\VerificationCodeRepository;
-use api\modules\Socio\SocioVerificationHelper;
-use api\contracts\services\PessoaServiceInterface;
-use api\modules\Pessoa\PessoaService;
-use api\modules\Pessoa\PessoaRepository;
-use api\modules\Pessoa\PessoaController;
-use api\modules\Auth\AuthController;
 use api\modules\Auth\AuthMiddleware;
-use api\modules\Auth\AuthService;
-use api\modules\Auth\UserRepository;
-use api\modules\Auth\JwtBlacklistRepository;
-use api\modules\Socio\SocioRepository;
-use api\modules\Socio\SocioMiddleware;
-use api\modules\Contribuicao\ContribuicaoController;
-use api\modules\Contribuicao\ContribuicaoService;
-use api\modules\Contribuicao\ContribuicaoRepository;
-use api\modules\Contribuicao\ContribuicaoImportRegistry;
-use api\modules\Contribuicao\AmigosLajeXlsxImportService;
-use api\modules\Contribuicao\PaymentRepository;
-use api\modules\Contribuicao\PaymentController;
-use api\middleware\CorsMiddleware;
+use api\Infrastructure\ModuleRouteLoader;
 use api\Infrastructure\RepositoryConnection;
+use api\middleware\CorsMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -36,108 +13,27 @@ require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../config.php';
 require __DIR__ . '/../../web/classes/LoginHelper.php';
 
-//dividir container em arquivos separados para cada módulo
-$container = new AppContainer([
-    PDO::class => function () {
-        return RepositoryConnection::getConnection();
-    },
-    UserRepository::class => function ($c) {
-        return new UserRepository($c->get(PDO::class));
-    },
-    JwtBlacklistRepository::class => function ($c) {
-        return new JwtBlacklistRepository($c->get(PDO::class));
-    },
-    AuthService::class => function ($c) {
-        return new AuthService(
-            $c->get(UserRepository::class),
-            $c->get(JwtBlacklistRepository::class)
-        );
-    },
-    AuthController::class => function ($c) {
-        return new AuthController($c->get(AuthService::class));
-    },
-    AuthMiddleware::class => function ($c) {
-        return new AuthMiddleware($c->get(AuthService::class));
-    },
-    SocioRepository::class => function ($c) {
-        return new SocioRepository($c->get(PDO::class));
-    },
-    VerificationCodeRepository::class => function ($c) {
-        return new VerificationCodeRepository($c->get(PDO::class));
-    },
-    EmailVerificationService::class => function ($c) {
-        return new EmailVerificationService($c->get(VerificationCodeRepository::class), 15);
-    },
-    EmailVerificationServiceInterface::class => function ($c) {
-        return $c->get(EmailVerificationService::class);
-    },
-    SocioService::class => function ($c) {
-        return new SocioService($c->get(SocioRepository::class), $c->get(EmailVerificationService::class), $c->get(AuthService::class));
-    },
-    SocioServiceInterface::class => function ($c) {
-        return $c->get(SocioService::class);
-    },
-    PessoaRepository::class => function ($c) {
-        return new PessoaRepository($c->get(PDO::class));
-    },
-    PessoaService::class => function ($c) {
-        return new PessoaService($c->get(PessoaRepository::class));
-    },
-    PessoaServiceInterface::class => function ($c) {
-        return $c->get(PessoaService::class);
-    },
-    PessoaController::class => function ($c) {
-        return new PessoaController($c->get(PessoaService::class));
-    },
-    SocioController::class => function ($c) {
-        return new SocioController($c->get(SocioService::class), $c->get(PessoaServiceInterface::class), $c->get(EmailVerificationService::class), $c->get(SocioVerificationHelper::class));
-    },
-    SocioVerificationHelper::class => function ($c) {
-        return new SocioVerificationHelper($c->get(PessoaServiceInterface::class), $c->get(SocioService::class), $c->get(EmailVerificationService::class));
-    },
-    ContribuicaoRepository::class => function ($c) {
-        return new ContribuicaoRepository($c->get(PDO::class));
-    },
-    ContribuicaoService::class => function ($c) {
-        return new ContribuicaoService($c->get(ContribuicaoRepository::class));
-    },
-    AmigosLajeXlsxImportService::class => function ($c) {
-        return new AmigosLajeXlsxImportService($c->get(ContribuicaoRepository::class));
-    },
-    ContribuicaoImportRegistry::class => function ($c) {
-        return new ContribuicaoImportRegistry([
-            'amigos_laje_xlsx' => $c->get(AmigosLajeXlsxImportService::class),
-        ]);
-    },
-    ContribuicaoController::class => function ($c) {
-        return new ContribuicaoController(
-            $c->get(ContribuicaoService::class),
-            $c->get(SocioRepository::class),
-            $c->get(PessoaRepository::class),
-            $c->get(PDO::class),
-            $c->get(ContribuicaoImportRegistry::class)
-        );
-    },
-    PaymentRepository::class => function ($c) {
-        return new PaymentRepository($c->get(PDO::class));
-    },
-    PaymentController::class => function ($c) {
-        return new PaymentController($c->get(PaymentRepository::class));
-    },
-    SocioMiddleware::class => function ($c) {
-        return new SocioMiddleware($c->get(UserRepository::class), 4);
-    },
-    CorsMiddleware::class => function ($c) {
-        $origin = defined('CORS_ORIGIN') ? CORS_ORIGIN : '*';
-        return new CorsMiddleware(
-            $origin,
-            ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-            ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Client-Type'],
-            true,
-            86400
-        );
-    },
-]);
+$routeLoader = new ModuleRouteLoader(__DIR__ . '/../src/modules');
+$moduleRoutes = $routeLoader->load();
+
+$container = new AppContainer(array_merge(
+    $routeLoader->getContainerEntries($moduleRoutes),
+    [
+        PDO::class => function () {
+            return RepositoryConnection::getConnection();
+        },
+        CorsMiddleware::class => function () {
+            $origin = defined('CORS_ORIGIN') ? CORS_ORIGIN : '*';
+            return new CorsMiddleware(
+                $origin,
+                ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+                ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Client-Type'],
+                true,
+                86400
+            );
+        },
+    ]
+));
 
 AppFactory::setContainer($container);
 
@@ -191,124 +87,6 @@ $app->get('/dashboard', function (Request $request, Response $response, $args) {
     /*->add($container->get(SocioMiddleware::class))*/
     ->add($container->get(AuthMiddleware::class));
 
-$app->post('/login', [AuthController::class, 'login']);
-$app->post('/register', [AuthController::class, 'register']);
-$app->post('/refresh', [AuthController::class, 'refresh']);
-$app->post('/logout', [AuthController::class, 'logout']);
-
-//Módulo Pessoa
-$app->get('/pessoas/homonimo/{fullname}', [PessoaController::class, 'checkHomonym']);
-
-$app->put('/pessoas/profile', [PessoaController::class, 'updateProfile'])
-    ->add($container->get(AuthMiddleware::class));
-
-$app->post('/pessoas/profile/photo', [PessoaController::class, 'updateProfilePhoto'])
-    ->add($container->get(AuthMiddleware::class));
-
-$app->get('/pessoas/{id}/profile/photo', [PessoaController::class, 'getProfilePhoto'])
-    ->add($container->get(AuthMiddleware::class));
-
-//Módulo Sócio
-$app->post('/socios/register', [SocioController::class, 'registerSocio']);
-
-$app->get('/socios/exists/{cpf}', [SocioController::class, 'checkSocioExistsByCpf']);
-$app->get('/socios/verify-code', [SocioController::class, 'sendVerificationCodeByCpf']);
-$app->get('/socios/support-contact', [SocioController::class, 'getSupportContact']);
-$app->get('/socios/{uuid}/validar_beneficios', [SocioController::class, 'validarBeneficiosPorUuid']);
-$app->post('/socios/verify-code', [SocioController::class, 'verifyCode']);
-$app->post('/socios/alter-password', [SocioController::class, 'alterPassword']);
-
-$app->get('/socios/parceiros', [SocioController::class, 'getSocioParceiros']);
-$app->get('/socios/parceiros/{id}/logo', [SocioController::class, 'getLogoSocioParceiro']);
-
-//aplicar middleware de autenticação e de permissão
-$app->post('/socios/parceiros', [SocioController::class, 'insertSocioParceiro'])
-    ->add($container->get(SocioMiddleware::class))
-    ->add($container->get(AuthMiddleware::class));
-
-$app->put('/socios/parceiros', [SocioController::class, 'updateSocioParceiro'])
-    ->add($container->get(SocioMiddleware::class))
-    ->add($container->get(AuthMiddleware::class));
-
-$app->patch('/socios/parceiros', [SocioController::class, 'alterStatusSocioParceiro'])
-    ->add($container->get(SocioMiddleware::class))
-    ->add($container->get(AuthMiddleware::class));
-
-$app->post('/socios/parceiros/logo', [SocioController::class, 'uploadLogoSocioParceiro'])
-    ->add($container->get(SocioMiddleware::class))
-    ->add($container->get(AuthMiddleware::class));
-
-$app->post('/socios/parceiros/setor', [SocioController::class, 'insertSocioParceiroSetor'])
-    ->add($container->get(SocioMiddleware::class))
-    ->add($container->get(AuthMiddleware::class));
-
-$app->get('/socios/parceiros/setor', [SocioController::class, 'getAllSocioParceiroSetor'])
-    ->add($container->get(AuthMiddleware::class));
-
-$app->delete('/socios/parceiros/{id}', [SocioController::class, 'deleteSocioParceiro'])
-    ->add($container->get(SocioMiddleware::class))
-    ->add($container->get(AuthMiddleware::class));
-
-$app->get('/socios/{cpf}', [SocioController::class, 'getSocioByCpf'])
-    ->add($container->get(AuthMiddleware::class));
-
-//Módulo Contribuição
-$app->get('/socios/{id}/contribuicoes', [ContribuicaoController::class, 'getContribuicoesBySocio'])
-    ->add($container->get(AuthMiddleware::class));
-$app->get('/socios/{id}/contribuicoes/filter', [ContribuicaoController::class, 'getContribuicoesBySocioAndStatus'])
-    ->add($container->get(AuthMiddleware::class));
-$app->get('/socios/{id}/contribuicoes/resume', [ContribuicaoController::class, 'getResumoContribuicoes'])
-    ->add($container->get(AuthMiddleware::class));
-
-//Gerar PDF do extrato de contribuições
-$app->get('/socios/{id}/contribuicoes/pdf', [ContribuicaoController::class, 'generateContribuicaoPdf'])
-    ->add($container->get(AuthMiddleware::class));
-
-//Download do PDF de uma contribuição a partir do nome do arquivo armazenado no diretório
-$app->get('/contribuicoes/{contribuicao_id}/pdf', [ContribuicaoController::class, 'downloadContribuicaoPdf'])
-    ->add($container->get(AuthMiddleware::class));
-
-//Gerar PDF do comprovante de pagamento de uma contribuição específica
-$app->get('/socios/{id}/contribuicoes/{contribuicao_id}/pdf', [ContribuicaoController::class, 'generateComprovantePdf'])
-    ->add($container->get(AuthMiddleware::class));
-
-//Benefícios
-$app->get('/socios/{id}/beneficios', [SocioController::class, 'getBeneficiosBySocio'])
-    ->add($container->get(AuthMiddleware::class));
-
-$app->post('/contribuicoes/boleto', [ContribuicaoController::class, 'generateBoleto'])
-    ->add($container->get(AuthMiddleware::class));
-
-$app->post('/contribuicoes/carne', [ContribuicaoController::class, 'generateCarne'])
-    ->add($container->get(AuthMiddleware::class));
-
-$app->post('/contribuicoes/pix', [ContribuicaoController::class, 'generatePix'])
-    ->add($container->get(AuthMiddleware::class));
-
-$app->post('/contribuicoes/credito', [ContribuicaoController::class, 'generateCredito'])
-    ->add($container->get(AuthMiddleware::class));
-
-$app->post('/contribuicoes/recorrencia', [ContribuicaoController::class, 'generateRecorrencia'])
-    ->add($container->get(AuthMiddleware::class));
-
-/**
- * Permite que funcionários do WeGIA gerem pagamentos manuais para sócios, como por exemplo, quando um sócio paga em dinheiro ou cheque na sede da associação.
- */
-$app->post('/contribuicoes/manual', [ContribuicaoController::class, 'generateManualPayment'])
-    ->add($container->get(SocioMiddleware::class))
-    ->add($container->get(AuthMiddleware::class));
-
-$app->post('/contribuicoes/import', [ContribuicaoController::class, 'importarContribuicoes'])
-    ->add($container->get(SocioMiddleware::class))
-    ->add($container->get(AuthMiddleware::class));
-
-$app->get('/contribuicoes/payments_rules', [PaymentController::class, 'getAllPaymentsRules'])
-    ->add($container->get(AuthMiddleware::class));
-
-$app->get('/contribuicoes/payment_methods', [PaymentController::class, 'getActivePaymentMethods'])
-    ->add($container->get(AuthMiddleware::class));
-
-$app->get('/contribuicoes/payments_gateway/{payment_method}', [PaymentController::class, 'getPaymentGatewayByPaymentMethod'])
-    ->add($container->get(AuthMiddleware::class));
+$routeLoader->registerRoutes($app, $container, $moduleRoutes);
 
 $app->run();
