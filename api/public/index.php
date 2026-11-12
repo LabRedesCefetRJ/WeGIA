@@ -19,6 +19,9 @@ use api\modules\Auth\UserRepository;
 use api\modules\Auth\JwtBlacklistRepository;
 use api\modules\Socio\SocioRepository;
 use api\modules\Socio\SocioMiddleware;
+use api\modules\Socio\SocioConfigurationRepository;
+use api\modules\Socio\SocioConfigurationService;
+use api\modules\Socio\SocioConfigurationController;
 use api\modules\Contribuicao\ContribuicaoController;
 use api\modules\Contribuicao\ContribuicaoService;
 use api\modules\Contribuicao\ContribuicaoRepository;
@@ -61,6 +64,15 @@ $container = new AppContainer([
     },
     SocioRepository::class => function ($c) {
         return new SocioRepository($c->get(PDO::class));
+    },
+    SocioConfigurationRepository::class => function ($c) {
+        return new SocioConfigurationRepository($c->get(PDO::class));
+    },
+    SocioConfigurationService::class => function ($c) {
+        return new SocioConfigurationService($c->get(SocioConfigurationRepository::class));
+    },
+    SocioConfigurationController::class => function ($c) {
+        return new SocioConfigurationController($c->get(SocioConfigurationService::class));
     },
     VerificationCodeRepository::class => function ($c) {
         return new VerificationCodeRepository($c->get(PDO::class));
@@ -217,6 +229,20 @@ $app->get('/socios/support-contact', [SocioController::class, 'getSupportContact
 $app->get('/socios/{uuid}/validar_beneficios', [SocioController::class, 'validarBeneficiosPorUuid']);
 $app->post('/socios/verify-code', [SocioController::class, 'verifyCode']);
 $app->post('/socios/alter-password', [SocioController::class, 'alterPassword']);
+
+$app->get('/socios/video_demonstration', [SocioConfigurationController::class, 'getVideoDemonstration']);
+$app->get('/socios/configuration', [SocioConfigurationController::class, 'getAll'])
+    ->add($container->get(SocioMiddleware::class))
+    ->add($container->get(AuthMiddleware::class));
+$app->post('/socios/configuration', [SocioConfigurationController::class, 'create'])
+    ->add($container->get(SocioMiddleware::class))
+    ->add($container->get(AuthMiddleware::class));
+$app->put('/socios/configuration', [SocioConfigurationController::class, 'update'])
+    ->add($container->get(SocioMiddleware::class))
+    ->add($container->get(AuthMiddleware::class));
+$app->delete('/socios/configuration', [SocioConfigurationController::class, 'delete'])
+    ->add($container->get(SocioMiddleware::class))
+    ->add($container->get(AuthMiddleware::class));
 
 $app->get('/socios/parceiros', [SocioController::class, 'getSocioParceiros']);
 $app->get('/socios/parceiros/{id}/logo', [SocioController::class, 'getLogoSocioParceiro']);

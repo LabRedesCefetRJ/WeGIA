@@ -40,11 +40,11 @@ async function decidirAcao() {
         }
     } catch (error) {
         console.error(error.message);
-        alert(error.message);
+        atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', error.message);
     }
 }
 
-function gerarMensalidade() {
+async function gerarMensalidade() {
     const form = document.getElementById('formulario');
     const formData = new FormData(form);
 
@@ -54,7 +54,7 @@ function gerarMensalidade() {
     formData.append('metodo', 'criarCarne');
     formData.append('documento_socio', documento);
 
-    fetch("../controller/control.php", {
+    return fetch("../controller/control.php", {
         method: "POST",
         body: formData
     })
@@ -66,28 +66,29 @@ function gerarMensalidade() {
                 console.log(resposta.link);
                 // Redirecionar o usuário para o link do boleto em uma nova aba
                 window.open(resposta.link, '_blank');
+                atualizarBotaoEnvioContribuicao('sucesso', 'avanca-terminar', 'Carnê gerado. Se o documento não abrir, verifique se o navegador bloqueou a nova janela.');
             } else if (resposta.mensagem) {
                 // Rota pública: o link foi enviado por email, não aparece aqui
-                alert(resposta.mensagem);
+                atualizarBotaoEnvioContribuicao('sucesso', 'avanca-terminar', resposta.mensagem);
             } else if (resposta.erro) {
-                alert('Erro: ' + resposta.erro);
                 voltarParaConfirmarCpf();
+                atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', 'Erro: ' + resposta.erro);
             } else {
-                alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
                 voltarParaConfirmarCpf();
+                atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', "Ops! Ocorreu um problema na geração do carnê. Tente novamente ou contate o suporte.");
             }
 
         })
         .catch(error => {
-            alert(error);
             console.error("Erro:", error);
+            atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', error);
         });
 }
 
 function verificarValorMensalidade(valor, parcelas, diaVencimento) {
 
     if (!valor || isNaN(valor) || valor <= 0) {
-        alert("Por favor, preencha um valor numérico válido.");
+        mostrarFeedbackContribuicao("Por favor, preencha um valor numérico válido.", 'warning');
         return false;
     }
 
@@ -96,24 +97,24 @@ function verificarValorMensalidade(valor, parcelas, diaVencimento) {
 
         for (const regra of regras) {
             if (regra.id_regra == 1 && parseFloat(valor) < regra.valor) {
-                alert(`O valor está abaixo do mínimo de R$${regra.valor}`);
+                mostrarFeedbackContribuicao(`O valor está abaixo do mínimo de R$${regra.valor}`, 'warning');
                 return false;
             } else if (regra.id_regra == 2 && parseFloat(valor) > regra.valor) {
-                alert(`O valor está acima do máximo de R$${regra.valor}`);
+                mostrarFeedbackContribuicao(`O valor está acima do máximo de R$${regra.valor}`, 'warning');
                 return false;
             }
         }
     }
 
     if (!parcelas || parcelas < 2 || parcelas > 12) {
-        alert('A quantidade de parcelas deve ser um número entre 2 e 12.');
+        mostrarFeedbackContribuicao('A quantidade de parcelas deve ser um número entre 2 e 12.', 'warning');
         return false;
     }
 
     const diasValidos = [1, 5, 10, 15, 20, 25];
 
     if (undefined === diasValidos.find((dia) => { return dia == diaVencimento })) {
-        alert('O dia de vencimento escolhido não é válido');
+        mostrarFeedbackContribuicao('O dia de vencimento escolhido não é válido', 'warning');
         return false;
     }
 
@@ -129,7 +130,7 @@ function configurarAvancaValorMensalidade(funcao) {
         const diaVencimentoObject = document.querySelector("input[name='dia']:checked");
 
         if (!diaVencimentoObject) {
-            alert('Selecione um dia de vencimento');
+            mostrarFeedbackContribuicao('Selecione um dia de vencimento', 'warning');
             return;
         }
 

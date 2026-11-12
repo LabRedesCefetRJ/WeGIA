@@ -1,3 +1,32 @@
+function mostrarFeedbackSegundaVia(mensagem, tipo = 'warning') {
+    let regiao = document.getElementById('feedback-segunda-via');
+    if (!regiao) {
+        regiao = document.createElement('div');
+        regiao.id = 'feedback-segunda-via';
+        regiao.setAttribute('aria-live', 'polite');
+        document.querySelector('.wrap-contact100').prepend(regiao);
+    }
+
+    const feedback = document.createElement('div');
+    feedback.className = `alert alert-${tipo} alert-dismissible`;
+    feedback.setAttribute('role', tipo === 'danger' ? 'alert' : 'status');
+    feedback.tabIndex = -1;
+
+    const conteudo = document.createElement('span');
+    conteudo.textContent = mensagem;
+
+    const fechar = document.createElement('button');
+    fechar.type = 'button';
+    fechar.className = 'close';
+    fechar.setAttribute('aria-label', 'Fechar aviso');
+    fechar.innerHTML = '<span aria-hidden="true">&times;</span>';
+    fechar.addEventListener('click', () => feedback.remove());
+
+    feedback.append(conteudo, fechar);
+    regiao.replaceChildren(feedback);
+    feedback.focus();
+}
+
 /**
  * Pega o campo radio com nome de opcao marcado na página 
  * @returns string
@@ -95,7 +124,7 @@ function realizarConsulta() {
     const csrf = document.querySelector('input[name="csrf_token"]').value;
 
     if (!validarDocumento(documento)) {
-        alert("O documento deve ser preenchido");//Alterar forma de exibição do alerta posteriormente
+        mostrarFeedbackSegundaVia("O documento deve ser preenchido", 'warning');
         return;
     }
 

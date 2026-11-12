@@ -41,7 +41,7 @@ async function decidirAcao(dadosCartao) {
         }
     } catch (error) {
         console.error(error.message);
-        alert(error.message);
+        atualizarBotaoEnvioContribuicao('fracasso', 'btn-finalizar', error.message);
     }
 }
 
@@ -59,28 +59,28 @@ function obterDadosCartao() {
 
 function validarDadosCartao(dadosCartao) {
     if (dadosCartao.number.length < 13 || dadosCartao.number.length > 19) {
-        alert('Número de cartão inválido. Deve ter entre 13 e 19 dígitos.');
+        mostrarFeedbackContribuicao('Número de cartão inválido. Deve ter entre 13 e 19 dígitos.', 'warning');
         return false;
     }
 
     if (dadosCartao.holder_name.length < 3) {
-        alert('Por favor, informe o nome como está no cartão.');
+        mostrarFeedbackContribuicao('Por favor, informe o nome como está no cartão.', 'warning');
         return false;
     }
 
     const mesExpiracao = Number(dadosCartao.exp_month);
     if (mesExpiracao < 1 || mesExpiracao > 12) {
-        alert('Por favor, informe um mês válido (1-12).');
+        mostrarFeedbackContribuicao('Por favor, informe um mês válido (1-12).', 'warning');
         return false;
     }
 
     if (dadosCartao.exp_year.length !== 2 && dadosCartao.exp_year.length !== 4) {
-        alert('Por favor, informe um ano válido (2 ou 4 dígitos).');
+        mostrarFeedbackContribuicao('Por favor, informe um ano válido (2 ou 4 dígitos).', 'warning');
         return false;
     }
 
     if (dadosCartao.cvv.length < 3) {
-        alert('Por favor, informe o código de segurança do cartão.');
+        mostrarFeedbackContribuicao('Por favor, informe o código de segurança do cartão.', 'warning');
         return false;
     }
 
@@ -138,11 +138,12 @@ async function processarCartaoCredito(dadosCartao) {
         })
         .catch((error) => {
             console.error("Erro:", error);
+            atualizarBotaoEnvioContribuicao('fracasso', 'btn-finalizar');
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("payment-result").classList.remove("hidden");
             document.getElementById("success-message").classList.add("hidden");
             document.getElementById("error-message").classList.remove("hidden");
-            document.getElementById("error-text").textContent = error.erro || "Erro no processamento do cartão";
+            document.getElementById("error-text").textContent = error.message || "Erro no processamento do cartão";
         });
 }
 
@@ -214,6 +215,9 @@ document.addEventListener('DOMContentLoaded', function () {
             // ~2 minutos, o que travava quem demorava pra digitar o cartão.
 
             // Se todas as validações passarem, processa o pagamento
+            if (!iniciarEnvioContribuicao('btn-finalizar')) {
+                return;
+            }
             decidirAcao(dadosCartao);
         });
     }

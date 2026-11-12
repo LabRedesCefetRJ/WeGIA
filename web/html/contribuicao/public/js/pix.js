@@ -40,11 +40,11 @@ async function decidirAcao() {
         }
     } catch (error) {
         console.error(error.message);
-        alert(error.message);
+        atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', error.message);
     }
 }
 
-function gerarQRCode() {
+async function gerarQRCode() {
     const form = document.getElementById('formulario');
     const formData = new FormData(form);
 
@@ -54,7 +54,7 @@ function gerarQRCode() {
     formData.append('metodo', 'criarQRCode');
     formData.append('documento_socio', documento);
 
-    fetch("../controller/control.php", {
+    return fetch("../controller/control.php", {
         method: "POST",
         body: formData
     })
@@ -71,70 +71,88 @@ function gerarQRCode() {
 
                 // Mostrar div do qrcode gerado
                 alternarPaginas('qrcode-div', 'pag5');
+                atualizarBotaoEnvioContribuicao('sucesso', 'avanca-terminar', 'QR Code PIX gerado. Escaneie a imagem ou copie o código para concluir a contribuição.');
 
-                // Criar uma div para centralizar o conteúdo
                 let qrContainer = document.createElement("div");
-                qrContainer.style.textAlign = "center";
+                qrContainer.className = "text-center";
 
                 // Adicionar o QR Code como imagem
                 let qrcode = document.createElement("img");
                 qrcode.src = "data:image/jpeg;base64," + resposta.qrcode;
-                qrcode.style.maxWidth = "51%";
+                qrcode.alt = "QR Code para realizar a contribuição via PIX";
                 qrContainer.appendChild(qrcode);
 
                 // Adicionar um botão abaixo do QR Code
                 let copyButton = document.createElement("button");
-                copyButton.textContent = "Copiar QRCode";
-                copyButton.style.display = "block";
-                copyButton.style.marginTop = "10px";
-                copyButton.style.margin = "auto";
-                copyButton.classList.add('btn');
-                copyButton.classList.add('btn-success');
+                copyButton.className = "btn btn-primary btn-lg";
+                const copyIcon = document.createElement("i");
+                copyIcon.className = "fa fa-copy me-2";
+                copyIcon.setAttribute("aria-hidden", "true");
+                copyButton.append(copyIcon, document.createTextNode("Copiar código PIX"));
                 qrContainer.appendChild(copyButton);
 
                 qrCodeDiv.appendChild(qrContainer);
-
-                // Ajustar a largura do botão após a imagem carregar
-                qrcode.onload = function () {
-                    const desktop = window.matchMedia("(min-width: 768px)");
-
-                    if (desktop.matches) {
-                        copyButton.style.width = qrcode.width * 0.75 + "px";
-                    }
-                };
 
                 // Rolar a página para o form3
                 window.location.hash = '#qrcode-div';
 
                 // Adicionar o evento de clique no botão para copiar o código
-                copyButton.addEventListener('click', function (ev) {
+                copyButton.addEventListener('click', async function (ev) {
                     ev.preventDefault();
-                    // Criar um elemento temporário para copiar o texto
-                    let tempInput = document.createElement("input");
-                    tempInput.value = resposta.copiaCola;//substituir pelo código da área de transferência
-                    document.body.appendChild(tempInput);
+                    let copiado = false;
 
-                    // Selecionar e copiar o texto
-                    tempInput.select();
-                    document.execCommand("copy");
+                    if (navigator.clipboard?.writeText) {
+                        try {
+                            await navigator.clipboard.writeText(resposta.copiaCola);
+                            copiado = true;
+                        } catch (error) {
+                            console.error("Não foi possível copiar usando a área de transferência do navegador.", error);
+                        }
+                    }
 
-                    // Remover o elemento temporário
-                    document.body.removeChild(tempInput);
+                    if (!copiado) {
+                        const tempInput = document.createElement("textarea");
+                        tempInput.value = resposta.copiaCola;
+                        tempInput.setAttribute("readonly", "");
+                        tempInput.style.position = "fixed";
+                        tempInput.style.opacity = "0";
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        try {
+                            copiado = document.execCommand("copy");
+                        } catch (error) {
+                            console.error("Não foi possível copiar usando o método alternativo.", error);
+                        }
+                        document.body.removeChild(tempInput);
+                    }
 
-                    alert("Código QR copiado para a área de transferência!");
+                    if (copiado) {
+                        mostrarFeedbackContribuicao("Código PIX copiado para a área de transferência.", 'success');
+                    } else {
+                        const codigoManual = document.createElement("textarea");
+                        codigoManual.className = "form-control mt-3";
+                        codigoManual.readOnly = true;
+                        codigoManual.value = resposta.copiaCola;
+                        codigoManual.setAttribute("aria-label", "Código PIX para copiar manualmente");
+                        qrContainer.appendChild(codigoManual);
+                        mostrarFeedbackContribuicao("Não foi possível copiar automaticamente. O código PIX está selecionado para cópia manual.", 'warning');
+                        codigoManual.focus();
+                        codigoManual.select();
+                    }
                 });
 
             } else if (resposta.erro) {
-                alert('Erro: ' + resposta.erro);
                 voltarParaConfirmarCpf();
+                atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', 'Erro: ' + resposta.erro);
             } else {
-                alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
                 voltarParaConfirmarCpf();
+                atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', "Ops! Ocorreu um problema na geração do PIX. Tente novamente ou contate o suporte.");
             }
 
         })
         .catch(error => {
             console.error("Erro:", error);
+            atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', error);
         });
 }
 

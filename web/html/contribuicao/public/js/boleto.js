@@ -40,11 +40,11 @@ async function decidirAcao() {
         }
     } catch (error) {
         console.error(error.message);
-        alert(error.message);
+        atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', error.message);
     }
 }
 
-function gerarBoleto() {
+async function gerarBoleto() {
     const form = document.getElementById('formulario');
     const formData = new FormData(form);
 
@@ -54,7 +54,7 @@ function gerarBoleto() {
     formData.append('metodo', 'criarBoleto');
     formData.append('documento_socio', documento);
 
-    fetch("../controller/control.php", {
+    return fetch("../controller/control.php", {
         method: "POST",
         body: formData
     })
@@ -66,22 +66,23 @@ function gerarBoleto() {
                 console.log(resposta.link);
                 // Redirecionar o usuário para o link do boleto em uma nova aba
                 window.open(resposta.link, '_blank');
+                atualizarBotaoEnvioContribuicao('sucesso', 'avanca-terminar', 'Boleto gerado. Se o boleto não abrir, verifique se o navegador bloqueou a nova janela.');
             } else if (resposta.mensagem) {
                 // Rota pública: o link foi enviado por email, não aparece aqui
-                alert(resposta.mensagem);
+                atualizarBotaoEnvioContribuicao('sucesso', 'avanca-terminar', resposta.mensagem);
             } else if (resposta.erro){
-                alert('Erro: '+ resposta.erro);
                 voltarParaConfirmarCpf();
+                atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', 'Erro: ' + resposta.erro);
             }
             else {
-                alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
                 voltarParaConfirmarCpf();
+                atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', "Ops! Ocorreu um problema na geração do boleto. Tente novamente ou contate o suporte.");
             }
 
         })
         .catch(error => {
-            alert(error);
             console.error("Erro:", error);
+            atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', error);
         });
 }
 
