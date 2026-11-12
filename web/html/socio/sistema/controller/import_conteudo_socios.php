@@ -235,7 +235,7 @@ permissao($_SESSION['id_pessoa'], 4, 7);
                 <i class="fa fa-refresh"></i> Atualizar
               </a>-->
               <a id="btn_aniversariantes" class="btn btn-app">
-                <i class="fa fa-birthday-cake"></i> Aniversariantes do mês
+                <i class="fa fa-birthday-cake"></i> Aniversariantes
               </a>
               <a href="graficos.php" id="btn_graficos" class="btn btn-app">
                 <i class="fa fa-chart-area"></i> Gráficos
