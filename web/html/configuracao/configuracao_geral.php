@@ -162,7 +162,10 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 							<!-- Conteúdo -->
 							<div class="config-item" <?= SYSTEM_UP_TO_DATE ? "style='display: none;'" : ""; ?>>
 								<div>Atualizar sistema:</div>
-								<button id="btn2" class="btn btn-primary" onClick="setLoader(this)"><a href="./atualizacao.php"><i class="fas fa-download" aria-hidden="true"></i></a></button>
+								<form method="post" action="./atualizacao.php" onsubmit="setLoaderForm(this)">
+									<?= Csrf::inputField() ?>
+									<button id="btn2" type="submit" class="btn btn-primary"><i class="fas fa-download" aria-hidden="true"></i></button>
+								</form>
 							</div>
 							<div class="config-item" <?= SYSTEM_UP_TO_DATE ? "" : "style='display: none;'"; ?>>
 								<div>Atualizar sistema:</div>
@@ -192,7 +195,10 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 							<!-- Conteúdo -->
 							<div class="config-item">
 								<div>Fazer backup:</div>
-								<button id="btn3" class="btn btn-primary" onClick="setLoader(this)"><a href="./backup.php"><i class="fa fa-floppy-o" aria-hidden="true"></i></a></button>
+								<form method="post" action="./backup.php" onsubmit="setLoaderForm(this)">
+									<?= Csrf::inputField() ?>
+									<button id="btn3" type="submit" class="btn btn-primary"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>
+								</form>
 							</div>
 							<div class="config-item">
 								<div>Gerenciar backup:</div>
@@ -240,6 +246,18 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 			btn.appendChild(loader);
 		}
 		window.location.href = btn.firstElementChild.href;
+	}
+
+	// Mesmo indicador de setLoader(), para as ações que agora são enviadas por POST.
+	function setLoaderForm(form) {
+		const btn = form.querySelector('button');
+		btn.firstElementChild.style.display = "none";
+		btn.disabled = true;
+		if (btn.childElementCount == 1) {
+			const loader = document.createElement("DIV");
+			loader.className = "loader";
+			btn.appendChild(loader);
+		}
 	}
 
 	var selectionState = {};

@@ -8,6 +8,9 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class SocioMiddleware
 {
+    private const ACAO_GRAVAR = 3; // GRAVAR E EXECUTAR
+    private const ACAO_LER = 5;    // LER E EXECUTAR
+
     private UserRepository $repository;
     private int $resourceId;
 
@@ -34,8 +37,13 @@ class SocioMiddleware
             return $this->forbidden('User ID não encontrado no token');
         }
 
-        // Verifica se o usuário tem acesso ao recurso
-        if (!$this->repository->hasAccessToResource($userId, $this->resourceId)) {
+        // Verifica se o cargo concede a ação pedida no recurso: leitura para
+        // GET/HEAD e escrita para os demais métodos. Só a existência da linha
+        // em permissao não basta, pois ela também guarda "SEM ACESSO".
+        $metodo = strtoupper($request->getMethod());
+        $acaoExigida = in_array($metodo, ['GET', 'HEAD'], true) ? self::ACAO_LER : self::ACAO_GRAVAR;
+
+        if (!$this->repository->hasActionOnResource((int) $userId, $this->resourceId, $acaoExigida)) {
             return $this->forbidden('Usuário não possui permissão para acessar este recurso');
         }
 

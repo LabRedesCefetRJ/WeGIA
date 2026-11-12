@@ -73,7 +73,16 @@ try {
 }
 
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['branch'])) {
+	// Trocar de branch altera o código em execução: exige token CSRF.
+	$csrfToken = $_POST['csrf_token'] ?? null;
+	if (!is_string($csrfToken) || !Csrf::validateToken($csrfToken)) {
+		http_response_code(403);
+		exit("Requisição inválida. Recarregue a página e tente novamente.");
+	}
+
 	$branch = filter_input(INPUT_POST, 'branch', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 	$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
@@ -312,8 +321,9 @@ require_once "../geral/msg.php";
 												<option value="<?php echo htmlspecialchars($branch); ?>" <?php if ($branch == getCurrentBranch()) echo 'style="color: #32CD32;"'; ?>><?php echo htmlspecialchars($branch); ?></option>
 											<?php endforeach; ?>
 										</select>
+										<?= Csrf::inputField() ?>
 										<button type="submit" name="action" value="switch">Trocar branch</button>
-										<button type="submit" name="action" value="update">Atualizar</button>
+										<button type="submit" name="action" value="update" formaction="atualizacao.php">Atualizar</button>
 									</form>
 								</div>
 							</div>

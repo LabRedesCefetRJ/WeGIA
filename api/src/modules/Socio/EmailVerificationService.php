@@ -7,6 +7,11 @@ use DateTime;
 
 class EmailVerificationService implements EmailVerificationServiceInterface
 {
+    // Conferências por código (o fluxo normal usa 2: verify-code e alter-password)
+    private const MAX_TENTATIVAS_POR_CODIGO = 5;
+    private const INTERVALO_MINIMO_REENVIO_SEGUNDOS = 60;
+    private const MAX_CODIGOS_POR_HORA = 5;
+
     private VerificationCodeRepository $repository;
     private string $emailFromName;
     private int $codeValidityMinutes = 15; // Default validity: 15 minutes
@@ -38,6 +43,20 @@ class EmailVerificationService implements EmailVerificationServiceInterface
                 return [
                     'success' => false,
                     'message' => 'Invalid email'
+                ];
+            }
+
+            // Limita a emissão de códigos: sem isso, pedir um código novo a
+            // cada leva de tentativas erradas renovava o limite indefinidamente
+            // (e lotava a caixa de e-mail da vítima).
+            if (
+                $this->repository->countCodesCreatedSince($idSocio, self::INTERVALO_MINIMO_REENVIO_SEGUNDOS) > 0 ||
+                $this->repository->countCodesCreatedSince($idSocio, 3600) >= self::MAX_CODIGOS_POR_HORA
+            ) {
+                return [
+                    'success' => false,
+                    'rate_limited' => true,
+                    'message' => 'Muitos pedidos de código. Aguarde alguns minutos e tente novamente.'
                 ];
             }
 
@@ -136,8 +155,8 @@ class EmailVerificationService implements EmailVerificationServiceInterface
                 ];
             }
 
-            // Verify code validity
-            $isValid = $this->repository->verifyCode($idSocio, $code);
+            // Verify code validity (cada conferência consome uma tentativa)
+            $isValid = $this->repository->verifyCodeWithAttemptLimit($idSocio, $code, self::MAX_TENTATIVAS_POR_CODIGO);
 
             if (!$isValid) {
                 return [
