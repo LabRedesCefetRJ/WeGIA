@@ -75,6 +75,54 @@ class VerificationCodeRepository
     }
 
     /**
+     * Confere o código contando a tentativa. Cada conferência (certa ou
+     * errada) consome uma das $maxTentativas do código mais recente; esgotadas
+     * as tentativas, o código não vale mais, nem o correto. O consumo é um
+     * UPDATE condicional, então requisições paralelas não passam do limite.
+     */
+    public function verifyCodeWithAttemptLimit(int $idSocio, string $code, int $maxTentativas): bool
+    {
+        $codeRecord = $this->getLatestCode($idSocio);
+
+        if (!$codeRecord) {
+            return false;
+        }
+
+        $query = "UPDATE socio_verification_code
+                  SET tentativas = tentativas + 1
+                  WHERE id = :id AND code_used = 0 AND expires_at > NOW()
+                  AND tentativas < :max_tentativas";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':id', (int) $codeRecord['id'], PDO::PARAM_INT);
+        $stmt->bindValue(':max_tentativas', $maxTentativas, PDO::PARAM_INT);
+        $stmt->execute();
+
+        if ($stmt->rowCount() !== 1) {
+            return false;
+        }
+
+        return hash_equals((string) $codeRecord['code'], $code);
+    }
+
+    /**
+     * Quantos códigos foram gerados para o sócio nos últimos $segundos.
+     */
+    public function countCodesCreatedSince(int $idSocio, int $segundos): int
+    {
+        $query = "SELECT COUNT(*) FROM socio_verification_code
+                  WHERE id_socio = :id_socio
+                  AND created_at > (NOW() - INTERVAL :segundos SECOND)";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':id_socio', $idSocio, PDO::PARAM_INT);
+        $stmt->bindValue(':segundos', $segundos, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * Mark code as used (when it's used to change password)
      */
     public function markAsUsed(int $idSocio, string $code): bool
