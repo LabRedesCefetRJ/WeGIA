@@ -17,6 +17,7 @@ require_once dirname(__DIR__, 4) . '/web/classes/Util.php';
 use Slim\Psr7\Request;
 use Slim\Psr7\Response;
 use DateTime;
+use api\Infrastructure\ApiErrorResponder;
 use api\modules\Contribuicao\ContribuicaoImportRegistry;
 
 class ContribuicaoController
@@ -26,19 +27,22 @@ class ContribuicaoController
     private \api\modules\Pessoa\PessoaRepository $pessoaRepository;
     private \PDO $pdo;
     private ContribuicaoImportRegistry $contribuicaoImportRegistry;
+    private ApiErrorResponder $errorResponder;
 
     public function __construct(
         ContribuicaoService $contribuicaoService,
         \api\modules\Socio\SocioRepository $socioRepository,
         \api\modules\Pessoa\PessoaRepository $pessoaRepository,
         \PDO $pdo,
-        ContribuicaoImportRegistry $contribuicaoImportRegistry
+        ContribuicaoImportRegistry $contribuicaoImportRegistry,
+        ApiErrorResponder $errorResponder
     ) {
         $this->contribuicaoService = $contribuicaoService;
         $this->socioRepository = $socioRepository;
         $this->pessoaRepository = $pessoaRepository;
         $this->pdo = $pdo;
         $this->contribuicaoImportRegistry = $contribuicaoImportRegistry;
+        $this->errorResponder = $errorResponder;
     }
 
     /**
@@ -77,14 +81,19 @@ class ContribuicaoController
         return true;
     }
 
-    private function jsonError(Response $response, string $message, int $statusCode): Response
+    private function jsonError(
+        Response $response,
+        string $message,
+        int $statusCode,
+        ?\Throwable $exception = null
+    ): Response
     {
-        $response->getBody()->write(json_encode([
-            'error' => $message
-        ]));
-
-        return $response->withStatus($statusCode)
-            ->withHeader('Content-Type', 'application/json');
+        return $this->errorResponder->respond(
+            $response,
+            $exception ?? $message,
+            $statusCode,
+            ['error' => $message]
+        );
     }
 
     private function normalizarCpf(string $cpf): string
@@ -233,7 +242,7 @@ class ContribuicaoController
         } catch (\InvalidArgumentException $e) {
             return $this->jsonError($response, $e->getMessage(), $e->getCode() >= 400 && $e->getCode() < 500 ? $e->getCode() : 400);
         } catch (\Throwable $e) {
-            return $this->jsonError($response, 'Erro ao importar contribuições: ' . $e->getMessage(), 500);
+            return $this->jsonError($response, 'Erro ao importar contribuições: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -402,12 +411,7 @@ class ContribuicaoController
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao recuperar contribuições: ' . $e->getMessage()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->jsonError($response, 'Erro ao recuperar contribuições: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -468,12 +472,7 @@ class ContribuicaoController
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao recuperar contribuições: ' . $e->getMessage()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->jsonError($response, 'Erro ao recuperar contribuições: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -514,12 +513,7 @@ class ContribuicaoController
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao recuperar resumo de contribuições: ' . $e->getMessage()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->jsonError($response, 'Erro ao recuperar resumo de contribuições: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -577,7 +571,7 @@ class ContribuicaoController
                 ->withHeader('Content-Disposition', 'attachment; filename="' . $nomeArquivo . '"')
                 ->withHeader('Content-Length', (string)strlen($conteudoPdf));
         } catch (\Exception $e) {
-            return $this->jsonError($response, 'Erro ao recuperar o PDF da contribuição: ' . $e->getMessage(), 500);
+            return $this->jsonError($response, 'Erro ao recuperar o PDF da contribuição: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -638,12 +632,7 @@ class ContribuicaoController
                 ->withHeader('Content-Disposition', 'attachment; filename="' . $nomeArquivo . '"')
                 ->withHeader('Content-Length', (string)strlen($pdf));
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao gerar PDF do extrato: ' . $e->getMessage()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->jsonError($response, 'Erro ao gerar PDF do extrato: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -709,12 +698,7 @@ class ContribuicaoController
                 ->withHeader('Content-Disposition', 'attachment; filename="' . $nomeArquivo . '"')
                 ->withHeader('Content-Length', (string)strlen($pdf));
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao gerar PDF do comprovante: ' . $e->getMessage()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->jsonError($response, 'Erro ao gerar PDF do comprovante: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -842,12 +826,7 @@ class ContribuicaoController
                 $this->pdo->rollBack();
             }
 
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao gerar boleto: ' . $e->getMessage()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->jsonError($response, 'Erro ao gerar boleto: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -999,12 +978,7 @@ class ContribuicaoController
                 $this->pdo->rollBack();
             }
 
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao gerar carnê: ' . $e->getMessage()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->jsonError($response, 'Erro ao gerar carnê: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -1129,12 +1103,7 @@ class ContribuicaoController
                 $this->pdo->rollBack();
             }
 
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao gerar Pix: ' . $e->getMessage()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->jsonError($response, 'Erro ao gerar Pix: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -1261,12 +1230,7 @@ class ContribuicaoController
                 $this->pdo->rollBack();
             }
 
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao processar cartão de crédito: ' . $e->getMessage()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->jsonError($response, 'Erro ao processar cartão de crédito: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -1401,12 +1365,7 @@ class ContribuicaoController
                 $this->pdo->rollBack();
             }
 
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao criar assinatura: ' . $e->getMessage()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->jsonError($response, 'Erro ao criar assinatura: ' . $e->getMessage(), 500, $e);
         }
     }
 
@@ -1414,14 +1373,7 @@ class ContribuicaoController
     {
         try {
             $data = $request->getParsedBody() ?? [];
-            /*$idPessoa = (int)$request->getAttribute('user_id');
-
-            if ($idPessoa <= 0) {
-                return $this->jsonError($response, 'Usuário não identificado.', 401);
-            }*/
-
-            // Aqui você pode adicionar a lógica para criar um pagamento manual
-            // Por exemplo, registrar o pagamento no banco de dados e retornar uma resposta
+        
             $idMeioPagamento = isset($data['id_meio_pagamento']) && $data['id_meio_pagamento'] !== ''
                 ? (int)$data['id_meio_pagamento']
                 : null;
@@ -1437,12 +1389,7 @@ class ContribuicaoController
             return $response->withStatus(201)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Throwable $e) {
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao registrar pagamento manual: ' . $e->getMessage() . ' em ' . $e->getFile() . ' na linha ' . $e->getLine()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->jsonError($response, 'Erro ao registrar pagamento manual: ' . $e->getMessage(), 500, $e);
         }
 
     }

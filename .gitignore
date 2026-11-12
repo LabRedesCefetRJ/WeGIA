@@ -5,4 +5,5 @@ web/html/contribuicao/pdfs/
 web/html/socio/sistema/tabelas/
 web/html/seguranca/ips_bloqueados.json
 api/vendor/
+api/logs/*.log
 

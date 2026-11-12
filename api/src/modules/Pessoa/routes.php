@@ -2,6 +2,7 @@
 
 use api\contracts\services\PessoaServiceInterface;
 use api\Container\AppContainer;
+use api\Infrastructure\ApiErrorResponder;
 use api\modules\Auth\AuthMiddleware;
 use api\modules\Pessoa\PessoaController;
 use api\modules\Pessoa\PessoaRepository;
@@ -20,7 +21,10 @@ return [
             return $container->get(PessoaService::class);
         },
         PessoaController::class => function ($container) {
-            return new PessoaController($container->get(PessoaService::class));
+            return new PessoaController(
+                $container->get(PessoaService::class),
+                $container->get(ApiErrorResponder::class)
+            );
         },
     ],
     'routes' => function (App $app, AppContainer $container): void {

@@ -2,6 +2,7 @@
 
 namespace api\modules\Pessoa;
 
+use api\Infrastructure\ApiErrorResponder;
 use Slim\Psr7\Request;
 use Slim\Psr7\Response;
 use DateTime;
@@ -9,10 +10,12 @@ use DateTime;
 class PessoaController
 {
     private PessoaService $pessoaService;
+    private ApiErrorResponder $errorResponder;
 
-    public function __construct(PessoaService $pessoaService)
+    public function __construct(PessoaService $pessoaService, ApiErrorResponder $errorResponder)
     {
         $this->pessoaService = $pessoaService;
+        $this->errorResponder = $errorResponder;
     }
 
     // Métodos para lidar com as requisições relacionadas a Pessoa
@@ -110,10 +113,12 @@ class PessoaController
             return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $statusCode = (int)$e->getCode() ?: 500;
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage()
-            ]));
-            return $response->withStatus($statusCode)->withHeader('Content-Type', 'application/json');
+            if ($statusCode < 400 || $statusCode > 599) {
+                $statusCode = 500;
+            }
+            return $this->errorResponder->respond($response, $e, $statusCode, [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -146,13 +151,9 @@ class PessoaController
                 $statusCode = 500;
             }
 
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage()
-            ], JSON_UNESCAPED_UNICODE));
-
-            return $response
-                ->withStatus($statusCode)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->errorResponder->respond($response, $e, $statusCode, [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -215,10 +216,12 @@ class PessoaController
             return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $statusCode = (int)$e->getCode() ?: 500;
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage()
-            ]));
-            return $response->withStatus($statusCode)->withHeader('Content-Type', 'application/json');
+            if ($statusCode < 400 || $statusCode > 599) {
+                $statusCode = 500;
+            }
+            return $this->errorResponder->respond($response, $e, $statusCode, [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -255,10 +258,12 @@ class PessoaController
                 ->withStatus(200);
         } catch (\Exception $e) {
             $statusCode = (int)$e->getCode() ?: 500;
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage()
-            ]));
-            return $response->withStatus($statusCode)->withHeader('Content-Type', 'application/json');
+            if ($statusCode < 400 || $statusCode > 599) {
+                $statusCode = 500;
+            }
+            return $this->errorResponder->respond($response, $e, $statusCode, [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

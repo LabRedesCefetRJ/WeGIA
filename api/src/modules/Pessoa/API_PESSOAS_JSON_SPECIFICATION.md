@@ -4,6 +4,19 @@
 
 Documentação completa das endpoints e formatos JSON para o módulo de Pessoa na WeGIA API.
 
+### Respostas de erro do servidor (5xx)
+
+Todas as rotas retornam uma mensagem genérica para status HTTP entre 500 e 599. Esse formato prevalece sobre exemplos específicos de erro 5xx apresentados abaixo:
+
+```json
+{
+  "success": false,
+  "error": "Ocorreu um erro interno. Tente novamente mais tarde."
+}
+```
+
+Os detalhes técnicos da falha são registrados em `api/logs/api.log` e não são enviados ao cliente.
+
 ---
 
 ## Verificar Pessoa Homônima

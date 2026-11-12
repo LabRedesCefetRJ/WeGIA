@@ -4,9 +4,13 @@ use api\Container\AppContainer;
 use api\modules\Auth\AuthMiddleware;
 use api\Infrastructure\ModuleRouteLoader;
 use api\Infrastructure\RepositoryConnection;
+use api\Infrastructure\FileLogger;
+use api\Infrastructure\ApiErrorResponder;
+use api\Infrastructure\ApiErrorHandler;
 use api\middleware\CorsMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Log\LoggerInterface;
 use Slim\Factory\AppFactory;
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -21,6 +25,12 @@ $container = new AppContainer(array_merge(
     [
         PDO::class => function () {
             return RepositoryConnection::getConnection();
+        },
+        LoggerInterface::class => function () {
+            return new FileLogger(dirname(__DIR__) . '/logs/api.log');
+        },
+        ApiErrorResponder::class => function ($container) {
+            return new ApiErrorResponder($container->get(LoggerInterface::class));
         },
         CorsMiddleware::class => function () {
             $origin = defined('CORS_ORIGIN') ? CORS_ORIGIN : '*';
@@ -56,7 +66,15 @@ $displayErrorDetails = ENV_APP === 'development' ? true : false;
  * Note: This middleware should be added last. It will not handle any exceptions/errors
  * for middleware added after it.
  */
-$errorMiddleware = $app->addErrorMiddleware($displayErrorDetails, true, true);
+$errorMiddleware = $app->addErrorMiddleware(
+    $displayErrorDetails,
+    true,
+    true,
+    $container->get(LoggerInterface::class)
+);
+$defaultErrorHandler = $errorMiddleware->getDefaultErrorHandler();
+$errorResponder = $container->get(ApiErrorResponder::class);
+$errorMiddleware->setDefaultErrorHandler(new ApiErrorHandler($errorResponder, $defaultErrorHandler));
 
 // Handle OPTIONS requests (CORS preflight)
 $app->options('/{routes:.*}', function (Request $request, Response $response) {

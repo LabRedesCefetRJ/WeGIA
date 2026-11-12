@@ -4,6 +4,7 @@ use api\contracts\services\EmailVerificationServiceInterface;
 use api\contracts\services\PessoaServiceInterface;
 use api\contracts\services\SocioServiceInterface;
 use api\Container\AppContainer;
+use api\Infrastructure\ApiErrorResponder;
 use api\modules\Auth\AuthMiddleware;
 use api\modules\Auth\AuthService;
 use api\modules\Auth\UserRepository;
@@ -53,6 +54,7 @@ return [
                 $container->get(SocioService::class),
                 $container->get(PessoaServiceInterface::class),
                 $container->get(EmailVerificationService::class),
+                $container->get(ApiErrorResponder::class),
                 $container->get(SocioVerificationHelper::class)
             );
         },

@@ -12,6 +12,7 @@ use api\modules\Pessoa\PessoaRepository;
 use api\modules\Socio\SocioMiddleware;
 use api\modules\Socio\SocioRepository;
 use api\Container\AppContainer;
+use api\Infrastructure\ApiErrorResponder;
 use Slim\App;
 
 return [
@@ -36,14 +37,18 @@ return [
                 $container->get(SocioRepository::class),
                 $container->get(PessoaRepository::class),
                 $container->get(PDO::class),
-                $container->get(ContribuicaoImportRegistry::class)
+                $container->get(ContribuicaoImportRegistry::class),
+                $container->get(ApiErrorResponder::class)
             );
         },
         PaymentRepository::class => function ($container) {
             return new PaymentRepository($container->get(PDO::class));
         },
         PaymentController::class => function ($container) {
-            return new PaymentController($container->get(PaymentRepository::class));
+            return new PaymentController(
+                $container->get(PaymentRepository::class),
+                $container->get(ApiErrorResponder::class)
+            );
         },
     ],
     'routes' => function (App $app, AppContainer $container): void {
