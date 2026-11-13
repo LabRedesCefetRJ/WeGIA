@@ -147,7 +147,7 @@ Content-Type: multipart/form-data
 ### Descrição
 Cria um novo modelo de documento na tabela `modelo_documento` com a descrição informada, o arquivo enviado, o HTML correspondente ao corpo do documento em `body_html` e o funcionário responsável pelo cadastro. A extração é feita pelo LibreOffice em modo headless para arquivos `.odt` e `.docx`; se o arquivo estiver inválido ou a conversão falhar, a operação é rejeitada.
 
-O executável `libreoffice` deve estar instalado e acessível no `PATH` do processo PHP. Os blocos `<style>` do cabeçalho são preservados em `body_html` antes do conteúdo do documento, e imagens são incorporadas como data URIs antes da limpeza dos arquivos temporários. Essa persistência do CSS não altera a renderização do editor Trix.
+O executável `libreoffice` deve estar instalado e acessível no `PATH` do processo PHP. Os blocos `<style>` do cabeçalho são preservados em `body_html` antes do conteúdo do documento, e imagens são incorporadas como data URIs antes da limpeza dos arquivos temporários. A persistência do CSS no banco não garante sua renderização pelo TinyMCE: o editor aplica seu próprio esquema de conteúdo e precisa estar configurado para os elementos e atributos usados pelo documento.
 
 ### Requisição
 ```text

@@ -51,8 +51,7 @@ try {
 	<link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
 	<link rel="stylesheet" href="../../assets/vendor/font-awesome/css/font-awesome.css" />
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
-	<link rel="stylesheet" href="../../node_modules/trix/dist/trix.css" />
-	<link rel="stylesheet" href="../../css/wegia-trix-editor.css" />
+	<link rel="stylesheet" href="../../css/wegia-tinymce-editor.css" />
 
 	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon">
 
@@ -258,8 +257,8 @@ try {
 	</div>
 
 	<?php require_once "../../Functions/authenticatedRequest.php"; ?>
-	<script src="../../node_modules/trix/dist/trix.umd.min.js"></script>
-	<script src="../../Functions/wegiaTrixEditor.js"></script>
+	<script src="../../node_modules/tinymce/tinymce.min.js"></script>
+	<script src="../../Functions/wegiaTinyMceEditor.js"></script>
 	<script>
 		(function() {
 			const configuracaoModelo = <?= json_encode([
@@ -277,7 +276,7 @@ try {
 			const descricaoEdicao = document.getElementById('descricaoModeloEdicao');
 			const arquivoEdicao = document.getElementById('arquivoModeloEdicao');
 			let modeloEmEdicao = null;
-			const campoEditorPromise = WegiaTrixEditor.mount(document.getElementById('campo-editor-modelo'), {
+			const campoEditorPromise = WegiaTinyMceEditor.mount(document.getElementById('campo-editor-modelo'), {
 				id: 'editor-doc-teste',
 				name: 'body_html',
 				label: 'Conteúdo do documento',

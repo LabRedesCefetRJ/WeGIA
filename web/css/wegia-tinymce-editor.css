@@ -1,0 +1,33 @@
+.wegia-tinymce-editor__controls {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.wegia-tinymce-editor__controls select {
+	max-width: 360px;
+}
+
+.wegia-tinymce-editor__status {
+	margin-left: 4px;
+}
+
+.wegia-tinymce-editor textarea {
+	min-height: 220px;
+}
+
+.wegia-tinymce-editor .tox-tinymce {
+	min-height: 300px;
+}
+
+@media (max-width: 600px) {
+	.wegia-tinymce-editor__controls {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.wegia-tinymce-editor__controls select {
+		max-width: none;
+	}
+}

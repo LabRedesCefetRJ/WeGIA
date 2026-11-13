@@ -32,37 +32,27 @@
 		return resultado;
 	}
 
-	function substituirConteudo(editor, html) {
-		const instancia = editor.editor;
-		const comprimento = instancia.getDocument().getLength();
-		instancia.setSelectedRange([0, comprimento]);
-		instancia.deleteInDirection('forward');
-		instancia.setSelectedRange([0, 0]);
-		instancia.insertHTML(html);
-	}
-
 	/**
-	 * Monta um campo Trix que submete o HTML pelo input oculto associado ao formulário pai.
+	 * Monta um campo TinyMCE que submete o HTML pelo input oculto associado ao formulário pai.
 	 * Opções: name, modelsUrl, bodyUrl, request (e, opcionalmente, label e placeholder).
 	 */
 	async function mount(container, options) {
 		if (!(container instanceof HTMLElement)) {
-			throw new TypeError('O componente Trix precisa de um elemento HTML para montagem.');
+			throw new TypeError('O componente TinyMCE precisa de um elemento HTML para montagem.');
 		}
 		if (!options || typeof options.name !== 'string' || options.name.trim() === '') {
-			throw new TypeError('Informe o atributo name para o valor do campo Trix.');
+			throw new TypeError('Informe o atributo name para o valor do campo TinyMCE.');
 		}
 		if (!options.modelsUrl || !options.bodyUrl || typeof options.request !== 'function') {
-			throw new TypeError('Informe modelsUrl, bodyUrl e a função request para o componente Trix.');
+			throw new TypeError('Informe modelsUrl, bodyUrl e a função request para o componente TinyMCE.');
 		}
-		if (!global.Trix) {
-			throw new Error('A biblioteca Trix deve ser carregada antes do componente de edição.');
+		if (!global.tinymce || typeof global.tinymce.init !== 'function') {
+			throw new Error('A biblioteca TinyMCE deve ser carregada antes do componente de edição.');
 		}
-		await global.customElements.whenDefined('trix-editor');
 
-		const componentId = `wegia-trix-${++nextEditorId}`;
-		const root = criarElemento('div', 'wegia-trix-editor');
-		const controls = criarElemento('div', 'wegia-trix-editor__controls');
+		const componentId = `wegia-tinymce-${++nextEditorId}`;
+		const root = criarElemento('div', 'wegia-tinymce-editor');
+		const controls = criarElemento('div', 'wegia-tinymce-editor__controls');
 		const select = criarElemento('select', 'form-control');
 		select.setAttribute('aria-label', 'Modelo de documento para importar');
 		const optionInicial = criarElemento('option', '', 'Carregando modelos...');
@@ -73,7 +63,7 @@
 		const importButton = criarElemento('button', 'btn btn-default', 'Importar');
 		importButton.type = 'button';
 		importButton.disabled = true;
-		const status = criarElemento('span', 'wegia-trix-editor__status');
+		const status = criarElemento('span', 'wegia-tinymce-editor__status');
 		status.setAttribute('role', 'status');
 		status.setAttribute('aria-live', 'polite');
 		controls.append(select, importButton, status);
@@ -83,22 +73,51 @@
 		input.id = `${componentId}-input`;
 		input.name = options.name;
 
-		const editor = criarElemento('trix-editor', 'trix-content');
-		editor.id = options.id || `${componentId}-editor`;
-		editor.setAttribute('input', input.id);
-		editor.setAttribute('aria-label', options.label || 'Campo de edição de texto');
-		editor.addEventListener('trix-initialize', () => {
-			const toolbar = editor.previousElementSibling;
-			if (toolbar && toolbar.matches('trix-toolbar')) {
-				toolbar.appendChild(controls);
-			}
-		}, { once: true });
+		const editorElement = criarElemento('textarea');
+		editorElement.id = options.id || `${componentId}-editor`;
+		editorElement.setAttribute('aria-label', options.label || 'Campo de edição de texto');
 		if (options.placeholder) {
-			editor.setAttribute('placeholder', options.placeholder);
+			editorElement.setAttribute('placeholder', options.placeholder);
 		}
 
-		root.append(controls, input, editor);
+		root.append(controls, input, editorElement);
 		container.replaceChildren(root);
+
+		let editorInstance = null;
+		function sincronizarValor() {
+			if (editorInstance) {
+				input.value = editorInstance.getContent({ format: 'html' });
+			}
+		}
+
+		const formulario = container.closest('form');
+		if (formulario) {
+			formulario.addEventListener('submit', sincronizarValor, true);
+		}
+
+		const editores = await global.tinymce.init({
+			target: editorElement,
+			license_key: 'gpl',
+			menubar: false,
+			statusbar: false,
+			min_height: 220,
+			plugins: 'image link lists table',
+			toolbar: 'undo redo | blocks | bold italic underline strikethrough | alignleft aligncenter alignright | bullist numlist | outdent indent | link image table',
+			extended_valid_elements: 'style[type|media]',
+			valid_children: '+body[style]',
+			paste_data_images: true,
+			convert_urls: false,
+			placeholder: options.placeholder || '',
+			iframe_attrs: { title: options.label || 'Campo de edição de texto' },
+			setup(editor) {
+				editor.on('input change Undo Redo SetContent', sincronizarValor);
+			}
+		});
+		editorInstance = editores[0] || null;
+		if (!editorInstance) {
+			throw new Error('TinyMCE não conseguiu inicializar o campo de edição.');
+		}
+		sincronizarValor();
 
 		select.addEventListener('change', () => {
 			importButton.disabled = select.value === '';
@@ -111,7 +130,7 @@
 
 			importButton.disabled = true;
 			select.disabled = true;
-			status.className = 'wegia-trix-editor__status';
+			status.className = 'wegia-tinymce-editor__status';
 			status.textContent = 'Importando modelo...';
 
 			try {
@@ -128,14 +147,15 @@
 					throw new Error('A API não retornou o conteúdo HTML do modelo.');
 				}
 
-				substituirConteudo(editor, modelo.body_html);
+				editorInstance.setContent(modelo.body_html);
+				sincronizarValor();
 				status.textContent = `Modelo "${modelo.descricao}" importado.`;
-				root.dispatchEvent(new CustomEvent('wegia-trix-import', {
+				root.dispatchEvent(new CustomEvent('wegia-tinymce-import', {
 					bubbles: true,
 					detail: { modelo }
 				}));
 			} catch (error) {
-				status.className = 'wegia-trix-editor__status text-danger';
+				status.className = 'wegia-tinymce-editor__status text-danger';
 				status.textContent = error.message || 'Não foi possível importar o modelo.';
 			} finally {
 				select.disabled = false;
@@ -147,7 +167,7 @@
 			const valorSelecionado = select.value;
 			select.disabled = true;
 			importButton.disabled = true;
-			status.className = 'wegia-trix-editor__status';
+			status.className = 'wegia-tinymce-editor__status';
 			status.textContent = 'Carregando modelos...';
 
 			try {
@@ -187,7 +207,7 @@
 				optionErro.selected = true;
 				select.appendChild(optionErro);
 				select.disabled = true;
-				status.className = 'wegia-trix-editor__status text-danger';
+				status.className = 'wegia-tinymce-editor__status text-danger';
 				status.textContent = error.message || 'Não foi possível carregar os modelos.';
 				throw error;
 			}
@@ -200,13 +220,14 @@
 		}
 
 		return {
-			editor,
+			editor: editorInstance,
 			input,
 			select,
 			importButton,
-			refresh: carregarModelos
+			refresh: carregarModelos,
+			getContent: () => editorInstance.getContent({ format: 'html' })
 		};
 	}
 
-	global.WegiaTrixEditor = Object.freeze({ mount });
+	global.WegiaTinyMceEditor = Object.freeze({ mount });
 })(window);
