@@ -67,9 +67,6 @@ try {
 	$fieldErrors = getSessionFormErrors(false);
 	$openModal = getSessionOpenModal(false);
 
-	$modalAtendido = $_SESSION['modal_cadastrar_atendido'] ?? null;
-	unset($_SESSION['modal_cadastrar_atendido']);
-
 	function formatCpfForDisplay(?string $cpf): string {
 		$digits = preg_replace('/\D+/', '', $cpf ?? '');
 		if (strlen($digits) !== 11) {
@@ -298,14 +295,12 @@ try {
 															style="display: inline;"
 															onsubmit="return confirm('Deseja realmente concluir este processo?');">
 															<input type="hidden" name="nomeClasse" value="ProcessoAceitacaoControle">
-															<input type="hidden" name="id_status" value="2">
-															<input type="hidden" name="abrir_modal_atendido" value="1">
 															<input type="hidden" name="metodo" value="atualizarStatus">
 															<input type="hidden" name="id_processo" value="<?= (int) $processo['id'] ?>">
 															<input type="hidden" name="id_status" value="2">
 															<button type="submit" class="btn btn-xs btn-success"><i class="fa fa-check" aria-hidden="true"></i> Concluir Processo </button>
 														</form>
-														
+
 													<?php else: ?>
 														<button type="button"
 															class="btn btn-xs btn-success"
@@ -507,6 +502,7 @@ try {
                                 <div id="alertNovoProcesso" class="alert alert-danger" role="alert" style="display: none;"></div>
 
                                 <div class="form-group">
+									<input type="hidden" id="id_pessoa_atendido" name="id_pessoa_atendido" value="">
                                     <label>Nome <span class="text-danger">*</span></label>
                                     <input type="text" id="nome" name="nome" class="form-control<?= !empty($fieldErrors['nome']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" required autocomplete="given-name" value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
                                     <?php if (!empty($fieldErrors['nome']) && $openModal === 'modalNovoProcesso'): ?>
@@ -704,48 +700,6 @@ try {
 						</div>
 					</div>
 				</div>
-				<?php if (!empty($modalAtendido)): ?>
-					<div class="modal fade" id="modalConfirmarAtendido" tabindex="-1" role="dialog" aria-hidden="true">
-						<div class="modal-dialog" role="document">
-							<div class="modal-content">
-								<div class="modal-header">
-									<button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-										<span aria-hidden="true">&times;</span>
-									</button>
-									<h3 class="modal-title">Processo concluído com sucesso!</h3>
-								</div>
-								<div class="modal-body">
-									<p>Deseja cadastrar um atendido para o processo de
-										<strong><?= htmlspecialchars($modalAtendido['nome'], ENT_QUOTES, 'UTF-8') ?></strong>?
-									</p>
-								</div>
-								<div class="modal-footer">
-									<button type="button" class="btn btn-default" data-dismiss="modal">Não</button>
-									<a href="../../controle/control.php?nomeClasse=ProcessoAceitacaoControle&metodo=criarAtendidoProcesso&id_processo=<?= (int)$modalAtendido['id_processo'] ?>"
-									class="btn btn-success">Sim</a>
-								</div>
-							</div>
-						</div>
-					</div>
-					<style>
-						#modalConfirmarAtendido.in {
-							display: flex !important;
-							align-items: center; 
-							justify-content: center; 
-						}
-
-						#modalConfirmarAtendido .modal-dialog {
-							margin: 0 10px;
-							width: 100%;
-							max-width: 500px;
-						}
-					</style>
-					<script>
-						$(function () {
-							$('#modalConfirmarAtendido').modal('show');
-						});
-					</script>
-					<?php endif; ?>
 
 			</section>
 		</div>
@@ -786,15 +740,58 @@ try {
 		$(document).ready(function () {
 			const params = new URLSearchParams(window.location.search);
 			const modal = params.get('modal');
-			const cpfAtendido = params.get('cpf');
+			const id_pessoa_atendido = params.get('idpessoa');
 
 			if (modal === 'modalNovoProcesso') {
 				$('#modalNovoProcesso').modal('show');
 			}
-			if (cpfAtendido) {
-				const $cpf = $('#modalNovoProcesso').find('#cpf');
-				$cpf.val(cpfAtendido);
-				buscarPessoaPorCpf(cpfAtendido);
+			if (id_pessoa_atendido) {
+				$.ajax({
+					url: '../../controle/control.php',
+					type: 'GET',
+					dataType: 'json',
+					data: {
+						nomeClasse: 'ProcessoAceitacaoControle',
+						metodo: 'buscarPessoaPorId',
+						id: id_pessoa_atendido
+					},
+					success: function(response) {
+						if (!response.success || !response.pessoa) {
+							return;
+						}
+						$('#id_pessoa_atendido').val(id_pessoa_atendido);
+						$('#cpf').val(response.pessoa.cpf || '');
+						$('#nome').val(response.pessoa.nome || '');
+						$('#sobrenome').val(response.pessoa.sobrenome || '');
+						$('#email').val(response.pessoa.email || '');
+						const telefone = response.pessoa.telefone;
+						$('#telefone').val(telefone && telefone.trim().toLowerCase() !== 'null' ? telefone : '');
+						$('#cep').val(response.pessoa.cep || '');
+						$('#rua').val(response.pessoa.logradouro || '');
+						$('#numero_residencia').val(
+							response.pessoa.numero_endereco || ''
+						);
+						$('#bairro').val(response.pessoa.bairro || '');
+						$('#cidade').val(response.pessoa.cidade || '');
+						$('#uf').val(response.pessoa.estado || '');
+						$('#ibge').val(response.pessoa.ibge || '');
+						$('#data_nascimento_processo').val(
+							response.pessoa.data_nascimento || ''
+						);
+
+						if (
+							response.pessoa.sexo === 'm' ||
+							response.pessoa.sexo === 'f'
+						) {
+							$('input[name="sexo"][value="' +
+								response.pessoa.sexo + '"]').prop('checked', true);
+						}
+					},
+					error: function(xhr) {
+						console.error('Erro ao buscar pessoa:', xhr.status, xhr.responseText);
+					}
+				});
+				$('#selectStatusProcessoCadastro').val('2');
 			}
 		});
 	</script>
