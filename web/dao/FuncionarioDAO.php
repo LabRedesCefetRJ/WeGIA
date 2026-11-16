@@ -272,8 +272,8 @@ class FuncionarioDAO
 
         $stmt->bindParam(':id_pessoa', $idPessoa);
         $stmt->bindParam(':registro_geral', $rg);
-        $stmt->bindParam(':orgao_emissor', $orgao_emissor);
-        $stmt->bindParam(':data_expedicao', $data_expedicao);
+        $stmt->bindParam(':orgao_emissor', $orgaoEmissor);
+        $stmt->bindParam(':data_expedicao', $dataExpedicao);
         $stmt->bindParam(':sobrenome', $sobrenome);
         $stmt->bindParam(':sexo', $sexo);
 

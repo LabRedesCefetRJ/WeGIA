@@ -1197,6 +1197,8 @@ class FuncionarioControle
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
             $funcionario = $this->verificarExistente();
+            //error_log("Verificando campos do RG: " ."rg" . $funcionario->getRegistroGeral() . "orgao_emissor" . $funcionario->getOrgaoEmissor() . "data_expedicao" . $funcionario->getDataExpedicao());
+            //exit();
             $idPessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
             $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
 
