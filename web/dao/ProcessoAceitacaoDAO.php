@@ -300,4 +300,17 @@ class ProcessoAceitacaoDAO
 
         return (int) $stmt->fetch(PDO::FETCH_ASSOC)['idatendido'];
     }
+    
+    public function getDescricaoProcesso(int $idProcesso)
+    {
+
+        $query = 'SELECT descricao FROM processo_aceitacao WHERE id = :id';
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(':id', $idProcesso);
+        $stmt->execute();
+        $descricao = $stmt->fetchColumn();
+
+        return $descricao ?: null;
+    }
 }
