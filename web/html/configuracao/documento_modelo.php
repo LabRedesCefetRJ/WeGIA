@@ -278,7 +278,7 @@ try {
 			let modeloEmEdicao = null;
 			const campoEditorPromise = WegiaTinyMceEditor.mount(document.getElementById('campo-editor-modelo'), {
 				id: 'editor-doc-teste',
-				name: 'body_html',
+				name: 'documento_html',
 				label: 'Conteúdo do documento',
 				placeholder: 'Escreva ou importe o conteúdo de um modelo...',
 				modelsUrl: `${apiBase}/importaveis`,
@@ -675,7 +675,7 @@ try {
 			});
 			document.getElementById('formTesteEditor').addEventListener('submit', (event) => {
 				event.preventDefault();
-				const valor = new FormData(event.currentTarget).get('body_html') || '';
+				const valor = new FormData(event.currentTarget).get('documento_html') || '';
 				document.getElementById('feedback-editor-modelo').textContent =
 					`Campo pronto para envio (${valor.length} caracteres HTML).`;
 			});

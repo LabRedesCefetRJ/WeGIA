@@ -39,9 +39,7 @@ class DocumentoModeloService
         return $this->repository->listarModelosImportaveis($idFuncionario);
     }
 
-    /**
-     * @return array{id:int, descricao:string, body_html:string}
-     */
+    /** @return array{id:int, descricao:string, documento_html:string, style:?string} */
     public function obterCorpoModeloImportavel(int $id, int $idPessoa): array
     {
         if ($id < 1) {
@@ -54,14 +52,15 @@ class DocumentoModeloService
             throw new \RuntimeException('Modelo importável não encontrado.', 404);
         }
 
-        if (!is_string($modelo['body_html']) || $modelo['body_html'] === '') {
+        if (!is_string($modelo['documento_html']) || $modelo['documento_html'] === '') {
             throw new \RuntimeException('O modelo selecionado não possui conteúdo HTML para importar.', 404);
         }
 
         return [
             'id' => (int) $modelo['id'],
             'descricao' => (string) $modelo['descricao'],
-            'body_html' => $modelo['body_html'],
+            'documento_html' => $modelo['documento_html'],
+            'style' => $modelo['style'] === null ? null : (string) $modelo['style'],
         ];
     }
 
@@ -111,9 +110,17 @@ class DocumentoModeloService
         }
 
         [$conteudo, $extensao] = $this->obterConteudoArquivo($arquivo);
-        $bodyHtml = $this->htmlConverter->converterParaHtml($conteudo, $extensao);
+        $documento = $this->htmlConverter->converterParaDocumento($conteudo, $extensao);
 
-        $id = $this->repository->salvarModelo($descricao, $conteudo, $bodyHtml, $extensao, $idFuncionario, $global);
+        $id = $this->repository->salvarModelo(
+            $descricao,
+            $conteudo,
+            $documento['documento_html'],
+            $documento['style'],
+            $extensao,
+            $idFuncionario,
+            $global
+        );
         if ($id === false || $id <= 0) {
             throw new \RuntimeException('Não foi possível salvar o modelo de documento.', 500);
         }
@@ -132,8 +139,15 @@ class DocumentoModeloService
             $atualizado = $this->repository->atualizarModelo($id, $descricao);
         } else {
             [$conteudo, $extensao] = $this->obterConteudoArquivo($arquivo);
-            $bodyHtml = $this->htmlConverter->converterParaHtml($conteudo, $extensao);
-            $atualizado = $this->repository->atualizarModelo($id, $descricao, $conteudo, $extensao, $bodyHtml);
+            $documento = $this->htmlConverter->converterParaDocumento($conteudo, $extensao);
+            $atualizado = $this->repository->atualizarModelo(
+                $id,
+                $descricao,
+                $conteudo,
+                $extensao,
+                $documento['documento_html'],
+                $documento['style']
+            );
         }
 
         if (!$atualizado) {

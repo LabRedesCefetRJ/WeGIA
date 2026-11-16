@@ -90,6 +90,23 @@
 			}
 		}
 
+		function aplicarStylesheet(css) {
+			const documento = editorInstance.getDoc();
+			const stylesheetAnterior = documento.head.querySelector('style[data-wegia-modelo]');
+			if (stylesheetAnterior) {
+				stylesheetAnterior.remove();
+			}
+
+			if (typeof css !== 'string' || css.trim() === '') {
+				return;
+			}
+
+			const stylesheet = documento.createElement('style');
+			stylesheet.setAttribute('data-wegia-modelo', '');
+			stylesheet.textContent = css;
+			documento.head.appendChild(stylesheet);
+		}
+
 		const formulario = container.closest('form');
 		if (formulario) {
 			formulario.addEventListener('submit', sincronizarValor, true);
@@ -143,11 +160,12 @@
 					}
 				));
 				const modelo = await jsonDaResposta(response);
-				if (typeof modelo.body_html !== 'string') {
+				if (typeof modelo.documento_html !== 'string') {
 					throw new Error('A API não retornou o conteúdo HTML do modelo.');
 				}
 
-				editorInstance.setContent(modelo.body_html);
+				editorInstance.setContent(modelo.documento_html);
+				aplicarStylesheet(modelo.style);
 				sincronizarValor();
 				status.textContent = `Modelo "${modelo.descricao}" importado.`;
 				root.dispatchEvent(new CustomEvent('wegia-tinymce-import', {

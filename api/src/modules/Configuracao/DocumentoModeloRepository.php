@@ -41,8 +41,8 @@ class DocumentoModeloRepository
             SELECT id, descricao, `global`
             FROM modelo_documento
             WHERE (id_funcionario = :id_funcionario OR `global` = 1)
-              AND body_html IS NOT NULL
-              AND body_html <> ''
+              AND documento_html IS NOT NULL
+              AND documento_html <> ''
             ORDER BY descricao ASC, id DESC
         ";
 
@@ -56,12 +56,12 @@ class DocumentoModeloRepository
     }
 
     /**
-     * @return array{id:int, descricao:string, body_html:?string}|null
+     * @return array{id:int, descricao:string, documento_html:?string, style:?string}|null
      */
     public function buscarModeloImportavel(int $id, int $idFuncionario): ?array
     {
         $query = "
-            SELECT id, descricao, body_html
+            SELECT id, descricao, documento_html, `style`
             FROM modelo_documento
             WHERE id = :id
               AND (id_funcionario = :id_funcionario OR `global` = 1)
@@ -123,15 +123,16 @@ class DocumentoModeloRepository
     public function salvarModelo(
         string $descricao,
         string $conteudoArquivo,
-        string $bodyHtml,
+        string $documentoHtml,
+        string $style,
         string $extensao,
         int $idFuncionario,
         bool $global
     ): int|false
     {
         $query = "
-            INSERT INTO modelo_documento (id_funcionario, descricao, documento, body_html, extensao, `global`)
-            VALUES (:id_funcionario, :descricao, :documento, :body_html, :extensao, :global)
+            INSERT INTO modelo_documento (id_funcionario, descricao, documento, documento_html, `style`, extensao, `global`)
+            VALUES (:id_funcionario, :descricao, :documento, :documento_html, :style, :extensao, :global)
         ";
 
         $stmt = $this->pdo->prepare($query);
@@ -139,7 +140,8 @@ class DocumentoModeloRepository
             ':id_funcionario' => $idFuncionario,
             ':descricao' => $descricao,
             ':documento' => $conteudoArquivo,
-            ':body_html' => $bodyHtml,
+            ':documento_html' => $documentoHtml,
+            ':style' => $style,
             ':extensao' => $extensao,
             ':global' => $global ? 1 : 0,
         ]);
@@ -158,7 +160,8 @@ class DocumentoModeloRepository
         string $descricao,
         ?string $conteudoArquivo = null,
         ?string $extensao = null,
-        ?string $bodyHtml = null
+        ?string $documentoHtml = null,
+        ?string $style = null
     ): bool
     {
         if ($conteudoArquivo === null) {
@@ -172,19 +175,20 @@ class DocumentoModeloRepository
                 ':id' => $id,
             ];
         } else {
-            if ($extensao === null || $bodyHtml === null) {
-                throw new \InvalidArgumentException('Extensão e conteúdo HTML são obrigatórios ao substituir o arquivo.');
+            if ($extensao === null || $documentoHtml === null || $style === null) {
+                throw new \InvalidArgumentException('Extensão, documento HTML e stylesheet são obrigatórios ao substituir o arquivo.');
             }
 
             $query = "
                 UPDATE modelo_documento
-                SET descricao = :descricao, documento = :documento, body_html = :body_html, extensao = :extensao
+                SET descricao = :descricao, documento = :documento, documento_html = :documento_html, `style` = :style, extensao = :extensao
                 WHERE id = :id
             ";
             $parametros = [
                 ':descricao' => $descricao,
                 ':documento' => $conteudoArquivo,
-                ':body_html' => $bodyHtml,
+                ':documento_html' => $documentoHtml,
+                ':style' => $style,
                 ':extensao' => $extensao,
                 ':id' => $id,
             ];

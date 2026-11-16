@@ -9,7 +9,8 @@ class DocumentoCorpoHtmlConverter
 {
     private const TEMPO_LIMITE_CONVERSAO_SEGUNDOS = 60;
 
-    public function converterParaHtml(string $conteudo, string $extensao): string
+    /** @return array{documento_html:string, style:string} */
+    public function converterParaDocumento(string $conteudo, string $extensao): array
     {
         $extensao = strtolower($extensao);
         if (!in_array($extensao, ['docx', 'odt'], true)) {
@@ -44,7 +45,7 @@ class DocumentoCorpoHtmlConverter
                 );
             }
 
-            return $this->extrairCorpoHtml($html, $diretorioTemporario);
+            return $this->extrairDocumentoHtml($html, $diretorioTemporario);
         } finally {
             $this->removerDiretorioTemporario($diretorioTemporario);
         }
@@ -192,7 +193,8 @@ class DocumentoCorpoHtmlConverter
         }
     }
 
-    private function extrairCorpoHtml(string $html, string $diretorioTemporario): string
+    /** @return array{documento_html:string, style:string} */
+    private function extrairDocumentoHtml(string $html, string $diretorioTemporario): array
     {
         $documentoHtml = new DOMDocument('1.0', 'UTF-8');
         $errosLibxml = libxml_use_internal_errors(true);
@@ -212,7 +214,6 @@ class DocumentoCorpoHtmlConverter
         }
 
         $this->incorporarImagens($documentoHtml, $diretorioTemporario);
-        $estilos = $this->extrairEstilosCabecalho($documentoHtml);
 
         $corpos = $documentoHtml->getElementsByTagName('body');
         $corpo = $corpos->item(0);
@@ -220,35 +221,50 @@ class DocumentoCorpoHtmlConverter
             throw new \RuntimeException('A conversão do documento não gerou um corpo HTML.', 500);
         }
 
-        $conteudo = '';
-        foreach ($corpo->childNodes as $no) {
-            $htmlNo = $documentoHtml->saveHTML($no);
-            if ($htmlNo === false) {
-                throw new \RuntimeException('Não foi possível serializar o corpo HTML do documento.', 500);
-            }
-            $conteudo .= $htmlNo;
+        $raizHtml = $documentoHtml->documentElement;
+        if ($raizHtml === null || strtolower($raizHtml->tagName) !== 'html') {
+            throw new \RuntimeException('A conversão do documento não gerou um documento HTML completo.', 500);
         }
 
-        return $estilos . $conteudo;
+        $style = $this->extrairEstiloCabecalho($documentoHtml);
+        $htmlCompleto = '<!DOCTYPE html>';
+        if ($documentoHtml->doctype !== null) {
+            $doctype = $documentoHtml->saveHTML($documentoHtml->doctype);
+            if ($doctype === false) {
+                throw new \RuntimeException('Não foi possível serializar o tipo do documento HTML.', 500);
+            }
+            if (trim($doctype) !== '') {
+                $htmlCompleto = $doctype;
+            }
+        }
+
+        $htmlRaiz = $documentoHtml->saveHTML($raizHtml);
+        if ($htmlRaiz === false) {
+            throw new \RuntimeException('Não foi possível serializar o documento HTML completo.', 500);
+        }
+
+        return [
+            'documento_html' => $htmlCompleto . $htmlRaiz,
+            'style' => $style,
+        ];
     }
 
-    private function extrairEstilosCabecalho(DOMDocument $documentoHtml): string
+    private function extrairEstiloCabecalho(DOMDocument $documentoHtml): string
     {
         $cabecalho = $documentoHtml->getElementsByTagName('head')->item(0);
         if ($cabecalho === null) {
             return '';
         }
 
-        $estilos = '';
+        $regras = [];
         foreach ($cabecalho->getElementsByTagName('style') as $estilo) {
-            $htmlEstilo = $documentoHtml->saveHTML($estilo);
-            if ($htmlEstilo === false) {
-                throw new \RuntimeException('Não foi possível serializar os estilos gerados pelo LibreOffice.', 500);
+            $css = trim($estilo->textContent);
+            if ($css !== '') {
+                $regras[] = $css;
             }
-            $estilos .= $htmlEstilo;
         }
 
-        return $estilos;
+        return implode("\n", $regras);
     }
 
     private function incorporarImagens(DOMDocument $documentoHtml, string $diretorioTemporario): void

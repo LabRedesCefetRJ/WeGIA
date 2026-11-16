@@ -58,7 +58,7 @@ GET /configuracao/documentos/modelo/importaveis
 **Obrigatório** - JWT
 
 ### Descrição
-Retorna metadados dos modelos que o funcionário autenticado pode importar: modelos próprios e modelos globais. Modelos sem `body_html` não são listados. O HTML não é incluído nesta resposta; ele é carregado somente para o modelo selecionado.
+Retorna metadados dos modelos que o funcionário autenticado pode importar: modelos próprios e modelos globais. Modelos sem `documento_html` não são listados. O HTML não é incluído nesta resposta; ele é carregado somente para o modelo selecionado.
 
 ### Resposta com sucesso (200 OK)
 ```json
@@ -88,14 +88,15 @@ GET /configuracao/documentos/modelo/{id}/body
 **Obrigatório** - JWT
 
 ### Descrição
-Retorna o campo `body_html` somente se o modelo for do funcionário autenticado ou for global.
+Retorna o campo `documento_html` somente se o modelo for do funcionário autenticado ou for global. O conteúdo é o documento HTML completo gerado pelo LibreOffice, incluindo `<!DOCTYPE>`, `<html>`, `<head>` e `<body>`.
 
 ### Resposta com sucesso (200 OK)
 ```json
 {
   "id": 1,
   "descricao": "Modelo de avaliação inicial",
-  "body_html": "<div><p>Conteúdo do modelo</p></div>"
+  "documento_html": "<!DOCTYPE html><html><head><style>p { color: #333; }</style></head><body><p>Conteúdo do modelo</p></body></html>",
+  "style": "p { color: #333; }"
 }
 ```
 
@@ -145,9 +146,11 @@ Content-Type: multipart/form-data
 ```
 
 ### Descrição
-Cria um novo modelo de documento na tabela `modelo_documento` com a descrição informada, o arquivo enviado, o HTML correspondente ao corpo do documento em `body_html` e o funcionário responsável pelo cadastro. A extração é feita pelo LibreOffice em modo headless para arquivos `.odt` e `.docx`; se o arquivo estiver inválido ou a conversão falhar, a operação é rejeitada.
+Cria um novo modelo de documento na tabela `modelo_documento` com a descrição informada, o arquivo enviado, o HTML completo correspondente ao documento em `documento_html` e o funcionário responsável pelo cadastro. A extração é feita pelo LibreOffice em modo headless para arquivos `.odt` e `.docx`; se o arquivo estiver inválido ou a conversão falhar, a operação é rejeitada.
 
-O executável `libreoffice` deve estar instalado e acessível no `PATH` do processo PHP. Os blocos `<style>` do cabeçalho são preservados em `body_html` antes do conteúdo do documento, e imagens são incorporadas como data URIs antes da limpeza dos arquivos temporários. A persistência do CSS no banco não garante sua renderização pelo TinyMCE: o editor aplica seu próprio esquema de conteúdo e precisa estar configurado para os elementos e atributos usados pelo documento.
+O executável `libreoffice` deve estar instalado e acessível no `PATH` do processo PHP. O documento HTML completo, incluindo o stylesheet do cabeçalho, é preservado em `documento_html`. O conteúdo CSS dos elementos `<style>` também é armazenado separadamente na coluna `style`; imagens são incorporadas como data URIs antes da limpeza dos arquivos temporários.
+
+Para instalações existentes, aplique `BD/rename_body_html_to_documento_html.sql` e depois `BD/add_style_to_modelo_documento.sql`. A primeira migration renomeia a coluna preservando os valores gravados; a segunda cria a coluna nullable `style`. Registros já existentes continuam com o CSS no documento completo e terão `style` nulo até serem convertidos novamente.
 
 ### Requisição
 ```text
@@ -221,7 +224,7 @@ Content-Type: application/json
 ### Requisição
 Envie `descricao` (obrigatória) e, se desejar substituir o arquivo atual, `arquivo` com o nome e o conteúdo Base64. Sem arquivo, o arquivo existente é preservado. A descrição aceita até 128 caracteres.
 
-Quando um novo arquivo é enviado, seu conteúdo é convertido para o HTML interno do corpo e atualizado em `body_html`. Se a leitura ou conversão falhar, a atualização é rejeitada e os dados atuais permanecem inalterados.
+Quando um novo arquivo é enviado, seu conteúdo é convertido para o documento HTML completo e atualizado em `documento_html`, e seu stylesheet é atualizado em `style`. Se a leitura ou conversão falhar, a atualização é rejeitada e os dados atuais permanecem inalterados.
 
 ```json
 {
