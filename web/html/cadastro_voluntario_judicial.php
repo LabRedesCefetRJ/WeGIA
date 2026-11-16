@@ -3,6 +3,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_S
 session_start();
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
+  exit;
 }
 $config_path = "config.php";
 if (file_exists($config_path)) {
@@ -28,17 +29,20 @@ if (!is_null($resultado)) {
     if ($permissao['id_acao'] < 3) {
       $msg = "Você não tem as permissões necessárias para essa página.";
       header("Location: ./home.php?msg_c=$msg");
+      exit;
     }
     $permissao = $permissao['id_acao'];
   } else {
     $permissao = 1;
     $msg = "Você não tem as permissões necessárias para essa página.";
     header("Location: ./home.php?msg_c=$msg");
+    exit;
   }
 } else {
   $permissao = 1;
   $msg = "Você não tem as permissões necessárias para essa página.";
   header("Location: ./home.php?msg_c=$msg");
+  exit;
 }
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "personalizacao_display.php";

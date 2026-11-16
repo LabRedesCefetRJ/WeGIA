@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -65,6 +66,7 @@ class MeioPagamentoController
             $this->pdo->commit();
 
             header("Location: ../view/meio_pagamento.php?msg=cadastrar-sucesso");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -72,6 +74,7 @@ class MeioPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=cadastrar-falha");
+            exit;
         }
     }
 
@@ -159,6 +162,7 @@ class MeioPagamentoController
             $this->pdo->commit();
 
             header("Location: ../view/meio_pagamento.php?msg=excluir-sucesso#mensagem-tabela");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -166,6 +170,7 @@ class MeioPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=excluir-falha#mensagem-tabela");
+            exit;
         }
     }
 
@@ -200,6 +205,7 @@ class MeioPagamentoController
 
             $this->pdo->commit();
             header("Location: ../view/meio_pagamento.php?msg=editar-sucesso#mensagem-tabela");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -207,6 +213,7 @@ class MeioPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=editar-falha#mensagem-tabela");
+            exit;
         }
     }
 
@@ -278,6 +285,7 @@ class MeioPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=editar-falha#mensagem-tabela");
+            exit;
         }
     }
 }

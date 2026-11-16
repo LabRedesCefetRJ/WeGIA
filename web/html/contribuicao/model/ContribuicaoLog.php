@@ -17,6 +17,9 @@ class ContribuicaoLog
     private MeioPagamento $meioPagamento;
     private ?RecorrenciaDTO $recorrenciaDTO = null;
     private $statusPagamento = 0;
+    private $idContribuicaoDocumento;
+    private $idMeioPagamento;
+    private ?string $uuid = null;
     private $agradecimento;
 
     /**
@@ -49,6 +52,18 @@ class ContribuicaoLog
     public function setId($id)
     {
         $this->id = $id;
+
+        return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(?string $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }
@@ -249,6 +264,38 @@ class ContribuicaoLog
     public function setDataPagamento($dataPagamento)
     {
         $this->dataPagamento = $dataPagamento;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of idContribuicaoDocumento
+     */ 
+    public function getIdContribuicaoDocumento()
+    {
+        return $this->idContribuicaoDocumento;
+    }
+
+    /**
+     * Set the value of idContribuicaoDocumento
+     *
+     * @return  self
+     */ 
+    public function setIdContribuicaoDocumento($idContribuicaoDocumento)
+    {
+        $this->idContribuicaoDocumento = $idContribuicaoDocumento;
+
+        return $this;
+    }
+
+    public function getIdMeioPagamento()
+    {
+        return $this->idMeioPagamento;
+    }
+
+    public function setIdMeioPagamento($idMeioPagamento)
+    {
+        $this->idMeioPagamento = $idMeioPagamento;
 
         return $this;
     }

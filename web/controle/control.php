@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 require_once __DIR__ . '/../config.php';
 //declaração de util
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
@@ -79,8 +80,12 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'UnidadeControle' => [22],
             'MemorandoControle' => [3],
             'DespachoControle' => [3],
-            'VoluntarioControle' => [11],
-            'NotificacaoControle' => [2, 5, 21, 22, 23, 24]
+            'VoluntarioControle' => [13],
+            'NotificacaoControle' => [2, 5, 21, 22, 23, 24],
+            'VisitanteControle' => [20],
+            'VisitaControle' => [20],
+            'VisitadoControle' => [20],
+            'SetorControle' => [20]
         ];
 
         /*Por padrão o control.php irá recusar qualquer controladora informada,

@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 include_once ROOT . '/classes/Unidade.php';
 include_once ROOT .'/dao/UnidadeDAO.php';
 class UnidadeControle
@@ -9,6 +10,7 @@ class UnidadeControle
         if((!isset($descricao_unidade)) || (empty($descricao_unidade))){
             $msg .= "Descrição da Unidade não informada. Por favor, informe uma descrição!";
             header('Location: ../html/unidade.html?msg='.$msg);
+            exit;
         }else{
         	$unidade = new Unidade($descricao_unidade);
         }
@@ -26,8 +28,10 @@ class UnidadeControle
 
         if(preg_match($regex, $nextPage)){
             header('Location:' . htmlspecialchars($nextPage));
+            exit;
         }else{
             header('Location:' . '../html/home.php');
+            exit;
         }
     }
     
@@ -41,6 +45,7 @@ class UnidadeControle
             $_SESSION['proxima']="Cadastrar outra unidade";
             $_SESSION['link']= WWW ."html/matPat/adicionar_unidade.php";
             header("Location: ". WWW ."html/matPat/cadastro_produto.php");
+            exit;
         } catch (PDOException $e){
             $msg= "Não foi possível registrar o funcionário"."<br>".$e->getMessage();
             echo $msg;
@@ -52,6 +57,7 @@ class UnidadeControle
             $unidadeDAO = new UnidadeDAO();
             $unidadeDAO->excluir($id_unidade);
             header('Location: '. WWW .'html/matPat/listar_unidade.php');
+            exit;
         }catch (PDOException $e) {
             echo "ERROR: ".$e->getMessage();
         }

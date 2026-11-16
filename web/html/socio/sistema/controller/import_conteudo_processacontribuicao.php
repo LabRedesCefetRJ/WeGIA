@@ -1,3 +1,11 @@
+<?php
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['usuario'])) die("Você não está logado(a).");
+
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 4, 7);
+?>
 <section class="body">
 
 		<!-- start: header -->

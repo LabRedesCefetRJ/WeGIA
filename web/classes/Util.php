@@ -7,6 +7,38 @@ class Util
     public const MENSAGEM_NOME_INVALIDO = 'O nome informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
     public const MENSAGEM_SOBRENOME_INVALIDO = 'O sobrenome informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
 
+    /** Normaliza os dias de pagamento; a condição usa avista, aprazo ou parcelado. */
+    public static function validarVencimentosPagamento(string $condicao, $prazo): string
+    {
+        if (!in_array($condicao, ['avista', 'aprazo', 'parcelado'], true)) {
+            throw new InvalidArgumentException('Condição de pagamento inválida.', 400);
+        }
+        if (!is_string($prazo) || strlen($prazo) > 255) {
+            throw new InvalidArgumentException('Informe vencimentos válidos, como 30/60/90.', 400);
+        }
+        $vencimentos = '';
+        if ($condicao !== 'avista') {
+            $prazo = preg_replace('/\s+/', '', $prazo);
+            if (!preg_match('/^[0-9]{1,4}(\/[0-9]{1,4})*$/D', $prazo)) {
+                throw new InvalidArgumentException('Informe os dias: 30 para a prazo ou 30/60/90 para parcelado.', 400);
+            }
+            $dias = array_map('intval', explode('/', $prazo));
+            if (($condicao === 'aprazo' && count($dias) !== 1)
+                || ($condicao === 'parcelado' && count($dias) < 2)) {
+                throw new InvalidArgumentException('A prazo exige um vencimento; parcelado exige pelo menos dois.', 400);
+            }
+            $anterior = -1;
+            foreach ($dias as $dia) {
+                if ($dia <= $anterior || ($condicao === 'aprazo' && $dia === 0)) {
+                    throw new InvalidArgumentException('Informe dias em ordem crescente, sem repetir. Use À vista para pagamento imediato.', 400);
+                }
+                $anterior = $dia;
+            }
+            $vencimentos = implode('/', $dias);
+        }
+        return $vencimentos;
+    }
+
     public static function definirFusoHorario(?string $fusoHorario = null): string
     {
         require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'FusoHorarioSistema.php';
@@ -1324,6 +1356,95 @@ class Util
     public static function limpaTelefone(string $telefone)
     {
         return preg_replace('/\D/', '', $telefone);
+    }
+
+    /**
+     * Diz por que o link de pagamento não poderá ser enviado por email ao
+     * sócio (null = pode enviar). As rotas públicas de boleto/carnê checam
+     * isso ANTES de emitir a cobrança no gateway: sem a checagem prévia, a
+     * cobrança era criada e o sócio nunca recebia o link.
+     */
+    public static function motivoImpedimentoEnvioLink(Socio $socio, ?PDO $pdo = null): ?string
+    {
+        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
+
+        if (!$socio->getEmail()) {
+            return 'Não há um e-mail cadastrado para este CPF/CNPJ. Informe um e-mail para receber o pagamento.';
+        }
+
+        $emailControle = new EmailControle($pdo);
+
+        if (!$emailControle->isEnabled() || !$emailControle->isConfigured()) {
+            return 'O envio de pagamentos por e-mail não está disponível no momento. Entre em contato com a instituição.';
+        }
+
+        return null;
+    }
+
+    /**
+     * Sócio sem e-mail cadastrado informa um e-mail no formulário de
+     * contribuição só pra receber este pagamento: ele é aplicado no objeto
+     * em memória (envio do link e dados do pagador no gateway) e nunca é
+     * gravado no cadastro. Quem já tem e-mail cadastrado não consegue
+     * trocar o destino por aqui — o campo do formulário é ignorado.
+     */
+    public static function aplicarEmailEnvio(Socio $socio): Socio
+    {
+        if ($socio->getEmail()) {
+            return $socio;
+        }
+
+        $email = trim((string) filter_input(INPUT_POST, 'email'));
+
+        if ($email === '') {
+            return $socio;
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('O e-mail informado não é válido.', 400);
+        }
+
+        return $socio->setEmail($email);
+    }
+
+    /**
+     * Monta a resposta enviada ao front-end quando um link de pagamento é
+     * gerado pelo fluxo de contribuição pública: o link nunca aparece na
+     * resposta, é sempre enviado por email pro sócio. Usado por
+     * ContribuicaoLogController e pelos services de boleto (Mercado Pago,
+     * Pagar.me) — centralizado aqui pra não duplicar a mesma lógica de
+     * envio nos três lugares.
+     */
+    public static function responderLinkGerado(string $link, Socio $socio, string $tipoDocumento, ?PDO $pdo = null): array
+    {
+        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
+
+        $emailControle = new EmailControle($pdo);
+
+        if (self::motivoImpedimentoEnvioLink($socio, $pdo) !== null) {
+            return ['erro' => "O $tipoDocumento foi gerado, mas não foi possível enviá-lo por email. Entre em contato com o suporte."];
+        }
+
+        $mensagem = sprintf(
+            '<p>Prezado(a) %s,</p><p>Seu %s foi gerado com sucesso, agradecemos pelo interesse em contribuir com nossa instituição. Acesse pelo link abaixo:</p><p><a href="%s">%s</a></p></p><p>Caso você não tenha solicitado este documento, ignore este email.</p>',
+            htmlspecialchars($socio->getNome()),
+            $tipoDocumento,
+            htmlspecialchars($link),
+            htmlspecialchars($link)
+        );
+
+        $resultadoEmail = $emailControle->enviarEmail(
+            $socio->getEmail(),
+            'Seu ' . $tipoDocumento . ' está pronto',
+            $mensagem,
+            $socio->getNome()
+        );
+
+        if (!$resultadoEmail['success']) {
+            return ['erro' => "O $tipoDocumento foi gerado, mas houve um erro ao enviar o email: " . $resultadoEmail['message']];
+        }
+
+        return ['mensagem' => ucfirst($tipoDocumento) . ' gerado! Enviamos o link de acesso para o seu email.'];
     }
 
     /**

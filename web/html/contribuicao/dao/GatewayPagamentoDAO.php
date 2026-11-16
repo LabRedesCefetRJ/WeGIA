@@ -106,7 +106,12 @@ class GatewayPagamentoDAO
 
         $stmt->execute();
 
-        if ($stmt->rowCount() < 1) {
+        // rowCount() só conta linhas de fato alteradas — se os valores
+        // enviados já eram os mesmos que estavam no banco (ex: token
+        // mascarado preservado + nome/endpoint sem mudança), o UPDATE roda
+        // certinho mas afeta 0 linhas. Só é erro de verdade se o ID nem
+        // existir.
+        if ($stmt->rowCount() < 1 && $this->buscarEndpointPorId($id) === null) {
             throw new Exception("Nenhuma alteração realizada ou ID inexistente.");
         }
     }
@@ -148,6 +153,24 @@ class GatewayPagamentoDAO
         $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $resultado ? $resultado['endpoint'] : null;
+    }
+
+    /**
+     * Busca só o token atualmente cadastrado para o gateway, independente do
+     * status (ativo ou não) — usado por GatewayPagamento::editar() pra
+     * comparar contra a versão mascarada e detectar se o token foi de fato
+     * reinformado.
+     */
+    public function buscarTokenPorId($id)
+    {
+        $sql = "SELECT private_token FROM contribuicao_gatewayPagamento WHERE id=:id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $resultado ? $resultado['private_token'] : null;
     }
 
     public function buscarPorId($id)

@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 Util::definirFusoHorario();
 if (session_status() === PHP_SESSION_NONE) {
@@ -113,6 +114,7 @@ try {
     }
 
     header("Location: profile_dependente.php?id_dependente=$idatendido_familiares");
+    exit;
 } catch (Exception $e) {
     error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
     http_response_code($e->getCode());

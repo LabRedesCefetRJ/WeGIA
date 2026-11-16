@@ -17,37 +17,31 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTOR
 permissao($_SESSION['id_pessoa'], 23, 5);
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
-?>
+include_once ROOT . '/dao/Conexao.php';
+include_once ROOT . '/dao/IentradaDAO.php';
 
-<!doctype html>
-<html class="fixed">
+$pdo = Conexao::connect();
 
-<head>
-	<?php
-	include_once ROOT . '/dao/Conexao.php';
-	include_once ROOT . '/dao/IentradaDAO.php';
-
-	$pdo = Conexao::connect();
-
-	$stmtOrigens = $pdo->query("
+$stmtOrigens = $pdo->query("
     	SELECT id_origem, nome_origem
     	FROM origem
     	ORDER BY nome_origem
-	");
-	$origens = $stmtOrigens->fetchAll(PDO::FETCH_ASSOC);
+");
+$origens = $stmtOrigens->fetchAll(PDO::FETCH_ASSOC);
 
-	$stmtTiposEntrada = $pdo->query("
+$stmtTiposEntrada = $pdo->query("
     	SELECT id_tipo, descricao
     	FROM tipo_entrada
     	ORDER BY descricao
-	");
-	$tiposEntrada = $stmtTiposEntrada->fetchAll(PDO::FETCH_ASSOC);
+");
+$tiposEntrada = $stmtTiposEntrada->fetchAll(PDO::FETCH_ASSOC);
 
 
-	if (!isset($_SESSION['ientrada'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=' . WWW . 'html/matPat/listar_Ientrada.php');
-	}
-	if (isset($_SESSION['ientrada'])) {
+if (!isset($_SESSION['ientrada'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=' . WWW . 'html/matPat/listar_Ientrada.php');
+	exit;
+}
+if (isset($_SESSION['ientrada'])) {
     	$dadosIentrada = $_SESSION['ientrada'];
 
     	if (is_string($dadosIentrada)) {
@@ -63,14 +57,20 @@ require_once ROOT . "/html/personalizacao_display.php";
     	}
 
     	$ientrada = json_encode($dadosIentrada);
-	}
-	if (!isset($_SESSION['entradaUnica'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=' . WWW . 'html/matPat/listar_Ientrada.php');
-	}
-	if (isset($_SESSION['entradaUnica'])) {
-		$entrada = $_SESSION['entradaUnica'];
-	}
-	?>
+}
+if (!isset($_SESSION['entradaUnica'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=' . WWW . 'html/matPat/listar_Ientrada.php');
+	exit;
+}
+if (isset($_SESSION['entradaUnica'])) {
+	$entrada = $_SESSION['entradaUnica'];
+}
+?>
+
+<!doctype html>
+<html class="fixed">
+
+<head>
 	<!-- Basic -->
 	<meta charset="UTF-8">
 
@@ -162,7 +162,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 				},
 				{
 					label: "Valor Total",
-					valor: entrada.valor_total
+					valor: formatarMoeda(entrada.valor_total)
 				},
 				{
 					label: "Data",
@@ -209,10 +209,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 				const totalItem = item.valor_unitario * item.qtd;
 
-				const totalFormatado = new Intl.NumberFormat('pt-BR', {
-        			style: 'currency',
-        			currency: 'BRL'
-    			}).format(totalItem);
+				const totalFormatado = formatarMoeda(totalItem);
 
 				$('#tabela')
 					.append($('<tr />')
@@ -221,7 +218,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 						.append($('<td />')
 							.text(item.qtd))
 						.append($('<td />')
-							.text(item.valor_unitario))
+							.text(formatarMoeda(item.valor_unitario)))
 						.append($('<td />')
 							.text(item.unidade))
 						.append($('<td />')
@@ -325,17 +322,17 @@ require_once ROOT . "/html/personalizacao_display.php";
                 			>
             			</td>
             			<td>
-                			<input 
+                			<div class="input-group"><span class="input-group-addon">R$</span><input 
                     			type="number" 
                     			step="0.01" 
                     			min="0"
                     			class="form-control valor-item-entrada"
                     			data-id-ientrada="${item.id_ientrada}"
                     			value="${item.valor_unitario}"
-                			>
+                			></div>
             			</td>
             			<td>${item.unidade}</td>
-            			<td>R$ ${(Number(item.qtd) * Number(item.valor_unitario)).toFixed(2)}</td>
+            			<td>${formatarMoeda(Number(item.qtd) * Number(item.valor_unitario))}</td>
         			</tr>
     			`);
 			});

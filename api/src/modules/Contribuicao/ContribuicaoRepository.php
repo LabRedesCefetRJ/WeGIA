@@ -3,6 +3,7 @@
 namespace api\modules\Contribuicao;
 
 use PDO;
+use api\utils\UuidGenerator;
 
 class ContribuicaoRepository
 {
@@ -15,11 +16,14 @@ class ContribuicaoRepository
 
     public function create(Contribuicao $contribuicao): bool
     {
-        $query = "INSERT INTO contribuicao_log (id_socio, id_gateway, id_meio_pagamento, valor, data_pagamento, data_vencimento, data_geracao, status_pagamento, codigo)
-                  VALUES (:id_socio, :id_gateway, :id_meio_pagamento, :valor, :data_pagamento, :data_vencimento, :data_geracao, :status_pagamento, :codigo)";
+        $uuid = UuidGenerator::generateV7();
+        $uuidBinary = $uuid->getBytes();
+        $query = "INSERT INTO contribuicao_log (uuid, id_socio, id_gateway, id_meio_pagamento, valor, data_pagamento, data_vencimento, data_geracao, status_pagamento, codigo)
+                  VALUES (:uuid, :id_socio, :id_gateway, :id_meio_pagamento, :valor, :data_pagamento, :data_vencimento, :data_geracao, :status_pagamento, :codigo)";
 
         $stmt = $this->db->prepare($query);
-        return $stmt->execute([
+        $resultado = $stmt->execute([
+            ':uuid' => $uuidBinary,
             ':id_socio' => $contribuicao->getIdSocio(),
             ':id_gateway' => $contribuicao->getIdGateway(),
             ':id_meio_pagamento' => $contribuicao->getIdMeioPagamento(),
@@ -30,6 +34,12 @@ class ContribuicaoRepository
             ':status_pagamento' => $contribuicao->getStatus() === 'paid' ? 1 : 0,
             ':codigo' => $contribuicao->getCodigo()
         ]);
+
+        if ($resultado) {
+            $contribuicao->setUuid($uuid->toString());
+        }
+
+        return $resultado;
     }
 
     public function findSociosComPessoas(): array

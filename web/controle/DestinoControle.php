@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -44,6 +45,7 @@ class DestinoControle
             $_SESSION['destino'] = $destinos;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -61,6 +63,7 @@ class DestinoControle
             $_SESSION['link'] = WWW . "html/matPat/cadastro_destino.php";
 
             header("Location: " . WWW . "html/matPat/cadastro_destino.php");
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -77,6 +80,7 @@ class DestinoControle
             $destinoDAO->excluir($id_destino);
 
             header('Location: ' . WWW . 'html/matPat/listar_destino.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }

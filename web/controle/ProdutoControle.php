@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -70,6 +71,7 @@ class ProdutoControle
             $_SESSION['produtos'] = $produtos;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -87,10 +89,12 @@ class ProdutoControle
             $_SESSION['categorias'] = $categorias;
 
             header('Location: ' . $_REQUEST['nextPage']);
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
             $msg = "Não foi possível listar o produto!";
             header('Location: caminho.php?msg=' . $msg);
+            exit;
         }
     }
 
@@ -107,10 +111,12 @@ class ProdutoControle
             $_SESSION['categorias'] = $categorias;
 
             header('Location: ' . $_REQUEST['nextPage']);
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
             $msg = "Não foi possível listar o produto!";
             header('Location: ' . WWW . 'html/geral/msg.php?msg=' . $msg);
+            exit;
         }
     }
 
@@ -129,6 +135,7 @@ class ProdutoControle
             $_SESSION['autocomplete'] = $produtos;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -157,6 +164,7 @@ class ProdutoControle
             $produtoDAO->incluir($produto);
 
             header("Location: " . WWW . "html/matPat/cadastro_produto.php");
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -218,6 +226,7 @@ class ProdutoControle
             $produto = $produtoDAO->listarId($id);
             $_SESSION['produto'] = $produto;
             header('Location: ' . $nextPage);
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -402,6 +411,48 @@ class ProdutoControle
             $produtoDAO->arquivar($idProduto);
 
             $_SESSION['msg'] = "Produto arquivado com sucesso.";
+
+            header('Location: ' . WWW . 'html/matPat/listar_produto.php');
+            exit;
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function arquivarTodos()
+    {
+        try {
+            if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+                throw new InvalidArgumentException('Método de requisição inválido.', 405);
+            }
+
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 403);
+            }
+
+            require_once ROOT . '/html/permissao/permissao.php';
+            permissao($_SESSION['id_pessoa'], 22, 3);
+
+            $produtosJson = $_POST['produtos_json'] ?? '';
+            $produtos = is_string($produtosJson) ? json_decode($produtosJson, true) : null;
+            if (!is_array($produtos) || empty($produtos) || array_values($produtos) !== $produtos) {
+                throw new InvalidArgumentException('Selecione uma lista de produtos válida.', 400);
+            }
+
+            $idsProdutos = [];
+            foreach ($produtos as $idProduto) {
+                if (!is_int($idProduto) || $idProduto < 1) {
+                    throw new InvalidArgumentException('Foi informado um produto inválido.', 400);
+                }
+                $idsProdutos[$idProduto] = $idProduto;
+            }
+
+            $produtoDAO = new ProdutoDAO($this->pdo);
+            $quantidade = $produtoDAO->arquivarTodos(array_values($idsProdutos));
+            $_SESSION['msg'] = $quantidade . ($quantidade === 1
+                ? ' produto arquivado com sucesso.'
+                : ' produtos arquivados com sucesso.');
+            unset($_SESSION['produtos']);
 
             header('Location: ' . WWW . 'html/matPat/listar_produto.php');
             exit;

@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 include_once ROOT . '/classes/Categoria.php';
 include_once ROOT . '/dao/CategoriaDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
@@ -13,6 +14,7 @@ class CategoriaControle
             return $categoria;
         } catch (InvalidArgumentException $e) {
             header('Location: ' . WWW . 'html/home.php?msg_c=' . $e->getMessage()); //Envio de temporariamente para a home, posteriormente criar um sistema de exibição de mensagens em html/adicionar_categoria.php
+            exit;
         }
     }
     public function listarTodos()
@@ -48,6 +50,7 @@ class CategoriaControle
         try {
             $categoriaDAO->incluir($categoria);
             header("Location: " . WWW . "html/matPat/adicionar_categoria.php");
+            exit;
         } catch (PDOException $e) {
             echo "Não foi possível registrar a categoria";
         }
@@ -76,6 +79,7 @@ class CategoriaControle
         try {
             $categoriaDAO->editar($id_categoria_produto, $descricao_categoria);
             header("Location: " . WWW . "html/matPat/listar_categoria.php");
+            exit;
         } catch (PDOException $e) {
             echo "Não foi possível editar a categoria";
         }

@@ -14,7 +14,19 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('editId').value = id;
             document.getElementById('editNome').value = nome;
             document.getElementById('editEndpoint').value = endpoint;
-            document.getElementById('editPrivateToken').value = privateToken;
+
+            // O token PRIVADO nunca vai como valor pré-preenchido (evita
+            // reenviar o valor mascarado sem querer e sobrescrever o token
+            // real por engano) — só como placeholder, pra indicar que já
+            // existe um token salvo. Campo vazio no envio = "manter o token
+            // atual". O token público não é secreto, então pode ir
+            // preenchido normalmente.
+            const editPrivateTokenField = document.getElementById('editPrivateToken');
+            editPrivateTokenField.value = '';
+            editPrivateTokenField.placeholder = (privateToken && privateToken !== 'coloque o token aqui')
+                ? `Token atual: ${privateToken} — deixe em branco para manter`
+                : 'Insira o token privado da API';
+
             document.getElementById('editPublicToken').value = publicToken;
 
             // Exibe o modal

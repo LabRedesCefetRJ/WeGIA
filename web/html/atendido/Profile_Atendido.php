@@ -281,9 +281,9 @@ require_once "../../controle/AtendidoControle.php";
       $('input[name="id_documento"]').val(id);
       $("#editimg").modal('show');
     }
+
     $(function() {
       var interno = <?php echo $_SESSION['atendido'] ?>;
-      console.log(interno);
       $.each(interno, function(i, item) {
         if (i = 1) {
           $("#formulario").append($("<input type='hidden' name='idatendido' value='" + item.id + "'>"));
@@ -468,8 +468,6 @@ require_once "../../controle/AtendidoControle.php";
         $("#metodo").val("alterarEndereco");
       }
       $.each(endereco, function(i, item) {
-        //console.log(endereco);
-        console.log("estado=" + item.estado);
         $("#nome").val(item.nome).prop('disabled', true);
         $("#cep").val(item.cep).prop('disabled', true);
         $("#estado").val(item.estado).prop('disabled', true);
@@ -779,7 +777,7 @@ require_once "../../controle/AtendidoControle.php";
                         <!-- Modal content-->
                         <div class="modal-content">
                           <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <button type="button" class="close" style="color: #c50114" data-dismiss="modal">&times;</button>
                             <h4 class="modal-title">Adicionar uma Foto</h4>
                           </div>
                           <div class="modal-body">
@@ -790,13 +788,14 @@ require_once "../../controle/AtendidoControle.php";
                               <div class="form-group">
                                 <label class="col-md-4 control-label" for="imgperfil">Carregue nova imagem de perfil:</label>
                                 <div class="col-md-8">
-                                  <input type="file" name="imgperfil" size="60" id="imgform" class="form-control">
+                                  <input type="file" name="imgperfil" size="60" id="imgform" class="form-control" required>
                                 </div>
                               </div>
                           </div>
                           <div class="modal-footer">
                             <input type="hidden" name="idatendido" value="<?= $id ?>">
-                            <input type="submit" id="formsubmit" value="Alterar imagem">
+                            <input class="btn btn-danger" type="button" id="fecharmodal" data-dismiss="modal" value="Cancelar Alteração">
+                            <input class="btn btn-primary" type="submit" id="formsubmit" value="Alterar imagem">
                           </div>
                         </div>
                         </form>
@@ -1397,6 +1396,12 @@ require_once "../../controle/AtendidoControle.php";
                           <div class="alert alert-warning">
                             Nenhum processo de aceitação foi encontrado para este atendido.
                           </div>
+                          <div class="text-left" style="margin-top: 20px;">
+                            <a class="btn btn-primary" href="processo_aceitacao.php?modal=modalNovoProcesso&idpessoa=<?=
+                            urlencode($atendidoDados[0]['id_pessoa'] ?? '')?>">
+                              <i class="fa fa-external-link"></i> Cadastrar processo de aceitação
+                            </a>
+                          </div>
                         <?php else: ?>
                           <div class="table-responsive">
                             <table class="table table-bordered table-striped mb-none">
@@ -1661,7 +1666,7 @@ require_once "../../controle/AtendidoControle.php";
     </script>
     <script>
       function verificaSucesso(response) {
-        console.log(response);
+        //console.log(response);
         if (response.errorInfo) {
           if (response.errorInfo[1] == 1451) {
             window.alert("O dependente possui documentos cadastrados em seu nome. Retire-os do bando de dados antes de remover o dependente.");

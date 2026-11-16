@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() == PHP_SESSION_NONE)
 	session_start();
 
@@ -115,6 +116,7 @@ class DespachoControle
 			$msg = "success";
 			$sccd = "Despacho enviado com sucesso";
 			header("Location: " . WWW . "html/memorando/listar_memorandos_ativos.php?msg=" . $msg . "&sccd=" . $sccd);
+			exit;
 		} catch (PDOException $e) {
 			$msg = "Não foi possível criar o despacho" . "<br>" . $e->getMessage();
 			echo $msg;

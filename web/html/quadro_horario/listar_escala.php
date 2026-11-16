@@ -12,6 +12,7 @@ if (!isset($_SESSION['usuario'])) {
 
 if (!isset($_SESSION['escala_quadro_horario'])) {
 	header('Location: ../../controle/control.php?metodo=listarEscala&nomeClasse=QuadroHorarioControle&nextPage=../html/quadro_horario/' . basename(__FILE__));
+	exit;
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';

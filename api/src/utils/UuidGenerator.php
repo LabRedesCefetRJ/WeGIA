@@ -18,4 +18,14 @@ class UuidGenerator
     {
         return self::generateV7()->getBytes();
     }
+
+    public static function parseV7(string $uuid): ?UuidInterface
+    {
+        try {
+            $parsedUuid = Uuid::fromString($uuid);
+            return $parsedUuid->getVersion() === 7 ? $parsedUuid : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
 }

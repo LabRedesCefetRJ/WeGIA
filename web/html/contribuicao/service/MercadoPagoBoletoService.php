@@ -3,8 +3,11 @@
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiBoletoServiceInterface.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ContribuicaoLogDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
 require_once '../dao/GatewayPagamentoDAO.php';
 
 /**
@@ -19,7 +22,14 @@ require_once '../dao/GatewayPagamentoDAO.php';
  */
 class MercadoPagoBoletoService implements ApiBoletoServiceInterface
 {
-    public function gerarBoleto(ContribuicaoLog $contribuicaoLog)
+    private PDO $pdo;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        $this->pdo = $pdo ?? ConexaoDAO::conectar();
+    }
+
+    public function gerarBoleto(ContribuicaoLog $contribuicaoLog, bool $porEmail = true)
     {
         $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());
 
@@ -124,9 +134,15 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
 
             $this->guardarSegundaVia($pdfLink, $contribuicaoLog);
 
-            // O controller (criarBoleto) não trata o retorno do link, então a service
-            // responde direto ao front-end aqui, no mesmo padrão do PagarMeBoletoService.
-            echo json_encode(['link' => $pdfLink]);
+            // O controller (criarBoleto) não trata o retorno do link, então a
+            // service responde direto ao front-end aqui, no mesmo padrão do
+            // PagarMeBoletoService. $porEmail vem de qual rota chamou (pública
+            // vs interna da equipe), não de sessão — quem decide é o método do
+            // controller que foi chamado, não quem está logado.
+            $linkPdf = WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($contribuicaoLog->getUuid());
+            echo json_encode($porEmail
+                ? Util::responderLinkGerado($linkPdf, $contribuicaoLog->getSocio(), 'boleto')
+                : ['link' => $linkPdf]);
 
             return $responseData['id'];
         } catch (Throwable $e) {
@@ -198,6 +214,11 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
             );
         }
 
-        file_put_contents($nomeArquivo, $fileContent);
+        $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
+        $idDocumento = $contribuicaoLogDao->salvarDocumentoPdf($fileContent, 'pdf');
+
+        if ($contribuicaoLog->getId()) {
+            $contribuicaoLogDao->vincularDocumento((int) $contribuicaoLog->getId(), $idDocumento);
+        }
     }
 }

@@ -22,6 +22,7 @@ class ModuloControle
             $modulo = new ModuloDAO();
             $modulo->alterar_modulos_visiveis($recurso);
             header('Location:'.$nextPage.'?msg_c=Visualização atualizada com sucesso.');
+            exit;
         } catch (PDOException $e) {
             echo 'Erro ao mudar a visibilidade do módulo: '. $e->getMessage();
         }

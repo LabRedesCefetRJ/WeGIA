@@ -35,17 +35,18 @@ class OrcamentoControle
         $orcamento = $this->criarOrcamentoDaRequisicao();
         $id_cotacao = $orcamento->getId_cotacao();
 
-        $this->validarCotacaoEmAnalise($id_cotacao);
-
-        if ($this->orcamentoDAO->contarPorCotacao($id_cotacao) >= 3) {
-            throw new InvalidArgumentException(
-                'A cotação pode possuir no máximo três orçamentos.',
-                409
-            );
-        }
-
         try {
             $this->pdo->beginTransaction();
+
+            // O bloqueio da cotação serializa a contagem e as alterações dos orçamentos.
+            $this->validarCotacaoEmAnalise($id_cotacao, true);
+
+            if ($this->orcamentoDAO->contarPorCotacao($id_cotacao) >= 3) {
+                throw new InvalidArgumentException(
+                    'A cotação pode possuir no máximo três orçamentos.',
+                    409
+                );
+            }
 
             $id_orcamento = $this->orcamentoDAO->incluir($orcamento);
 
@@ -108,7 +109,7 @@ class OrcamentoControle
             );
         }
 
-        $orcamento = $this->criarOrcamentoDaRequisicao($id_cotacao);
+        $orcamento = $this->criarOrcamentoDaRequisicao($id_cotacao, $orcamentoAtual);
         $orcamento->setId_orcamento($id_orcamento);
 
         $novoDocumento = null;
@@ -177,27 +178,42 @@ class OrcamentoControle
 
         $id_cotacao = $orcamento->getId_cotacao();
 
-        $this->validarCotacaoEmAnalise($id_cotacao);
+        try {
+            $this->pdo->beginTransaction();
 
-        $quantidade = $this->orcamentoDAO
-            ->contarPorCotacao($id_cotacao);
+            $this->validarCotacaoEmAnalise($id_cotacao, true);
+            $atual = $this->obterOrcamento($id_orcamento, true);
+            if ($atual->getId_cotacao() !== $id_cotacao) {
+                throw new InvalidArgumentException('O orçamento não pertence a esta cotação.', 409);
+            }
 
-        if ($quantidade <= 1) {
-            throw new InvalidArgumentException(
-                'A cotação deve possuir pelo menos um orçamento.',
-                409
+            $quantidade = $this->orcamentoDAO
+                ->contarPorCotacao($id_cotacao);
+
+            if ($quantidade <= 1) {
+                throw new InvalidArgumentException(
+                    'A cotação deve possuir pelo menos um orçamento.',
+                    409
+                );
+            }
+
+            $alterados = $this->orcamentoDAO->excluir(
+                $id_orcamento
             );
-        }
 
-        $alterados = $this->orcamentoDAO->excluir(
-            $id_orcamento
-        );
+            if ($alterados < 1) {
+                throw new InvalidArgumentException(
+                    'O orçamento informado não existe.',
+                    404
+                );
+            }
 
-        if ($alterados < 1) {
-            throw new InvalidArgumentException(
-                'O orçamento informado não existe.',
-                404
-            );
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
         }
 
         $_SESSION['msg'] = 'Orçamento excluído com sucesso.';
@@ -265,15 +281,30 @@ class OrcamentoControle
         $orcamento = $this->obterOrcamento($id_orcamento);
         $id_cotacao = $orcamento->getId_cotacao();
 
-        $this->validarCotacaoEmAnalise($id_cotacao);
+        try {
+            $this->pdo->beginTransaction();
 
-        $alterados = $this->orcamentoDocDAO->excluir($id_orcamento);
+            $this->validarCotacaoEmAnalise($id_cotacao, true);
+            $atual = $this->obterOrcamento($id_orcamento, true);
+            if ($atual->getId_cotacao() !== $id_cotacao) {
+                throw new InvalidArgumentException('O orçamento não pertence a esta cotação.', 409);
+            }
 
-        if ($alterados < 1) {
-            throw new InvalidArgumentException(
-                'Arquivo do orçamento não encontrado.',
-                404
-            );
+            $alterados = $this->orcamentoDocDAO->excluir($id_orcamento);
+
+            if ($alterados < 1) {
+                throw new InvalidArgumentException(
+                    'Arquivo do orçamento não encontrado.',
+                    404
+                );
+            }
+
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
         }
 
         $_SESSION['msg'] = 'Arquivo do orçamento excluído com sucesso.';
@@ -351,7 +382,7 @@ class OrcamentoControle
         exit;
     }
 
-    private function criarOrcamentoDaRequisicao($id_cotacao = null): Orcamento
+    private function criarOrcamentoDaRequisicao($id_cotacao = null, ?Orcamento $original = null): Orcamento
     {
         $prazo_entrega = $_POST['prazo_entrega'] ?? null;
 
@@ -362,12 +393,21 @@ class OrcamentoControle
             );
         }
 
+        $vencimentos = $_POST['vencimentos_pagamento'] ?? '';
+        if ($original !== null && $original->getVencimentosPagamento() === ''
+            && $vencimentos === ''
+            && ($_POST['condicao_pagamento'] ?? null) === $original->getCondicao_pagamento()
+            && (string) ($_POST['id_fornecedor'] ?? '') === (string) $original->getId_fornecedor()) {
+            $vencimentos = null; // O registro antigo não informou esses dias.
+        }
+
         return new Orcamento(
             $id_cotacao ?? ($_POST['id_cotacao'] ?? null),
             $_POST['id_fornecedor'] ?? null,
             $_POST['condicao_pagamento'] ?? null,
             $prazo_entrega,
-            $_POST['valor'] ?? null
+            $_POST['valor'] ?? null,
+            $vencimentos
         );
     }
 

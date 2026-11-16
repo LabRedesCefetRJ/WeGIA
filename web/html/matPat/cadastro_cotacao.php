@@ -272,6 +272,12 @@ if (!isset($_SESSION['rascunho_cadastro_cotacao_token'])) {
                                                         <option value="<?= htmlspecialchars($valorCondicao, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($rotuloCondicao, ENT_QUOTES, 'UTF-8') ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
+                                                <p class="help-block" data-condicao-habitual></p>
+                                                <div data-vencimentos-cotacao hidden>
+                                                    <label for="condicao-pagamento-0-vencimentos">Prazo ou vencimentos (dias)</label>
+                                                    <input type="text" class="form-control" name="vencimentos_pagamento[]" id="condicao-pagamento-0-vencimentos" maxlength="255" placeholder="Ex.: 30 ou 30/60/90">
+                                                    <small class="help-block">Ex.: 30 para pagar em 30 dias; 30/60 para duas parcelas. Com entrada: 0/30/60.</small>
+                                                </div>
                                             </div>
 
                                             <div class="form-group col-md-3">
@@ -450,6 +456,9 @@ if (!isset($_SESSION['rascunho_cadastro_cotacao_token'])) {
 
                 selectFornecedor.selectedIndex = 0;
                 orcamento.querySelector('[name="condicao_pagamento[]"]').selectedIndex = 0;
+                orcamento.querySelector('[name="vencimentos_pagamento[]"]').value = '';
+                orcamento.querySelector('[data-condicao-habitual]').textContent = '';
+                orcamento.querySelector('[data-vencimentos-cotacao]').hidden = true;
 
                 const valor = orcamento.querySelector(
                     'input[name="valor[]"]'
@@ -529,6 +538,7 @@ if (!isset($_SESSION['rascunho_cadastro_cotacao_token'])) {
                             fornecedor: orcamento.querySelector('select[name="id_fornecedor[]"]').value,
                             valor: orcamento.querySelector('[name="valor[]"]').value,
                             condicaoPagamento: orcamento.querySelector('[name="condicao_pagamento[]"]').value,
+                            vencimentos: orcamento.querySelector('[name="vencimentos_pagamento[]"]').value,
                             prazo: orcamento.querySelector('[name="prazo_entrega[]"]').value,
                             tinhaArquivo: orcamento.querySelector('[type="file"]').files.length > 0 ||
                                 orcamento.dataset.arquivoPendente === '1'
@@ -571,6 +581,7 @@ if (!isset($_SESSION['rascunho_cadastro_cotacao_token'])) {
                         select.replaceChildren(...opcoesFornecedores.map(function (opcao) { return opcao.cloneNode(true); }));
                         select.value = salvo.fornecedor || '';
                         orcamento.querySelector('[name="condicao_pagamento[]"]').value = salvo.condicaoPagamento || '';
+                        orcamento.querySelector('[name="vencimentos_pagamento[]"]').value = salvo.vencimentos || '';
                         orcamento.querySelector('[name="valor[]"]').value = salvo.valor || '';
                         orcamento.querySelector('[name="prazo_entrega[]"]').value = salvo.prazo || '';
                         if (salvo.tinhaArquivo) {
@@ -609,6 +620,9 @@ if (!isset($_SESSION['rascunho_cadastro_cotacao_token'])) {
     </script>
     <script>
         window.limitesUploadCotacao = <?= json_encode(CotacaoSuporte::limitesUpload()) ?>;
+    </script>
+    <script>
+        window.condicoesFornecedores = <?= json_encode(array_column($fornecedores, null, 'id_origem'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     </script>
     <script src="../../assets/javascripts/forms/cotacao.js"></script>
 </body>
