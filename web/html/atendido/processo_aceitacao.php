@@ -420,7 +420,6 @@ try {
                                         maxlength="14"
                                         placeholder="000.000.000-00"
                                         onkeypress="return Onlynumbers(event)"
-                                        oninput="mascara('###.###.###-##',this,event)"
                                         onkeyup="mascara('###.###.###-##',this,event)"
                                         onblur="formatCpfField(this); validarCPFEditar(this.value)"
                                         class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'modalEditarPerfil' ? ' is-invalid' : '' ?>" />
