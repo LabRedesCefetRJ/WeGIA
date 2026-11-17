@@ -91,7 +91,12 @@ class AtendimentoPacienteControle
             $_SESSION['msg'] = 'Atendimento cadastrado com sucesso.';
             header('Location: ../html/saude/profile_paciente.php?id_fichamedica=' . $idFichaMedica);
             exit();
-        } catch (Exception $e) {
+
+        } catch (InvalidArgumentException $e) {       
+            $_SESSION['msg_e'] = $e->getMessage();
+            $this->redirecionarParaPerfil($idFichaMedica);
+
+        } catch (Exception $e) {                         
             $codigo = ($e->getCode() >= 400 && $e->getCode() < 600) ? (int)$e->getCode() : 500;
             if ($codigo >= 500) {
                 error_log(
@@ -105,14 +110,18 @@ class AtendimentoPacienteControle
                 $_SESSION['msg_e'] = $e->getMessage();
             }
 
-            $url = '../html/saude/profile_paciente.php';
-            if (is_numeric($idFichaMedica) && (int)$idFichaMedica > 0) {
-                $url .= '?id_fichamedica=' . (int)$idFichaMedica;
-            }
-
-            header('Location: ' . $url);
-            exit();
+            $this->redirecionarParaPerfil($idFichaMedica);
         }
+    }
+
+    private function redirecionarParaPerfil($idFichaMedica): void
+    {
+        $url = '../html/saude/profile_paciente.php';
+        if (is_numeric($idFichaMedica) && (int)$idFichaMedica > 0) {
+            $url .= '?id_fichamedica=' . (int)$idFichaMedica;
+        }
+        header('Location: ' . $url);
+        exit();
     }
 
     private function normalizarMedicacoes(string $acervo): array
@@ -173,7 +182,7 @@ class AtendimentoPacienteControle
             if (!is_array($medicacao)) {
                 throw new InvalidArgumentException('Formato de medicação inválido.', 400);
             }
-
+            $tipo_medicacao = ((int)($medicacao['id_tipo_medicacao'] ?? 0));
             $medicamento = trim((string)($medicacao['nome_medicacao'] ?? ''));
             $dosagem = trim((string)($medicacao['dosagem'] ?? ''));
             $horarios = $medicacao['horarios'] ?? [];
@@ -181,9 +190,26 @@ class AtendimentoPacienteControle
                 $horarios = array_filter(array_map('trim', explode(',', $horarios)));
             }
             $duracao = trim((string)($medicacao['tempo'] ?? ''));
+            $tipo_uso_medicacao = ((int)($medicacao['id_tipo_uso'] ?? null));
+            $data_termino = trim((string)($medicacao['data_termino'] ?? ''));
+            
+            if ($tipo_medicacao <= 0) {
+                throw new InvalidArgumentException('Tipo de medicação não é válido.', 400);
+            }
 
-            if ($medicamento === '' || $dosagem === '' || empty($horarios) || $duracao === '') {
-                throw new InvalidArgumentException('Campos da medicação estão incompletos.', 400);
+            if($tipo_medicacao === 1) {
+                if ($medicamento === '' || $dosagem === '') {
+                    throw new InvalidArgumentException('Nome e dosagem da medicação são obrigatórios.', 400);
+                }
+            }else{
+                if ($medicamento === '' || $dosagem === '' || empty($horarios) || (int)$tipo_uso_medicacao <= 0) {
+                    throw new InvalidArgumentException('Campos da medicação estão incompletos.', 400);
+                }
+                if ($tipo_uso_medicacao != 1) {
+                    if($data_termino === '') {
+                        throw new InvalidArgumentException('Campos da medicação estão incompletos.', 400);
+                    }
+                }
             }
         }
     }

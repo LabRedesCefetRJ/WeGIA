@@ -1896,29 +1896,64 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_medicacao_status` (
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `wegia`.`saude_medicacao_tipo_medicacao`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`saude_medicacao_tipo_medicacao` (
+    `id_tipo_medicacao` INT NOT NULL AUTO_INCREMENT,
+    `descricao` varchar(255) NOT NULL,
+    PRIMARY KEY (`id_tipo_medicacao`),
+    UNIQUE INDEX (`descricao`)
+) ENGINE = INNODB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`saude_medicacao_tipo_uso`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`saude_medicacao_tipo_uso` (
+    `id_tipo_uso` INT NOT NULL AUTO_INCREMENT,
+    `descricao` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`id_tipo_uso`),
+    UNIQUE INDEX (`descricao`)
+)ENGINE = INNODB;
+
+-- -----------------------------------------------------
 -- Table `wegia`.`saude_medicacao`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`saude_medicacao` (
+CREATE TABLE `saude_medicacao` (
   `id_medicacao` INT NOT NULL AUTO_INCREMENT,
   `id_atendimento` INT NOT NULL,
+  `id_tipo_medicacao` INT NOT NULL DEFAULT 0,
   `medicamento` VARCHAR(255) NOT NULL,
   `dosagem` VARCHAR(100) NULL,
   `duracao` VARCHAR(100) NULL,
+  `id_tipo_uso` INT NULL,
+  `data_termino_medicacao` DATETIME NULL,
   `saude_medicacao_status_idsaude_medicacao_status` INT NOT NULL,
   PRIMARY KEY (`id_medicacao`),
   INDEX `fk_saude_medicacao_saude_atendimento1_idx` (`id_atendimento` ASC),
   INDEX `fk_saude_medicacao_saude_medicacao_status1_idx` (`saude_medicacao_status_idsaude_medicacao_status` ASC),
-  CONSTRAINT `fk_saude_medicacao_saude_atendimento1`
-    FOREIGN KEY (`id_atendimento`)
-    REFERENCES `wegia`.`saude_atendimento` (`id_atendimento`)
-    ON DELETE NO ACTION
+  INDEX `fk_saude_medicacao_saude_medicacao_id_tipo_medicacao1_idx` (`id_tipo_medicacao` ASC),
+  INDEX `fk_saude_medicacao_saude_medicacao_id_tipo_uso1_idx` (`id_tipo_uso` ASC),
+  CONSTRAINT `fk_saude_medicacao_saude_atendimento1` 
+    FOREIGN KEY (`id_atendimento`) 
+    REFERENCES `wegia`.`saude_atendimento` (`id_atendimento`) 
+    ON DELETE NO ACTION 
     ON UPDATE NO ACTION,
-  CONSTRAINT `fk_saude_medicacao_saude_medicacao_status1`
-    FOREIGN KEY (`saude_medicacao_status_idsaude_medicacao_status`)
-    REFERENCES `wegia`.`saude_medicacao_status` (`idsaude_medicacao_status`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+  CONSTRAINT `fk_saude_medicacao_saude_medicacao_status1` 
+    FOREIGN KEY (`saude_medicacao_status_idsaude_medicacao_status`) 
+    REFERENCES `wegia`.`saude_medicacao_status` (`idsaude_medicacao_status`) 
+    ON DELETE NO ACTION 
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_saude_medicacao_saude_medicacao_id_tipo_medicacao1`
+    FOREIGN KEY (`id_tipo_medicacao`) 
+    REFERENCES `wegia`.`saude_medicacao_tipo_medicacao` (`id_tipo_medicacao`) 
+    ON DELETE NO ACTION 
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_saude_medicacao_saude_medicacao_id_tipo_uso1` 
+    FOREIGN KEY (`id_tipo_uso`) 
+    REFERENCES `wegia`.`saude_medicacao_tipo_uso` (`id_tipo_uso`) 
+    ON DELETE NO ACTION 
+    ON UPDATE CASCADE,
+) ENGINE=InnoDB
 
 
 -- -----------------------------------------------------

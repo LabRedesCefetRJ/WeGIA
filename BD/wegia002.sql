@@ -284,6 +284,15 @@ INSERT INTO `saude_exame_tipos` (`id_exame_tipo`, `descricao`) VALUES
 
 INSERT INTO `saude_medicacao_status` (`descricao`) VALUES ('Em tratamento'), ('Concluído') , ('Substituído'), ('Cancelado');
 
+INSERT INTO `saude_medicacao_tipo_medicacao` (descricao) VALUES
+('Não Informado'), -- Para medicações registradas antes da adição da coluna id_tipo_medicacao
+('SOS'),
+('Prescrito');
+
+INSERT IGNORE INTO `saude_medicacao_tipo_uso` (`descricao`) VALUES 
+('Continuo'),
+('Temporário');
+
 INSERT INTO `saude_tabelacid` (`CID`, `descricao`) VALUES ('B34.2', 'Infecção por coronavírus de localização não especificada');
 
 INSERT INTO `contribuicao_regras` (`regra`) VALUES ('MIN_VALUE'), ('MAX_VALUE');
