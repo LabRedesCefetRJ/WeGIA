@@ -306,7 +306,7 @@ function quickQuery($query, $parametro, $column)
                         'estoque' => 'Relatório de Estoque', 'itens_compra' => 'Relatório de Itens de Compra',
                         'requisicao' => 'Ficha de Requisição',
                     ];
-                    $relatorio = new RelatorioMatPat($filtros, $corpoRelatorio, $titulos[$post[0]] ?? 'Relatório', $post[0]);
+                    $relatorio = new RelatorioMatPat($filtros, $corpoRelatorio, $titulos[$post[0]] ?? 'Relatório', $post[0], trim(($_SESSION['nome'] ?? '') . ' ' . ($_SESSION['sobrenome'] ?? '')));
                     echo $relatorio->getHtml();
                     ?>
 				</div>

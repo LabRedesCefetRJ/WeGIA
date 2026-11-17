@@ -28,7 +28,7 @@ try {
 
     //pegar apenas pessoas que também sejam funcionários, para evitar que clientes acessem o sistema
     $stmt = $pdo->prepare("
-        SELECT p.id_pessoa, p.cpf, p.senha, p.nome, p.adm_configurado, p.nivel_acesso 
+        SELECT p.id_pessoa, p.cpf, p.senha, p.nome, p.sobrenome, p.adm_configurado, p.nivel_acesso 
         FROM pessoa p JOIN funcionario f ON p.id_pessoa = f.id_pessoa
         WHERE p.cpf = :cpf
         LIMIT 1
@@ -83,6 +83,7 @@ try {
     $_SESSION['usuario']   = $usuario['cpf'];
     $_SESSION['id_pessoa'] = $usuario['id_pessoa'];
     $_SESSION['nome']      = $usuario['nome'];
+    $_SESSION['sobrenome'] = $usuario['sobrenome'];
     $_SESSION['nivel']     = $usuario['nivel_acesso'];
     $_SESSION['expira']    = time() + (30 * 60); // 30 minutos
 

@@ -10,14 +10,16 @@ class RelatorioMatPat
     private $logo;
     private $instituicao;
     private $geradoEm;
+    private $geradoPor;
 
-    public function __construct(array $resumo, $body, $titulo = 'Relatório', $tipo = '')
+    public function __construct(array $resumo, $body, $titulo = 'Relatório', $tipo = '', $geradoPor = null)
     {
         $this->resumo = $resumo;
         $this->body = $body;
         $this->titulo = $titulo;
         $this->tipo = $tipo;
         $this->geradoEm = new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE));
+        $this->geradoPor = $geradoPor;
 
         $logo = trim($this->campoPersonalizado('Logo', 'file'));
         $this->logo = '';
@@ -67,7 +69,7 @@ class RelatorioMatPat
         }
         $html .= '<div>';
         if ($this->instituicao !== '') $html .= '<strong>' . self::escapar($this->instituicao) . '</strong>';
-        $html .= '<h1>' . self::escapar($this->titulo) . '</h1><p>Material e Patrimônio • ' . $this->geradoEm->format('d/m/Y H:i') . '</p></div></header>';
+        $html .= '<h1>' . self::escapar($this->titulo) . '</h1><p>Material e Patrimônio • ' . $this->geradoEm->format('d/m/Y H:i') . '</p> <p>Gerado por: ' . self::escapar($this->geradoPor) . '</p></div></header>';
         if ($this->resumo) {
             $html .= '<section class="relatorio-filtros"><h2>Filtros utilizados</h2><dl>';
             foreach ($this->resumo as $nome => $valor) {

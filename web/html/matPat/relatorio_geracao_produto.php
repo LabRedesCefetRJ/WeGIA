@@ -493,7 +493,7 @@ require_once ROOT . '/html/relatorios/RelatorioMatPat.php';
 					</table>
 
                     <?php
-                    $relatorio = new RelatorioMatPat($resumo, ob_get_clean(), 'Relatório de Produto', 'produto');
+                    $relatorio = new RelatorioMatPat($resumo, ob_get_clean(), 'Relatório de Produto', 'produto', trim(($_SESSION['nome'] ?? '') . ' ' . ($_SESSION['sobrenome'] ?? '')));
                     echo $relatorio->getHtml();
                     ?>
 				</div>
