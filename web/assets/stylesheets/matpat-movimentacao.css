@@ -1,0 +1,146 @@
+.movimentacao-tabela-container {
+    overflow-x: auto;
+}
+
+.movimentacao-tabela {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.movimentacao-inclusao {
+    min-width: 680px;
+}
+
+.movimentacao-produtos {
+    min-width: 680px;
+}
+
+.movimentacao-inclusao > thead > tr:first-child > th:nth-child(1) {
+    width: 50%;
+}
+
+.movimentacao-inclusao > thead > tr:first-child > th:nth-child(2) {
+    width: 14%;
+}
+
+.movimentacao-inclusao > thead > tr:first-child > th:nth-child(3) {
+    width: 24%;
+}
+
+.movimentacao-inclusao > thead > tr:first-child > th:nth-child(4) {
+    width: 12%;
+}
+
+.movimentacao-produtos > thead > tr:first-child > th:nth-child(1) {
+    width: 43%;
+}
+
+.movimentacao-produtos > thead > tr:first-child > th:nth-child(2) {
+    width: 12%;
+}
+
+.movimentacao-produtos > thead > tr:first-child > th:nth-child(3),
+.movimentacao-produtos > thead > tr:first-child > th:nth-child(4) {
+    width: 17%;
+}
+
+.movimentacao-produtos > thead > tr:first-child > th:nth-child(5) {
+    width: 11%;
+}
+
+.table.movimentacao-tabela > thead > tr > th,
+.table.movimentacao-tabela > thead > tr > td,
+.table.movimentacao-tabela > tbody > tr > th,
+.table.movimentacao-tabela > tbody > tr > td,
+.table.movimentacao-tabela > tfoot > tr > td {
+    padding: 8px;
+    vertical-align: middle;
+}
+
+.movimentacao-tabela > thead > tr > th {
+    background-color: #f5f8fa;
+    font-weight: 600;
+}
+
+.movimentacao-tabela input:not([type="hidden"]) {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+}
+
+.movimentacao-inclusao input[type="number"] {
+    text-align: left;
+}
+
+.movimentacao-produtos .quant input,
+.movimentacao-produtos #total_total_formatado {
+    text-align: right;
+}
+
+.movimentacao-produtos > tbody > tr > :nth-child(3),
+.movimentacao-produtos > tbody > tr > :nth-child(4) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+.movimentacao-inclusao > thead > tr > :last-child,
+.movimentacao-produtos > thead > tr > :last-child,
+.movimentacao-produtos > tbody > tr > :last-child {
+    text-align: center;
+}
+
+.movimentacao-tabela .add-row,
+.movimentacao-tabela .delete-row {
+    min-height: 34px;
+    padding: 6px 8px;
+}
+
+.movimentacao-total-label {
+    text-align: right;
+    font-weight: 600;
+    background: #fafafa;
+}
+
+.movimentacao-inclusao input.form-control {
+    height: 34px;
+}
+
+.movimentacao-produtos > thead > tr > th:nth-child(2),
+.movimentacao-produtos > thead > tr > th:nth-child(3),
+.movimentacao-produtos > thead > tr > th:nth-child(4) {
+    text-align: right;
+}
+
+.movimentacao-inclusao {
+    margin-bottom: 22px;
+}
+
+.movimentacao-produtos .prod {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.movimentacao-produtos .quant input[readonly] {
+    height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+}
+
+.movimentacao-produtos #valor-total {
+    text-align: right;
+    background: #fafafa;
+}
+
+.movimentacao-produtos #total_total_formatado {
+    max-width: 180px;
+    margin-left: auto;
+}
