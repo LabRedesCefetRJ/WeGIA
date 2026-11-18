@@ -97,12 +97,8 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
 
 require_once "../../controle/AtendidoControle.php";
 
-$stmtProcessoAceitacao = $pdo->prepare("SELECT descricao FROM processo_aceitacao pa JOIN pessoa p ON(p.id_pessoa = pa.id_pessoa) JOIN atendido a ON(p.id_pessoa = a.pessoa_id_pessoa) WHERE a.idatendido = :idAtendido");
-$stmtProcessoAceitacao->bindParam(':idAtendido', $id);
-$stmtProcessoAceitacao->execute();
-
-$descricao = $stmtProcessoAceitacao->fetchColumn();
-$descricao = str_replace(['&#13;&#10;', '&#10;', '&#13;'], "\n", $descricao);
+$descricao = $processoAceitacaoDAO->getDescricaoProcesso((int)$processoAceitacao['id']);
+$descricaoFormatada = str_replace(['&#13;&#10;', '&#10;', '&#13;'], "\n", $descricao);
 ?>
 
 <!doctype html>
@@ -475,8 +471,6 @@ $descricao = str_replace(['&#13;&#10;', '&#10;', '&#13;'], "\n", $descricao);
         $("#metodo").val("alterarEndereco");
       }
       $.each(endereco, function(i, item) {
-        //console.log(endereco);
-        console.log("estado=" + item.estado);
         $("#nome").val(item.nome).prop('disabled', true);
         $("#cep").val(item.cep).prop('disabled', true);
         $("#estado").val(item.estado).prop('disabled', true);
@@ -1421,7 +1415,7 @@ $descricao = str_replace(['&#13;&#10;', '&#10;', '&#13;'], "\n", $descricao);
                               </thead>
                               <tbody>
                                 <tr>
-                                  <td style="white-space: pre-wrap;"><?= htmlspecialchars($descricao ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                                  <td style="white-space: pre-wrap;"><?= htmlspecialchars($descricaoFormatada ?? '', ENT_QUOTES, 'UTF-8') ?></td>
                                 </tr>
                               </tbody>
                             </table>
@@ -1690,8 +1684,7 @@ $descricao = str_replace(['&#13;&#10;', '&#10;', '&#13;'], "\n", $descricao);
       }
     </script>
     <script>
-      function verificaSucesso(response) {
-        console.log(response);
+      function verificaSucesso(response) { 
         if (response.errorInfo) {
           if (response.errorInfo[1] == 1451) {
             window.alert("O dependente possui documentos cadastrados em seu nome. Retire-os do bando de dados antes de remover o dependente.");
