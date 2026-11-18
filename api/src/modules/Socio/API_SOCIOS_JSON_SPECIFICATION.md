@@ -22,6 +22,7 @@ Registra um novo sócio no sistema. Se a pessoa com o CPF fornecido já existe, 
   "valorMensalidade": 50.00,
   "status": 1,
   "autoStatusContribuicao": true,
+  "autoRenovation": false,
   "idSocioTipo": 0,
   "uuid": "019f7118-9242-70ba-b2d5-54a360512623"
 }
@@ -41,6 +42,9 @@ Registra um novo sócio no sistema. Se a pessoa com o CPF fornecido já existe, 
 | `status` | integer | Não | 1 | Status do sócio (1 = ativo) |
 | `autoStatusContribuicao` | boolean | Não | true | Atualizar status automaticamente conforme contribuição |
 | `idSocioTipo` | integer | Não | 0 | ID do tipo de sócio |
+| `autoRenovation` | boolean | Não | false | Habilita a geração e o envio automático de um novo carnê de 12 parcelas após o vencimento final do carnê atual. Clientes que omitirem o campo mantêm o comportamento padrão (desativado). |
+
+O campo `autoRenovation` é aceito somente na criação e não altera a estrutura das respostas existentes desta rota.
 
 ### Resposta - 201 Created (Sucesso)
 ```json

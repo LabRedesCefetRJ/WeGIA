@@ -83,7 +83,7 @@ class ContribuicaoLog
      */
     public function setValor($valor)
     {
-        $this->valor = (int) floor($valor);
+        $this->valor = (float) $valor;
 
         return $this;
     }

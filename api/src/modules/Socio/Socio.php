@@ -17,8 +17,9 @@ class Socio implements SocioInterface, JsonSerializable
     private float $valorMensalidade;
     private DateTime $inicioContribuicao;
     private ?string $uuid = null;
+    private bool $autoRenovation;
 
-    public function __construct(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade = 10.0, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null, ?string $uuid = null)
+    public function __construct(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade = 10.0, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null, ?string $uuid = null, bool $autoRenovation = false)
     {
         if ($id !== null)
             $this->id = $id;
@@ -30,6 +31,7 @@ class Socio implements SocioInterface, JsonSerializable
         $this->valorMensalidade = $valorMensalidade;
         $this->inicioContribuicao = $inicioContribuicao;
         $this->uuid = $uuid;
+        $this->autoRenovation = $autoRenovation;
     }
 
     public function getId(): int
@@ -50,6 +52,11 @@ class Socio implements SocioInterface, JsonSerializable
     public function getAutoStatusContribuicao(): bool
     {
         return $this->autoStatusContribuicao;
+    }
+
+    public function getAutoRenovation(): bool
+    {
+        return $this->autoRenovation;
     }
 
     public function getValorMensalidade(): float

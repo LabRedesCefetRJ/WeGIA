@@ -72,6 +72,7 @@ if (!isset($auto_status_contribuicoes) || empty($auto_status_contribuicoes)) {
 } else {
     $auto_status_contribuicoes = 1;
 }
+$auto_renovation = isset($_REQUEST['auto_renovation']) ? (int) (bool) $_REQUEST['auto_renovation'] : null;
 
 // Data de nascimento (opcional)
 if (empty($data_nasc)) {
@@ -290,7 +291,8 @@ if ($stmt) {
                        id_sociotipo = ?,  
                        data_referencia = ?, 
                        valor_periodo = ?, 
-                       auto_status_contribuicoes = ? 
+                       auto_status_contribuicoes = ?,
+                       auto_renovation = COALESCE(?, auto_renovation)
                    WHERE id_socio = ?";
 
         $stmt = mysqli_prepare($conexao, $sqlUpdateSocio);
@@ -304,12 +306,13 @@ if ($stmt) {
         if ($stmt) {
             // Bind dos parâmetros
             $stmt->bind_param(
-                'iisdii',
+                'iisdiii',
                 $status,               // Inteiro (id_sociostatus)
                 $id_sociotipo,         // Inteiro (id_sociotipo)
                 $data_referencia,      // String (data_referencia)
                 $valor_periodo,        // Double (valor_periodo)
                 $auto_status_contribuicoes, // Inteiro (auto_status_contribuicoes)
+                $auto_renovation,
                 $id_socio              // Inteiro (id_socio)
             );
 

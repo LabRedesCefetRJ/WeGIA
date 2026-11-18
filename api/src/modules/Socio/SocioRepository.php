@@ -18,7 +18,7 @@ class SocioRepository
     public function save(Socio $socio): Socio|false
     {
         $uuidBinary = UuidGenerator::generateBinary();
-        $query = "INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes, uuid) VALUES (:id_pessoa, :id_sociostatus, :id_sociotipo, :valor_periodo, :data_referencia, :auto_status_contribuicoes, :uuid)";
+        $query = "INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes, auto_renovation, uuid) VALUES (:id_pessoa, :id_sociostatus, :id_sociotipo, :valor_periodo, :data_referencia, :auto_status_contribuicoes, :auto_renovation, :uuid)";
         $stmt = $this->db->prepare($query);
         $resultado = $stmt->execute([
             ':id_pessoa' => $socio->getPessoa()->getId(),
@@ -27,6 +27,7 @@ class SocioRepository
             ':valor_periodo' => $socio->getValorMensalidade(),
             ':data_referencia' => $socio->getInicioContribuicao()->format('Y-m-d'),
             ':auto_status_contribuicoes' => $socio->getAutoStatusContribuicao() ? 1 : 0,
+            ':auto_renovation' => $socio->getAutoRenovation() ? 1 : 0,
             ':uuid' => $uuidBinary
         ]);
 

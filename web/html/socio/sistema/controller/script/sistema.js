@@ -312,6 +312,7 @@ function modalSimples(titulo, msg, tipo) {
         const valor_periodo = $("#valor_periodo").val();
         const tipo_contribuicao = $("#tipo_contribuicao").val();
         const auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
+        const auto_renovation = $("#auto_renovation").prop("checked") ? 1 : 0;
         const csrf = document.querySelector('input[name="csrf_token"]').value;
 
         // ============================================
@@ -375,6 +376,7 @@ function modalSimples(titulo, msg, tipo) {
             valor_periodo,
             tipo_contribuicao,
             auto_status_contribuicoes,
+            auto_renovation,
             csrf_token: csrf
         })
             .done(function (resultadoCadastro) {
@@ -433,6 +435,7 @@ function modalSimples(titulo, msg, tipo) {
         const valor_periodo = $("#valor_periodo").val();
         const tipo_contribuicao = $("#tipo_contribuicao").val();
         const auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
+        const auto_renovation = $("#auto_renovation").prop("checked") ? 1 : 0;
 
         // ============================================
         // Validação da data de referência
@@ -495,7 +498,8 @@ function modalSimples(titulo, msg, tipo) {
             data_referencia,
             valor_periodo,
             tipo_contribuicao,
-            auto_status_contribuicoes
+            auto_status_contribuicoes,
+            auto_renovation
         })
             .done(function (resultadoCadastro) {
                 const resultado = JSON.parse(resultadoCadastro);

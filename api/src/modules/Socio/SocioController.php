@@ -83,7 +83,8 @@ class SocioController
                 $data['valorMensalidade'] ?? 10.0,
                 $data['status'] ?? 1,
                 $data['autoStatusContribuicao'] ?? true,
-                $data['idSocioTipo'] ?? 0
+                $data['idSocioTipo'] ?? 0,
+                filter_var($data['autoRenovation'] ?? false, FILTER_VALIDATE_BOOLEAN)
             );
 
             // Send verification code via email

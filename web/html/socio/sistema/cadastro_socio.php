@@ -81,6 +81,7 @@ $data_referencia = trim($_REQUEST['data_referencia']);
 $valor_periodo = trim($_REQUEST['valor_periodo']);
 $tipo_contribuicao = trim($_REQUEST['tipo_contribuicao']);
 $auto_status_contribuicoes = isset($_REQUEST['auto_status_contribuicoes']) && !empty($_REQUEST['auto_status_contribuicoes']) ? 1 : 0;
+$auto_renovation = isset($_REQUEST['auto_renovation']) && !empty($_REQUEST['auto_renovation']) ? 1 : 0;
 
 if (!$socio_nome || empty($socio_nome)) {
     http_response_code(400);
@@ -349,8 +350,8 @@ switch ($pessoa) {
 }
 
 $uuidBinary = \api\utils\UuidGenerator::generateBinary();
-$stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes, uuid) VALUES (?, ?, ?, ?, ?, ?, ?)");
-$stmt2->bind_param('iiidsis', $id_pessoa, $status, $id_sociotipo, $valor_periodo, $data_referencia, $auto_status_contribuicoes, $uuidBinary);
+$stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes, auto_renovation, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt2->bind_param('iiidsiis', $id_pessoa, $status, $id_sociotipo, $valor_periodo, $data_referencia, $auto_status_contribuicoes, $auto_renovation, $uuidBinary);
 $stmt2->execute();
 
 if ($stmt2->affected_rows > 0) {

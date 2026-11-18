@@ -1215,6 +1215,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   `valor_periodo` DECIMAL(10,2) NULL DEFAULT NULL,
   `data_referencia` DATE NULL DEFAULT NULL,
   `auto_status_contribuicoes` TINYINT(1) NOT NULL DEFAULT 1,
+  `auto_renovation` TINYINT(1) NOT NULL DEFAULT 0,
   `deletado` TINYINT(1) NOT NULL DEFAULT 0,
   UNIQUE INDEX (`id_pessoa` ASC),
   PRIMARY KEY (`id_socio`),
@@ -1237,6 +1238,18 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `wegia`.`socio_carnet_renewal` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `id_socio` INT NOT NULL,
+  `carnet_final_due_date` DATE NOT NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'processing',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_socio_carnet_renewal` (`id_socio`, `carnet_final_due_date`),
+  CONSTRAINT `fk_socio_carnet_renewal_socio` FOREIGN KEY (`id_socio`) REFERENCES `wegia`.`socio` (`id_socio`)
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `wegia`.`socio_has_tag`

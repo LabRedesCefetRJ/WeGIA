@@ -54,6 +54,7 @@ $bairro = $registro['bairro'];
 $cidade = $registro['cidade'];
 $estado = $registro['estado'];
 $auto_status_contribuicoes = isset($registro['auto_status_contribuicoes']) ? (int)$registro['auto_status_contribuicoes'] : 0;
+$auto_renovation = isset($registro['auto_renovation']) ? (int)$registro['auto_renovation'] : 0;
 
 $data_referencia = $registro['data_referencia'];
 $valor_periodo = $registro['valor_periodo'];
@@ -202,6 +203,9 @@ $valor_periodo = $registro['valor_periodo'];
                       Atualizar status com base nas contribuições do sistema
                     </label>
                   </div>
+                </div>
+                <div class="form-group col-xs-6">
+                  <label><input type="checkbox" id="auto_renovation" name="auto_renovation" value="1" <?php echo $auto_renovation ? 'checked' : ''; ?>> Renovar carnê automaticamente ao término</label>
                 </div>
               </div>
               <div class="row">

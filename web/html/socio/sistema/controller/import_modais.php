@@ -120,6 +120,9 @@ try {
                     </label>
                   </div>
                 </div>
+                <div class="form-group col-xs-6">
+                  <label><input type="checkbox" id="auto_renovation" name="auto_renovation" value="1"> Renovar carnê automaticamente ao término</label>
+                </div>
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">

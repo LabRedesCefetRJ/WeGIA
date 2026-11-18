@@ -37,7 +37,8 @@ class PagarMeCarneService implements ApiCarneServiceInterface
             $this->contribuicaoLogCollection = $contribuicaoLogCollection;
 
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
-            $gatewayPagamento = $gatewayPagamentoDao->buscarPorId(1); //Pegar valor do id dinamicamente
+            $gatewayId = $contribuicaoLogCollection->getIterator()->current()->getGatewayPagamento()->getId();
+            $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($gatewayId);
 
             //Configurar cabeçalho da requisição
             $headers = [
