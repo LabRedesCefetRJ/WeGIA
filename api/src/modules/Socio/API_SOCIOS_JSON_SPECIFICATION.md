@@ -238,6 +238,24 @@ GET /socios/verify-code?cpf=12345678901
 }
 ```
 
+### Resposta - 429 Too Many Requests (Limite de Envio Atingido)
+Retornada quando o sócio já pediu um código há menos de 60 segundos ou já recebeu 5 códigos na última hora. Nenhum e-mail é enviado e o código anterior continua válido.
+```json
+{
+  "success": false,
+  "rate_limited": true,
+  "message": "Muitos pedidos de código. Aguarde alguns minutos e tente novamente."
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `success` | boolean | Sempre `false` |
+| `rate_limited` | boolean | Sempre `true`; identifica que a recusa foi por limite de envio |
+| `message` | string | Mensagem descritiva para exibir ao usuário |
+
+O cliente deve aguardar antes de pedir um novo código (ao menos 60 segundos; até 1 hora se o limite por hora foi atingido) e pode usar o código mais recente já recebido por e-mail, se ainda estiver dentro da validade.
+
 ### Resposta - 500 Internal Server Error
 ```json
 {
@@ -1260,11 +1278,14 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
    - Formato: Sempre 6 dígitos
    - Validade: 15 minutos por padrão
    - Invalidação: Um novo código invalida todos os anteriores
+   - Tentativas: Cada código pode ser conferido no máximo 5 vezes, somando as chamadas a POST `/socios/verify-code` e POST `/socios/alter-password`. Depois disso o código deixa de valer e a resposta é a mesma de código inválido ou expirado (400); é preciso pedir um novo código
+   - Limite de envio: Um novo código só pode ser pedido 60 segundos após o anterior, e no máximo 5 códigos por hora por sócio. Acima disso, GET `/socios/verify-code` responde 429 Too Many Requests
 
 4. **Tratamento de Erros**: 
    - Erros 400: Requisição mal formada ou validação falhou
    - Erros 403: Acesso negado (não autorizado para acessar o recurso)
    - Erros 404: Recurso não encontrado
+   - Erros 429: Limite de pedidos de código de verificação atingido (GET `/socios/verify-code`); aguardar antes de tentar novamente
    - Erros 500: Erro interno do servidor
 
 5. **Nota sobre Typos**: 

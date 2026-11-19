@@ -8,8 +8,11 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class SocioMiddleware
 {
-    private const ACAO_GRAVAR = 3; // GRAVAR E EXECUTAR
-    private const ACAO_LER = 5;    // LER E EXECUTAR
+    // Valores de acao.id_acao. A checagem é por bits, então
+    // ACAO_LER_GRAVAR_EXECUTAR (7) atende tanto às rotas de leitura quanto às de escrita.
+    private const ACAO_GRAVAR = 3;              // GRAVAR E EXECUTAR
+    private const ACAO_LER = 5;                 // LER E EXECUTAR
+    private const ACAO_LER_GRAVAR_EXECUTAR = 7; // LER, GRAVAR E EXECUTAR
 
     private UserRepository $repository;
     private int $resourceId;
