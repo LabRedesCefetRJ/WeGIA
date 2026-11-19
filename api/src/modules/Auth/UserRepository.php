@@ -74,6 +74,30 @@ class UserRepository
     }
 
     /**
+     * Verifica se o cargo do funcionário associado à pessoa concede a ação
+     * exigida no recurso, com a mesma regra de permissao() da intranet.
+     *
+     * id_acao é uma bitmask (1 = SEM ACESSO, 3 = GRAVAR E EXECUTAR,
+     * 5 = LER E EXECUTAR, 7 = LER, GRAVAR E EXECUTAR): SEM ACESSO nega
+     * sempre, e o cargo precisa ter todos os bits exigidos.
+     *
+     * @param int $idPessoa ID da pessoa
+     * @param int $resourceId ID do recurso
+     * @param int $requiredAction id_acao exigido (ex.: 3 para escrita, 5 para leitura)
+     * @return bool True se o cargo concede a ação, false caso contrário
+     */
+    public function hasActionOnResource(int $idPessoa, int $resourceId, int $requiredAction): bool
+    {
+        $granted = $this->getAccessLevel($idPessoa, $resourceId);
+
+        if ($granted === null || $granted === 1) {
+            return false;
+        }
+
+        return ($granted & $requiredAction) === $requiredAction;
+    }
+
+    /**
      * Obtém o nível de ação permitido para uma pessoa em um recurso específico
      *
      * @param int $idPessoa ID da pessoa

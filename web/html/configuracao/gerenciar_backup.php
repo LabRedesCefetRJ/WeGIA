@@ -23,8 +23,16 @@ if (PHP_OS !== 'Linux') {
     exit();
 }
 
-$file   = $_REQUEST['file']   ?? null;
-$action = $_REQUEST['action'] ?? null;
+// Remover/restaurar backup altera estado: só por POST e com token CSRF.
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+$csrfToken = $_POST['csrf_token'] ?? null;
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !is_string($csrfToken) || !Csrf::validateToken($csrfToken)) {
+    header("Location: ./listar_backup.php?msg=error&err=" . urlencode("Requisição inválida. Recarregue a página e tente novamente."));
+    exit();
+}
+
+$file   = $_POST['file']   ?? null;
+$action = $_POST['action'] ?? null;
 
 if (!$file || !$action) {
     header("Location: ./listar_backup.php?msg=warning&warn=" . urlencode("Parâmetros inválidos."));
