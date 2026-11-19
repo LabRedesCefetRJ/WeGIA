@@ -55,6 +55,7 @@ require_once ROOT . '/classes/Csrf.php';
     <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
     <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
     <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
+    <link rel="stylesheet" href="../../css/recepcao.css">
     <script src="../../assets/vendor/modernizr/modernizr.js"></script>
     <script src="../../assets/vendor/jquery/jquery.min.js"></script>
     <script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
@@ -172,24 +173,25 @@ endif; ?>
                             </div>
                             <div class="col-md-9 col-lg-9">
                             <div class="panel-body">
+                                <p class="legenda-obrigatorio">Os campos marcados com <span class="campo-obrigatorio">*</span> são de preenchimento obrigatório.</p>
                                 <h4 class="mb-xlg">Informações Pessoais</h4>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Nome *</label>
+                                    <label class="col-md-3 control-label">Nome <span class="campo-obrigatorio" aria-hidden="true">*</span></label>
                                     <div class="col-md-6"><input type="text" class="form-control" name="nome" id="nome" required>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Sobrenome *</label>
+                                    <label class="col-md-3 control-label">Sobrenome <span class="campo-obrigatorio" aria-hidden="true">*</span></label>
                                     <div class="col-md-6"><input type="text" class="form-control" name="sobrenome" id="sobrenome"
                                             required></div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">CPF *</label>
+                                    <label class="col-md-3 control-label">CPF <span class="campo-obrigatorio" aria-hidden="true">*</span></label>
                                     <div class="col-md-6"><input type="text" class="form-control" name="cpf" id="cpf"
                                             maxlength="14" value="<?= $cpfPrefilled ?>"required readonly></div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Sexo *</label>
+                                    <label class="col-md-3 control-label">Sexo <span class="campo-obrigatorio" aria-hidden="true">*</span></label>
                                     <div class="col-md-6">
                                         <input type="radio" name="gender" id="radioM" value="m" required> M
                                         <input type="radio" name="gender" id="radioF" value="f" required> F
@@ -197,7 +199,7 @@ endif; ?>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Nascimento *</label>
+                                    <label class="col-md-3 control-label">Nascimento <span class="campo-obrigatorio" aria-hidden="true">*</span></label>
                                     <div class="col-md-6"><input type="date" class="form-control" name="nascimento" id="nascimento"
                                             min="<?= $dataNascimentoMinima?>" max="<?= $dataNascimentoMaxima?>"
                                             required></div>

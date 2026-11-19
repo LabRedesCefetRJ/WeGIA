@@ -1,0 +1,19 @@
+/* Estilos compartilhados do módulo Recepção */
+
+/* Marcador de campo obrigatório.
+   #b71c1c sobre fundo branco tem contraste de 6.6:1 (WCAG AA para texto normal). */
+.campo-obrigatorio {
+	color: #b71c1c;
+	font-weight: bold;
+	font-size: 1.1em;
+	line-height: 1;
+}
+
+/* Legenda exibida no início dos formulários explicando o marcador */
+.legenda-obrigatorio {
+	margin: 0 0 20px;
+	padding: 8px 12px;
+	border-left: 4px solid #b71c1c;
+	background-color: #fdf3f3;
+	color: #333;
+}
