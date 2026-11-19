@@ -151,12 +151,26 @@
 		}).join("");
 	}
 
+	// Visita aberta desde um dia anterior: provavelmente a saída não foi registrada.
+	function textoEmAndamento(grupo) {
+		const dias = Number(grupo.dias_em_andamento) || 0;
+		return dias === 0 ? "Em andamento" : `Em andamento há ${dias} ${dias === 1 ? "dia" : "dias"}`;
+	}
+
+	function rotuloEmAndamento(grupo) {
+		const atrasada = (Number(grupo.dias_em_andamento) || 0) > 0;
+		return `<span class="label ${atrasada ? "label-danger" : "label-warning"}"` +
+			(atrasada ? ' title="Entrada de um dia anterior sem saída registrada"' : "") +
+			`>${textoEmAndamento(grupo)}</span>`;
+	}
+
 	function detalhesDaLinha(grupo) {
 		const descricao = grupo.descricao && grupo.descricao.trim() !== ""
 			? escaparHtml(grupo.descricao)
 			: '<span class="text-muted">Sem descrição</span>';
 
-		let saida = '<span class="text-danger"><strong>Em andamento</strong></span>';
+		let saida = `<span class="text-danger"><strong>${textoEmAndamento(grupo)}</strong></span>` +
+			((Number(grupo.dias_em_andamento) || 0) > 0 ? ' <span class="text-muted">(a saída pode não ter sido registrada)</span>' : "");
 		if (!grupo.em_andamento && grupo.horario_saida) {
 			saida = `${formatarData(grupo.horario_saida)} às ${formatarHora(grupo.horario_saida)}`;
 		}
@@ -215,7 +229,7 @@
 					data: null,
 					render: function (grupo, tipo) {
 						if (grupo.em_andamento) {
-							return tipo === "display" ? '<span class="label label-warning">Em andamento</span>' : "9999";
+							return tipo === "display" ? rotuloEmAndamento(grupo) : "9999";
 						}
 						if (tipo !== "display") {
 							return grupo.horario_saida;

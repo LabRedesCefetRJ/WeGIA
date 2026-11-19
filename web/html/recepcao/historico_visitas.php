@@ -204,7 +204,7 @@ function escaparHistorico($texto)
 
 							<p class="text-muted dica-historico">
 								<i class="fa fa-info-circle" aria-hidden="true"></i>
-								Clique em uma linha para ver todos os visitantes e visitados da entrada. Clique em um nome para ver a ficha da pessoa.
+								Clique em uma linha para ver todos os visitantes e visitados da entrada. Clique em um nome para ver a ficha da pessoa. O período mostra as visitas que estavam em andamento em algum momento dele, inclusive as que entraram antes ou saíram depois.
 							</p>
 
 							<table class="table table-hover" id="tabelaHistorico" style="width:100%" data-plugin-options='{"searchPlaceholder": "Pesquisar"}'>

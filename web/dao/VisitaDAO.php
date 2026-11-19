@@ -419,7 +419,9 @@ class VisitaDAO
      * Histórico de entradas agrupadas, mais recentes primeiro.
      *
      * Filtros aceitos (já validados pelo controle):
-     * - data_inicio, data_fim: 'Y-m-d', aplicados ao dia da entrada (intervalo fechado);
+     * - data_inicio, data_fim: 'Y-m-d' (intervalo fechado). A entrada aparece se a visita esteve em andamento
+     *   em algum momento do período: entrou até o fim dele e saiu depois do início, ou ainda não saiu. Assim, quem
+     *   entra num dia e sai no outro aparece nos dois dias, e uma visita sem saída aparece até hoje, enquanto não for encerrada;
      * - id_visitado: entradas em que esse visitado foi visitado (a entrada aparece completa);
      * - categoria: uma de CATEGORIAS_VISITADO, com o mesmo comportamento de id_visitado;
      * - situacao: SITUACAO_EM_ANDAMENTO ou SITUACAO_ENCERRADA.
@@ -432,7 +434,9 @@ class VisitaDAO
         $parametros = [];
 
         if (!empty($filtros['data_inicio'])) {
-            $condicoes[] = 'visita.horario_entrada >= :inicio';
+            // Sem saída registrada, a visita conta como em andamento até agora (não em dias que ainda não chegaram).
+            $condicoes[] = 'COALESCE(visita.horario_saida, :agora) >= :inicio';
+            $parametros[':agora'] = (new DateTimeImmutable())->format('Y-m-d H:i:s');
             $parametros[':inicio'] = $filtros['data_inicio'] . ' 00:00:00';
         }
 
@@ -469,7 +473,20 @@ class VisitaDAO
             )";
         }
 
-        return $this->buscarGrupos(implode(' AND ', $condicoes), $parametros);
+        $grupos = $this->buscarGrupos(implode(' AND ', $condicoes), $parametros);
+
+        // Dias de calendário desde a entrada das visitas ainda abertas (0 = entrou hoje), para destacar saídas esquecidas.
+        $hoje = new DateTimeImmutable('today');
+        foreach ($grupos as &$grupo) {
+            $grupo['dias_em_andamento'] = null;
+            if ($grupo['em_andamento']) {
+                $intervalo = (new DateTimeImmutable($grupo['horario_entrada']))->setTime(0, 0)->diff($hoje);
+                $grupo['dias_em_andamento'] = $intervalo->invert ? 0 : $intervalo->days;
+            }
+        }
+        unset($grupo);
+
+        return $grupos;
     }
 
     /**

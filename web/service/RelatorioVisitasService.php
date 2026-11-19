@@ -15,6 +15,9 @@ $baseDir = dirname(__DIR__);
 require_once $baseDir . DIRECTORY_SEPARATOR . 'config.php';
 require_once $baseDir . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
+// Mesmo fuso do resto do sistema (o control.php faz o mesmo), para o "gerado em" e as contas de "hoje" baterem.
+Util::definirFusoHorario();
+
 if (!isset($_SESSION['usuario'], $_SESSION['id_pessoa'])) {
     header('Location: ' . WWW . 'index.php');
     exit();
@@ -177,14 +180,23 @@ try {
             . ', de ' . $estatisticas['inicio']->format('d/m/Y') . ' a ' . $estatisticas['fim']->format('d/m/Y')
             . (empty($filtros['data_inicio']) ? ' (a partir da primeira visita encontrada)' : '')
             . ($estatisticas['fim_limitado_a_hoje'] ? ' (dias futuros não entram na média)' : '')
-            . '. Cada entrada registrada conta como uma visita, independentemente de quantos visitantes e visitados ela tenha.';
+            . '. Cada entrada registrada conta como uma visita, no dia em que entrou, independentemente de quantos visitantes e visitados ela tenha.';
+
+        if ($estatisticas['entradas_anteriores'] > 0) {
+            $periodoCalculo .= ' ' . ($estatisticas['entradas_anteriores'] === 1
+                ? '1 visita começou antes do período e continuava em andamento nele: ela aparece no resultado, mas não entra nos totais nem nas médias.'
+                : $estatisticas['entradas_anteriores'] . ' visitas começaram antes do período e continuavam em andamento nele: elas aparecem no resultado, mas não entram nos totais nem nas médias.');
+        }
     }
 
     // Linhas da tabela
     $linhas = '';
     foreach ($grupos as $grupo) {
         if ($grupo['em_andamento']) {
-            $saida = '<span class="andamento">Em andamento</span>';
+            $dias = (int) ($grupo['dias_em_andamento'] ?? 0);
+            $saida = $dias === 0
+                ? '<span class="andamento">Em andamento</span>'
+                : '<span class="andamento">Em andamento há ' . $dias . ($dias === 1 ? ' dia' : ' dias') . '</span><br><span class="observacao">Saída não registrada?</span>';
         } elseif (relatorioVisitasData($grupo['horario_saida'], 'd/m/Y') === relatorioVisitasData($grupo['horario_entrada'], 'd/m/Y')) {
             $saida = relatorioVisitasData($grupo['horario_saida'], 'H:i');
         } else {
