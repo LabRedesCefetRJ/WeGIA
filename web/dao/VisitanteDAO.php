@@ -219,4 +219,24 @@ class VisitanteDAO
 
         return $resultado;
     }
+
+    /**
+     * Dados cadastrais do visitante para a ficha do histórico de visitas (sem senha nem campos de saúde).
+     */
+    public function buscarDetalhes(int $idVisitante): ?array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT p.nome, p.sobrenome, p.sexo, p.data_nascimento, p.cpf, p.registro_geral, p.telefone, p.email,
+                   p.logradouro, p.numero_endereco, p.complemento, p.bairro, p.cidade, p.estado, p.cep, p.imagem
+            FROM visitante v
+            INNER JOIN pessoa p ON p.id_pessoa = v.id_pessoa
+            WHERE v.id_visitante = :id
+        ");
+        $stmt->bindValue(':id', $idVisitante, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $linha = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $linha === false ? null : $linha;
+    }
 }

@@ -17,3 +17,168 @@
 	background-color: #fdf3f3;
 	color: #333;
 }
+
+/* ---------- Histórico de visitas (mesmo visual dos boxes do módulo Sócios) ---------- */
+
+.box-recepcao {
+	position: relative;
+	margin-bottom: 20px;
+	background: #fff;
+	border-top: 3px solid #f39c12;
+	border-radius: 3px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.box-recepcao-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 15px;
+	border-bottom: 1px solid #f4f4f4;
+}
+
+.box-recepcao-title {
+	margin: 0;
+	font-size: 18px;
+	color: #444;
+}
+
+.box-recepcao-recolher {
+	color: #97a0b3;
+}
+
+.box-recepcao-body {
+	padding: 15px;
+}
+
+.filtros-historico {
+	margin-bottom: 10px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #f4f4f4;
+}
+
+.filtros-acoes {
+	padding-top: 25px;
+}
+
+.filtros-atalhos .btn {
+	margin: 2px 2px 2px 0;
+}
+
+.dica-historico {
+	margin: 10px 0;
+}
+
+#tabelaHistorico tbody tr:not(.linha-detalhes) {
+	cursor: pointer;
+}
+
+#tabelaHistorico .coluna-expandir {
+	width: 30px;
+}
+
+#tabelaHistorico .botao-expandir .fa {
+	transition: transform 0.15s;
+}
+
+#tabelaHistorico tr.linha-aberta .botao-expandir .fa {
+	transform: rotate(90deg);
+}
+
+.mais-itens {
+	margin-left: 2px;
+	color: #666;
+	white-space: nowrap;
+}
+
+.detalhes-entrada {
+	padding: 5px 10px;
+}
+
+.detalhes-entrada h5 {
+	margin-top: 0;
+	font-weight: bold;
+}
+
+.lista-detalhes {
+	padding-left: 18px;
+	margin-bottom: 10px;
+}
+
+.lista-detalhes li {
+	margin-bottom: 4px;
+}
+
+.box-recepcao-acoes {
+	margin-top: 15px;
+}
+
+.btn-app-recepcao {
+	display: inline-block;
+	min-width: 90px;
+	height: 60px;
+	margin: 0 10px 10px 0;
+	padding: 10px 8px;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	background-color: #f4f4f4;
+	color: #444;
+	font-size: 12px;
+	text-align: center;
+}
+
+.btn-app-recepcao > .fa {
+	display: block;
+	font-size: 20px;
+	margin-bottom: 4px;
+}
+
+.btn-app-recepcao:hover,
+.btn-app-recepcao:focus {
+	background-color: #e7e7e7;
+	border-color: #aaa;
+	color: #444;
+}
+
+/* Ficha (modal) */
+
+.ficha-cabecalho {
+	display: flex;
+	align-items: center;
+	gap: 15px;
+	margin-bottom: 10px;
+}
+
+.ficha-foto {
+	width: 72px;
+	height: 72px;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 1px solid #ddd;
+}
+
+.ficha-nome {
+	font-size: 18px;
+	font-weight: bold;
+	margin-bottom: 4px;
+}
+
+.ficha-secao {
+	margin: 15px 0 5px;
+	padding-bottom: 4px;
+	border-bottom: 1px solid #eee;
+	font-weight: bold;
+}
+
+.ficha-campos {
+	margin-bottom: 0;
+}
+
+.ficha-campos dt,
+.ficha-campos dd {
+	margin-bottom: 4px;
+}
+
+.ficha-aviso {
+	margin-top: 8px;
+}

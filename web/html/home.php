@@ -952,6 +952,12 @@ require_once ROOT . "/html/geral/msg.php";
 								<h4>Registro de Saída</h4>
 							</div>
 						</a>
+						<a href="<?= WWW ?>html/recepcao/historico_visitas.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fas fa-clock-rotate-left"></i>
+								<h4>Histórico de Visitas</h4>
+							</div>
+						</a>
 					</div>
 				</div>
 				<!--fim da parte interna de #recepcao-->

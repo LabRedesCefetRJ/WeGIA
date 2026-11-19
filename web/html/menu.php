@@ -622,6 +622,11 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 									<span>Registro de Saída</span>
 								</a>
 							</li>
+							<li>
+								<a href="<?= WWW ?>html/recepcao/historico_visitas.php">
+									<span>Histórico de Visitas</span>
+								</a>
+							</li>
 						</ul>
 					</li>
 					<!--fim livro de visitas-->

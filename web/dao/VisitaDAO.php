@@ -211,7 +211,46 @@ class VisitaDAO
         return $visitas;
     }
 
-    public function listarTodosAgrupados()
+    /** Categorias de visitado aceitas no filtro do histórico. */
+    public const CATEGORIAS_VISITADO = ['atendido', 'funcionario', 'voluntario', 'pet', 'setor', 'instituicao'];
+
+    public const SITUACAO_EM_ANDAMENTO = 'andamento';
+    public const SITUACAO_ENCERRADA = 'encerrada';
+
+    /**
+     * Categoria do visitado (depende do alias "visitado" na consulta). Uma pessoa com mais de um vínculo
+     * é classificada pelo primeiro encontrado: atendido, funcionário e voluntário.
+     */
+    private const SQL_CATEGORIA_VISITADO = "CASE
+                    WHEN visitado.id_pessoa IS NOT NULL AND EXISTS (SELECT 1 FROM atendido cat_a WHERE cat_a.pessoa_id_pessoa = visitado.id_pessoa) THEN 'atendido'
+                    WHEN visitado.id_pessoa IS NOT NULL AND EXISTS (SELECT 1 FROM funcionario cat_f WHERE cat_f.id_pessoa = visitado.id_pessoa) THEN 'funcionario'
+                    WHEN visitado.id_pessoa IS NOT NULL AND EXISTS (SELECT 1 FROM voluntario cat_v WHERE cat_v.id_pessoa = visitado.id_pessoa) THEN 'voluntario'
+                    WHEN visitado.id_pessoa IS NOT NULL THEN 'pessoa'
+                    WHEN visitado.id_pet IS NOT NULL THEN 'pet'
+                    WHEN visitado.id_setor IS NOT NULL THEN 'setor'
+                    ELSE 'instituicao'
+                END";
+
+    private ?string $nomeInstituicao = null;
+
+    private function nomeInstituicao(): string
+    {
+        if ($this->nomeInstituicao === null) {
+            $titulo = trim((string) SelecaoParagrafoDAO::getSelecao(SelecaoParagrafo::Titulo));
+            $this->nomeInstituicao = $titulo !== '' ? $titulo : 'Instituição';
+        }
+
+        return $this->nomeInstituicao;
+    }
+
+    /**
+     * Busca as visitas que atendem à condição e as agrupa por entrada. Uma entrada com vários visitantes e
+     * visitados gera uma linha de visita por par, todas com o mesmo horário de entrada e a mesma descrição
+     * (ver incluirMultiplos), e é essa a chave do agrupamento.
+     *
+     * Os valores são devolvidos sem escape: quem exibe é responsável por escapar.
+     */
+    private function buscarGrupos(string $condicao, array $parametros = []): array
     {
         $consulta = $this->pdo->prepare("
             SELECT
@@ -219,6 +258,7 @@ class VisitaDAO
                 visita.id_visitante,
                 visita.id_visitado,
                 visita.horario_entrada,
+                visita.horario_saida,
                 visita.descricao,
                 pessoa_visitante.nome AS visitante_nome,
                 pessoa_visitante.sobrenome AS visitante_sobrenome,
@@ -235,7 +275,8 @@ class VisitaDAO
                     WHEN visitado.id_pet IS NOT NULL THEN 'pet'
                     WHEN visitado.id_setor IS NOT NULL THEN 'setor'
                     ELSE 'instituicao'
-                END AS visitado_tipo
+                END AS visitado_tipo,
+                " . self::SQL_CATEGORIA_VISITADO . " AS visitado_categoria
 
             FROM visita
 
@@ -266,14 +307,17 @@ class VisitaDAO
             LEFT JOIN setor
                 ON setor.id_setor = visitado.id_setor
 
-            WHERE visita.status = 'ativo'
+            WHERE $condicao
             ORDER BY visita.horario_entrada DESC, visita.id_visita ASC
         ");
+
+        foreach ($parametros as $nome => $valor) {
+            $consulta->bindValue($nome, $valor, is_int($valor) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
 
         $consulta->execute();
 
         $grupos = [];
-        $nomeInstituicao = null;
 
         foreach ($consulta->fetchAll(PDO::FETCH_ASSOC) as $linha) {
             $chave = $linha['horario_entrada'] . '|' . ($linha['descricao'] ?? '');
@@ -282,15 +326,27 @@ class VisitaDAO
                 $grupos[$chave] = [
                     'ids_visita' => [],
                     'horario_entrada' => $linha['horario_entrada'],
+                    'horario_saida' => null,
+                    'em_andamento' => false,
                     'descricao' => $linha['descricao'] ?? '',
                     'visitantes' => [],
                     'visitados' => [],
                 ];
             }
 
-            $grupos[$chave]['ids_visita'][] = (int) $linha['id_visita'];
+            $grupo = &$grupos[$chave];
 
-            $grupos[$chave]['visitantes'][(int) $linha['id_visitante']] = [
+            $grupo['ids_visita'][] = (int) $linha['id_visita'];
+
+            // A saída é registrada para a entrada inteira; se alguma visita ainda estiver aberta, a entrada está em andamento.
+            if ($linha['horario_saida'] === null) {
+                $grupo['em_andamento'] = true;
+            } elseif ($grupo['horario_saida'] === null || $linha['horario_saida'] > $grupo['horario_saida']) {
+                $grupo['horario_saida'] = $linha['horario_saida'];
+            }
+
+            $grupo['visitantes'][(int) $linha['id_visitante']] = [
+                'id_visitante' => (int) $linha['id_visitante'],
                 'nome' => $linha['visitante_nome'],
                 'sobrenome' => $linha['visitante_sobrenome'],
                 'tipo' => 'pessoa',
@@ -308,21 +364,34 @@ class VisitaDAO
                     $identificadorVisitado = Visitado::IDENTIFICADOR_VAZIO;
             }
 
-            $nomeVisitado = $linha['visitado_nome'];
+            $nomeVisitado = $linha['visitado_tipo'] === 'instituicao' ? $this->nomeInstituicao() : $linha['visitado_nome'];
 
-            if ($linha['visitado_tipo'] === 'instituicao') {
-                $nomeInstituicao ??= trim((string) SelecaoParagrafoDAO::getSelecao(SelecaoParagrafo::Titulo));
-                $nomeVisitado = $nomeInstituicao !== '' ? $nomeInstituicao : 'Instituição';
-            }
-
-            $grupos[$chave]['visitados'][(int) $linha['id_visitado']] = [
+            $grupo['visitados'][(int) $linha['id_visitado']] = [
+                'id_visitado' => (int) $linha['id_visitado'],
                 'nome' => $nomeVisitado ?? 'Instituição',
                 'sobrenome' => $linha['visitado_sobrenome'],
                 'tipo' => $linha['visitado_tipo'],
+                'categoria' => $linha['visitado_categoria'],
                 'identificador' => $identificadorVisitado,
             ];
+
+            unset($grupo);
         }
 
+        foreach ($grupos as &$grupo) {
+            if ($grupo['em_andamento']) {
+                $grupo['horario_saida'] = null;
+            }
+            $grupo['visitantes'] = array_values($grupo['visitantes']);
+            $grupo['visitados'] = array_values($grupo['visitados']);
+        }
+        unset($grupo);
+
+        return array_values($grupos);
+    }
+
+    public function listarTodosAgrupados()
+    {
         $escapar = function ($item) {
             return [
                 'nome' => htmlspecialchars($item['nome'] ?? '', ENT_QUOTES, 'UTF-8'),
@@ -333,16 +402,106 @@ class VisitaDAO
         };
 
         $resultado = [];
-        foreach ($grupos as $grupo) {
+        foreach ($this->buscarGrupos("visita.status = 'ativo'") as $grupo) {
             $resultado[] = [
                 'ids_visita' => $grupo['ids_visita'],
                 'horario_entrada' => htmlspecialchars($grupo['horario_entrada'] ?? '', ENT_QUOTES, 'UTF-8'),
                 'descricao' => htmlspecialchars($grupo['descricao'] ?? '', ENT_QUOTES, 'UTF-8'),
-                'visitantes' => array_map($escapar, array_values($grupo['visitantes'])),
-                'visitados' => array_map($escapar, array_values($grupo['visitados'])),
+                'visitantes' => array_map($escapar, $grupo['visitantes']),
+                'visitados' => array_map($escapar, $grupo['visitados']),
             ];
         }
 
         return $resultado;
+    }
+
+    /**
+     * Histórico de entradas agrupadas, mais recentes primeiro.
+     *
+     * Filtros aceitos (já validados pelo controle):
+     * - data_inicio, data_fim: 'Y-m-d', aplicados ao dia da entrada (intervalo fechado);
+     * - id_visitado: entradas em que esse visitado foi visitado (a entrada aparece completa);
+     * - categoria: uma de CATEGORIAS_VISITADO, com o mesmo comportamento de id_visitado;
+     * - situacao: SITUACAO_EM_ANDAMENTO ou SITUACAO_ENCERRADA.
+     *
+     * Os valores são devolvidos sem escape.
+     */
+    public function listarHistorico(array $filtros = []): array
+    {
+        $condicoes = ['1 = 1'];
+        $parametros = [];
+
+        if (!empty($filtros['data_inicio'])) {
+            $condicoes[] = 'visita.horario_entrada >= :inicio';
+            $parametros[':inicio'] = $filtros['data_inicio'] . ' 00:00:00';
+        }
+
+        if (!empty($filtros['data_fim'])) {
+            $condicoes[] = 'visita.horario_entrada < :fimExclusivo';
+            $parametros[':fimExclusivo'] = (new DateTimeImmutable($filtros['data_fim']))->modify('+1 day')->format('Y-m-d 00:00:00');
+        }
+
+        if (($filtros['situacao'] ?? '') === self::SITUACAO_EM_ANDAMENTO) {
+            $condicoes[] = 'visita.horario_saida IS NULL';
+        } elseif (($filtros['situacao'] ?? '') === self::SITUACAO_ENCERRADA) {
+            $condicoes[] = 'visita.horario_saida IS NOT NULL';
+        }
+
+        // Os filtros de visitado selecionam a entrada inteira, para que os demais visitados dela continuem aparecendo.
+        $condicoesVisitado = [];
+
+        if (!empty($filtros['id_visitado'])) {
+            $condicoesVisitado[] = 'filtro.id_visitado = :idVisitado';
+            $parametros[':idVisitado'] = (int) $filtros['id_visitado'];
+        }
+
+        if (!empty($filtros['categoria']) && in_array($filtros['categoria'], self::CATEGORIAS_VISITADO, true)) {
+            $condicoesVisitado[] = '(' . self::SQL_CATEGORIA_VISITADO . ') = :categoria';
+            $parametros[':categoria'] = $filtros['categoria'];
+        }
+
+        if ($condicoesVisitado) {
+            $condicoes[] = "(visita.horario_entrada, COALESCE(visita.descricao, '')) IN (
+                SELECT filtro.horario_entrada, COALESCE(filtro.descricao, '')
+                FROM visita AS filtro
+                INNER JOIN visitado ON visitado.id_visitado = filtro.id_visitado
+                WHERE " . implode(' AND ', $condicoesVisitado) . "
+            )";
+        }
+
+        return $this->buscarGrupos(implode(' AND ', $condicoes), $parametros);
+    }
+
+    /**
+     * Visitados que já receberam alguma visita, para o filtro do histórico (inclui os que hoje estão inativos).
+     */
+    public function listarVisitadosComVisitas(): array
+    {
+        $linhas = $this->pdo->query("
+            SELECT DISTINCT
+                visitado.id_visitado,
+                CASE
+                    WHEN pessoa.id_pessoa IS NOT NULL THEN CONCAT_WS(' ', pessoa.nome, NULLIF(pessoa.sobrenome, ''))
+                    ELSE COALESCE(pet.nome, setor.descricao)
+                END AS nome,
+                " . self::SQL_CATEGORIA_VISITADO . " AS categoria
+            FROM visita
+            INNER JOIN visitado ON visitado.id_visitado = visita.id_visitado
+            LEFT JOIN pessoa ON pessoa.id_pessoa = visitado.id_pessoa
+            LEFT JOIN pet ON pet.id_pet = visitado.id_pet
+            LEFT JOIN setor ON setor.id_setor = visitado.id_setor
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        $visitados = array_map(function ($linha) {
+            return [
+                'id_visitado' => (int) $linha['id_visitado'],
+                'nome' => $linha['categoria'] === 'instituicao' ? $this->nomeInstituicao() : (string) $linha['nome'],
+                'categoria' => $linha['categoria'],
+            ];
+        }, $linhas);
+
+        usort($visitados, fn($a, $b) => strcasecmp($a['nome'], $b['nome']));
+
+        return $visitados;
     }
 }
