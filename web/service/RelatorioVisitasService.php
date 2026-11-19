@@ -28,7 +28,6 @@ permissao($_SESSION['id_pessoa'], 20, 5);
 
 require_once $baseDir . '/controle/VisitaControle.php';
 require_once $baseDir . '/dao/VisitaDAO.php';
-require_once $baseDir . '/classes/EstatisticaVisitas.php';
 
 require_once $baseDir . '/assets/vendor/setasign/fpdi/src/autoload.php';
 
@@ -81,6 +80,27 @@ function relatorioVisitasNomes(array $itens, array $rotulosCategoria): string
     return implode('<br>', $linhas);
 }
 
+/** Intervalo do filtro em forma curta ("21/10 a 19/11/2026"), para o quadro do período selecionado. */
+function relatorioVisitasIntervaloCurto(array $filtros): string
+{
+    $inicio = !empty($filtros['data_inicio']) ? new DateTimeImmutable($filtros['data_inicio']) : null;
+    $fim = !empty($filtros['data_fim']) ? new DateTimeImmutable($filtros['data_fim']) : null;
+
+    if ($inicio && $fim) {
+        if ($inicio == $fim) {
+            return $inicio->format('d/m/Y');
+        }
+        return $inicio->format($inicio->format('Y') === $fim->format('Y') ? 'd/m' : 'd/m/Y') . ' a ' . $fim->format('d/m/Y');
+    }
+    if ($inicio) {
+        return 'A partir de ' . $inicio->format('d/m/Y');
+    }
+    if ($fim) {
+        return 'Até ' . $fim->format('d/m/Y');
+    }
+    return 'Sem limite de datas';
+}
+
 function relatorioVisitasLogo(PDO $pdo): string
 {
     $stmt = $pdo->prepare("SELECT imagem.imagem, imagem.tipo
@@ -102,7 +122,7 @@ function relatorioVisitasLogo(PDO $pdo): string
 
     $tipo = preg_replace('/[^a-z0-9+]/', '', strtolower($logo['tipo'] ?? 'png')) ?: 'png';
 
-    return '<img src="data:image/' . $tipo . ';base64,' . $base64 . '" style="height:45px;">';
+    return '<img src="data:image/' . $tipo . ';base64,' . $base64 . '" style="height:38px;">';
 }
 
 try {
@@ -111,7 +131,6 @@ try {
     $pdo = Conexao::connect();
     $visitaDAO = new VisitaDAO($pdo);
     $grupos = $visitaDAO->listarHistorico($filtros);
-    $estatisticas = EstatisticaVisitas::calcular($grupos, $filtros);
 
     $rotulosCategoria = [
         'atendido' => 'Atendido',
@@ -170,35 +189,54 @@ try {
     $nomeInstituicao = trim((string) SelecaoParagrafoDAO::getSelecao(SelecaoParagrafo::Titulo));
     $geradoEm = new DateTimeImmutable();
 
-    // Estatísticas
-    $semMedia = '<span class="observacao">%s</span>';
-    if ($estatisticas['media_diaria'] === null) {
-        $mensagem = $estatisticas['total_entradas'] === 0 && $estatisticas['inicio'] === null
-            ? 'Sem visitas para calcular'
-            : 'Período ainda não iniciado';
-        $mediaDiaria = $mediaSemanal = $mediaMensal = sprintf($semMedia, $mensagem);
-    } else {
-        $mediaDiaria = EstatisticaVisitas::formatarMedia($estatisticas['media_diaria']);
-        $mediaSemanal = EstatisticaVisitas::formatarMedia($estatisticas['media_semanal']) ?? sprintf($semMedia, 'Período menor que uma semana');
-        $mediaMensal = EstatisticaVisitas::formatarMedia($estatisticas['media_mensal']) ?? sprintf($semMedia, 'Período menor que um mês');
+    // Quantidade de visitas: o período escolhido e janelas fixas até hoje, com os demais filtros iguais.
+    // Cada quadro conta o mesmo que a tabela mostraria com aquele período.
+    $hoje = new DateTimeImmutable('today');
+    $janelas = [
+        [
+            'titulo' => (!empty($filtros['data_inicio']) || !empty($filtros['data_fim'])) ? 'Período selecionado' : 'Todo o histórico',
+            'intervalo' => relatorioVisitasIntervaloCurto($filtros),
+            'grupos' => $grupos,
+            'destaque' => true,
+        ],
+    ];
+    foreach ([
+        'Últimos 7 dias' => [$hoje->modify('-6 days'), $hoje],
+        'Este mês' => [$hoje->modify('first day of this month'), $hoje],
+        'Últimos 30 dias' => [$hoje->modify('-29 days'), $hoje],
+    ] as $titulo => [$inicioJanela, $fimJanela]) {
+        $filtrosJanela = array_merge($filtros, [
+            'data_inicio' => $inicioJanela->format('Y-m-d'),
+            'data_fim' => $fimJanela->format('Y-m-d'),
+        ]);
+        $janelas[] = [
+            'titulo' => $titulo,
+            'intervalo' => $inicioJanela == $fimJanela
+                ? $inicioJanela->format('d/m/Y')
+                : $inicioJanela->format('d/m') . ' a ' . $fimJanela->format('d/m/Y'),
+            'grupos' => $visitaDAO->listarHistorico($filtrosJanela),
+            'destaque' => false,
+        ];
     }
 
-    $periodoCalculo = '';
-    if ($estatisticas['inicio'] !== null && $estatisticas['dias'] > 0) {
-        $periodoCalculo = 'Calculado sobre ' . $estatisticas['dias'] . ($estatisticas['dias'] === 1 ? ' dia' : ' dias')
-            . ', de ' . $estatisticas['inicio']->format('d/m/Y') . ' a ' . $estatisticas['fim']->format('d/m/Y')
-            . (empty($filtros['data_inicio']) ? ' (a partir da primeira visita encontrada)' : '')
-            . ($estatisticas['fim_limitado_a_hoje'] ? ' (dias futuros não entram na média)' : '')
-            . '. Cada entrada registrada conta como uma visita'
-            . ($referencia === VisitaDAO::REFERENCIA_SAIDA ? ', no dia em que saiu' : ', no dia em que entrou')
-            . ', independentemente de quantos visitantes e visitados ela tenha.';
-
-        if ($estatisticas['entradas_anteriores'] > 0) {
-            $periodoCalculo .= ' ' . ($estatisticas['entradas_anteriores'] === 1
-                ? '1 visita começou antes do período e continuava em andamento nele: ela aparece no resultado, mas não entra nos totais nem nas médias.'
-                : $estatisticas['entradas_anteriores'] . ' visitas começaram antes do período e continuavam em andamento nele: elas aparecem no resultado, mas não entram nos totais nem nas médias.');
-        }
+    $quadros = '';
+    foreach ($janelas as $janela) {
+        $visitas = count($janela['grupos']);
+        $visitantes = count(array_unique(array_merge(...array_map(
+            fn($g) => array_map(fn($v) => (int) $v['id_visitante'], $g['visitantes']),
+            $janela['grupos'] ?: [['visitantes' => []]]
+        ))));
+        $quadros .= '<td class="quadro' . ($janela['destaque'] ? ' quadro-destaque' : '') . '" width="25%">'
+            . '<div class="quadro-titulo">' . relatorioVisitasEscapar($janela['titulo']) . '</div>'
+            . '<div class="quadro-numero">' . $visitas . '</div>'
+            . '<div class="quadro-rotulo">' . ($visitas === 1 ? 'visita' : 'visitas')
+            . ' · ' . $visitantes . ($visitantes === 1 ? ' visitante' : ' visitantes') . '</div>'
+            . '<div class="quadro-intervalo">' . relatorioVisitasEscapar($janela['intervalo']) . '</div>'
+            . '</td>';
     }
+
+    $notaQuadros = 'Cada entrada registrada conta como uma visita, independentemente de quantos visitantes e visitados ela tenha;'
+        . ' visitantes contam uma vez por quadro. Os quadros usam os mesmos filtros de visitado, tipo, situação e referência do relatório.';
 
     // Linhas da tabela
     $linhas = '';
@@ -230,56 +268,59 @@ try {
     $html = '
     <style>
         body { font-family: sans-serif; font-size: 9pt; color: #222; }
-        .cabecalho td { vertical-align: middle; }
-        .instituicao { font-size: 12pt; font-weight: bold; }
-        h3 { font-size: 14pt; margin: 10px 0 6px; }
-        h4 { font-size: 11pt; margin: 14px 0 6px; }
-        .resumo { margin: 0; padding-left: 14px; }
-        .resumo li { margin-bottom: 2px; }
-        .geracao { color: #555; margin-top: 6px; }
+        table.cabecalho { width: 100%; border-collapse: collapse; border-bottom: 2px solid #0088cc; }
+        table.cabecalho td { vertical-align: middle; padding: 0 0 6px 0; }
+        .instituicao { font-size: 8.5pt; color: #555; }
+        .titulo { font-size: 15pt; font-weight: bold; color: #1d2127; }
+        .geracao { text-align: right; font-size: 8pt; color: #555; }
+        .filtros { margin: 6px 0 8px; padding: 5px 8px; background: #f2f6f9; font-size: 8pt; color: #333; }
+        .filtros b { color: #1d2127; }
+        table.quadros { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: 0 -6px; }
+        td.quadro { border: 1px solid #dee2e6; padding: 6px 8px; vertical-align: top; }
+        td.quadro-destaque { border: 1px solid #0088cc; background: #e6f3fa; }
+        .quadro-titulo { font-size: 7.5pt; font-weight: bold; color: #555; text-transform: uppercase; }
+        .quadro-numero { font-size: 18pt; font-weight: bold; color: #0088cc; line-height: 1.1; }
+        .quadro-rotulo { font-size: 8pt; color: #333; }
+        .quadro-intervalo { font-size: 7pt; color: #777; }
+        h4 { font-size: 10.5pt; margin: 10px 0 4px; }
         table.dados { width: 100%; border-collapse: collapse; }
         table.dados th { background: #343a40; color: #fff; text-align: left; padding: 5px; font-size: 8.5pt; }
         table.dados td { padding: 5px; border-bottom: 1px solid #dee2e6; vertical-align: top; font-size: 8.5pt; }
         table.dados tr.par td { background: #f2f2f2; }
-        table.estatisticas td { padding: 4px 10px 4px 0; }
         .categoria, .observacao { color: #666; font-size: 7.5pt; }
         .andamento { color: #b71c1c; font-weight: bold; }
         .vazio { text-align: center; color: #666; padding: 14px; }
-        .nota { color: #555; font-size: 7.5pt; margin-top: 4px; }
+        .nota { color: #777; font-size: 7pt; margin-top: 4px; }
     </style>
 
-    <table class="cabecalho" width="100%"><tr>
-        <td width="60">' . relatorioVisitasLogo($pdo) . '</td>
-        <td class="instituicao">' . relatorioVisitasEscapar($nomeInstituicao) . '</td>
+    <table class="cabecalho"><tr>
+        <td width="48">' . relatorioVisitasLogo($pdo) . '</td>
+        <td>
+            <div class="instituicao">' . relatorioVisitasEscapar($nomeInstituicao) . '</div>
+            <div class="titulo">Relatório de visitas</div>
+        </td>
+        <td class="geracao" width="35%">Gerado em ' . $geradoEm->format('d/m/Y') . ' às ' . $geradoEm->format('H:i')
+            . '<br>por ' . relatorioVisitasEscapar($usuario) . '</td>
     </tr></table>
 
-    <h3>Relatório de visitas</h3>
-    <ul class="resumo">
-        <li>Período: ' . relatorioVisitasEscapar($periodo) . '</li>
-        <li>Visitado: ' . relatorioVisitasEscapar($visitadoFiltro) . '</li>
-        <li>Tipo de visitado: ' . relatorioVisitasEscapar($categoriaFiltro) . '</li>
-        <li>Situação: ' . relatorioVisitasEscapar($situacaoFiltro) . '</li>
-    </ul>
-    <div class="geracao">Gerado em ' . $geradoEm->format('d/m/Y') . ' às ' . $geradoEm->format('H:i') . ' por ' . relatorioVisitasEscapar($usuario) . '</div>
+    <div class="filtros">
+        <b>Período:</b> ' . relatorioVisitasEscapar($periodo) . ' &nbsp;&nbsp;|&nbsp;&nbsp;
+        <b>Visitado:</b> ' . relatorioVisitasEscapar($visitadoFiltro) . ' &nbsp;&nbsp;|&nbsp;&nbsp;
+        <b>Tipo de visitado:</b> ' . relatorioVisitasEscapar($categoriaFiltro) . ' &nbsp;&nbsp;|&nbsp;&nbsp;
+        <b>Situação:</b> ' . relatorioVisitasEscapar($situacaoFiltro) . '
+    </div>
 
-    <h4>Estatísticas</h4>
-    <table class="estatisticas">
-        <tr><td><strong>Visitas (entradas registradas):</strong></td><td>' . $estatisticas['total_entradas'] . '</td></tr>
-        <tr><td><strong>Visitantes recebidos:</strong></td><td>' . $estatisticas['total_visitantes'] . '</td></tr>
-        <tr><td><strong>Média diária:</strong></td><td>' . $mediaDiaria . '</td></tr>
-        <tr><td><strong>Média semanal:</strong></td><td>' . $mediaSemanal . '</td></tr>
-        <tr><td><strong>Média mensal:</strong></td><td>' . $mediaMensal . '</td></tr>
-    </table>
-    ' . ($periodoCalculo !== '' ? '<div class="nota">' . relatorioVisitasEscapar($periodoCalculo) . '</div>' : '') . '
+    <table class="quadros"><tr>' . $quadros . '</tr></table>
+    <div class="nota">' . relatorioVisitasEscapar($notaQuadros) . '</div>
 
     <h4>Resultado</h4>
     <table class="dados">
         <thead><tr>
             <th width="12%">Entrada</th>
-            <th width="13%">Saída</th>
+            <th width="15%">Saída</th>
             <th width="25%">Visitantes</th>
             <th width="28%">Visitados</th>
-            <th width="22%">Descrição</th>
+            <th width="20%">Descrição</th>
         </tr></thead>
         <tbody>' . $linhas . '</tbody>
     </table>';
