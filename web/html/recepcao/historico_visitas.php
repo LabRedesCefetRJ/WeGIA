@@ -140,15 +140,33 @@ function escaparHistorico($texto)
 						<div class="box-recepcao-body">
 							<form id="formFiltros" class="filtros-historico" novalidate>
 								<div class="row">
-									<div class="form-group col-sm-6 col-md-2">
+									<div class="form-group col-sm-6 col-md-3">
+										<label for="filtroReferencia">Filtrar período por</label>
+										<select class="form-control" id="filtroReferencia" name="referencia">
+											<option value="presenca">Presença no período</option>
+											<option value="entrada">Data de entrada</option>
+											<option value="saida">Data de saída</option>
+										</select>
+									</div>
+									<div class="form-group col-sm-6 col-md-3">
 										<label for="filtroDataInicio">Data inicial</label>
 										<input type="date" class="form-control" id="filtroDataInicio" name="data_inicio" value="<?= escaparHistorico($dataInicioPadrao) ?>" max="9999-12-31">
 									</div>
-									<div class="form-group col-sm-6 col-md-2">
+									<div class="form-group col-sm-6 col-md-3">
 										<label for="filtroDataFim">Data final</label>
 										<input type="date" class="form-control" id="filtroDataFim" name="data_fim" value="<?= escaparHistorico($dataFimPadrao) ?>" max="9999-12-31">
 									</div>
 									<div class="form-group col-sm-6 col-md-3">
+										<label for="filtroSituacao">Situação</label>
+										<select class="form-control" id="filtroSituacao" name="situacao">
+											<option value="">Todas</option>
+											<option value="andamento">Em andamento</option>
+											<option value="encerrada">Encerradas</option>
+										</select>
+									</div>
+								</div>
+								<div class="row">
+									<div class="form-group col-sm-6 col-md-6">
 										<label for="filtroVisitado">Visitado</label>
 										<select class="form-control" id="filtroVisitado" name="id_visitado">
 											<option value="">Todos</option>
@@ -163,7 +181,7 @@ function escaparHistorico($texto)
 											<?php endforeach; ?>
 										</select>
 									</div>
-									<div class="form-group col-sm-6 col-md-2">
+									<div class="form-group col-sm-6 col-md-4">
 										<label for="filtroCategoria">Tipo de visitado</label>
 										<select class="form-control" id="filtroCategoria" name="categoria">
 											<option value="">Todos</option>
@@ -175,15 +193,7 @@ function escaparHistorico($texto)
 											<option value="instituicao">Instituição</option>
 										</select>
 									</div>
-									<div class="form-group col-sm-6 col-md-2">
-										<label for="filtroSituacao">Situação</label>
-										<select class="form-control" id="filtroSituacao" name="situacao">
-											<option value="">Todas</option>
-											<option value="andamento">Em andamento</option>
-											<option value="encerrada">Encerradas</option>
-										</select>
-									</div>
-									<div class="form-group col-sm-6 col-md-1 filtros-acoes">
+									<div class="form-group col-sm-12 col-md-2 filtros-acoes">
 										<button type="submit" class="btn btn-primary btn-block" id="botaoFiltrar">
 											<i class="fa fa-filter" aria-hidden="true"></i> Filtrar
 										</button>
@@ -204,14 +214,13 @@ function escaparHistorico($texto)
 
 							<p class="text-muted dica-historico">
 								<i class="fa fa-info-circle" aria-hidden="true"></i>
-								Clique em uma linha para ver todos os visitantes e visitados da entrada. Clique em um nome para ver a ficha da pessoa. O período mostra as visitas que estavam em andamento em algum momento dele, inclusive as que entraram antes ou saíram depois.
+								Clique em uma linha para ver todos os visitantes e visitados da entrada. Clique em um nome para ver a ficha da pessoa. <span id="dicaPeriodo">O período mostra as visitas que estavam em andamento em algum momento dele, inclusive as que entraram antes ou saíram depois.</span>
 							</p>
 
 							<table class="table table-hover" id="tabelaHistorico" style="width:100%" data-plugin-options='{"searchPlaceholder": "Pesquisar"}'>
 								<thead>
 									<tr>
 										<th class="coluna-expandir"><span class="sr-only">Expandir</span></th>
-										<th>Data</th>
 										<th>Entrada</th>
 										<th>Saída</th>
 										<th>Visitantes</th>

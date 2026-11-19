@@ -135,6 +135,15 @@ try {
         $periodo = 'Até ' . relatorioVisitasData($filtros['data_fim'], 'd/m/Y');
     }
 
+    $referencia = $filtros['referencia'] ?? VisitaDAO::REFERENCIA_PRESENCA;
+    if (!empty($filtros['data_inicio']) || !empty($filtros['data_fim'])) {
+        $periodo .= [
+            VisitaDAO::REFERENCIA_PRESENCA => ' (visitas em andamento no período)',
+            VisitaDAO::REFERENCIA_ENTRADA => ' (pela data de entrada)',
+            VisitaDAO::REFERENCIA_SAIDA => ' (pela data de saída)',
+        ][$referencia];
+    }
+
     $visitadoFiltro = 'Todos';
     if (!empty($filtros['id_visitado'])) {
         $visitadoFiltro = 'Visitado não encontrado';
@@ -180,7 +189,9 @@ try {
             . ', de ' . $estatisticas['inicio']->format('d/m/Y') . ' a ' . $estatisticas['fim']->format('d/m/Y')
             . (empty($filtros['data_inicio']) ? ' (a partir da primeira visita encontrada)' : '')
             . ($estatisticas['fim_limitado_a_hoje'] ? ' (dias futuros não entram na média)' : '')
-            . '. Cada entrada registrada conta como uma visita, no dia em que entrou, independentemente de quantos visitantes e visitados ela tenha.';
+            . '. Cada entrada registrada conta como uma visita'
+            . ($referencia === VisitaDAO::REFERENCIA_SAIDA ? ', no dia em que saiu' : ', no dia em que entrou')
+            . ', independentemente de quantos visitantes e visitados ela tenha.';
 
         if ($estatisticas['entradas_anteriores'] > 0) {
             $periodoCalculo .= ' ' . ($estatisticas['entradas_anteriores'] === 1
@@ -197,18 +208,14 @@ try {
             $saida = $dias === 0
                 ? '<span class="andamento">Em andamento</span>'
                 : '<span class="andamento">Em andamento há ' . $dias . ($dias === 1 ? ' dia' : ' dias') . '</span><br><span class="observacao">Saída não registrada?</span>';
-        } elseif (relatorioVisitasData($grupo['horario_saida'], 'd/m/Y') === relatorioVisitasData($grupo['horario_entrada'], 'd/m/Y')) {
-            $saida = relatorioVisitasData($grupo['horario_saida'], 'H:i');
         } else {
-            // Saída em outro dia: mostra a data para não parecer que saiu antes de entrar.
             $saida = relatorioVisitasData($grupo['horario_saida'], 'd/m/Y H:i');
         }
 
         $descricao = trim((string) $grupo['descricao']);
 
         $linhas .= '<tr>'
-            . '<td>' . relatorioVisitasData($grupo['horario_entrada'], 'd/m/Y') . '</td>'
-            . '<td>' . relatorioVisitasData($grupo['horario_entrada'], 'H:i') . '</td>'
+            . '<td>' . relatorioVisitasData($grupo['horario_entrada'], 'd/m/Y H:i') . '</td>'
             . '<td>' . $saida . '</td>'
             . '<td>' . relatorioVisitasNomes($grupo['visitantes'], []) . '</td>'
             . '<td>' . relatorioVisitasNomes($grupo['visitados'], $rotulosCategoria) . '</td>'
@@ -217,7 +224,7 @@ try {
     }
 
     if ($linhas === '') {
-        $linhas = '<tr><td colspan="6" class="vazio">Nenhuma visita encontrada com os filtros selecionados.</td></tr>';
+        $linhas = '<tr><td colspan="5" class="vazio">Nenhuma visita encontrada com os filtros selecionados.</td></tr>';
     }
 
     $html = '
@@ -268,12 +275,11 @@ try {
     <h4>Resultado</h4>
     <table class="dados">
         <thead><tr>
-            <th width="9%">Data</th>
-            <th width="7%">Entrada</th>
-            <th width="11%">Saída</th>
+            <th width="12%">Entrada</th>
+            <th width="13%">Saída</th>
             <th width="25%">Visitantes</th>
             <th width="28%">Visitados</th>
-            <th width="20%">Descrição</th>
+            <th width="22%">Descrição</th>
         </tr></thead>
         <tbody>' . $linhas . '</tbody>
     </table>';

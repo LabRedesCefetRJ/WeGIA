@@ -69,6 +69,16 @@
 	margin: 10px 0;
 }
 
+/* Data e hora numa célula só, sem quebrar entre as duas. */
+#tabelaHistorico .coluna-horario {
+	white-space: nowrap;
+}
+
+.hora-historico {
+	margin-left: 4px;
+	font-weight: 600;
+}
+
 #tabelaHistorico tbody tr:not(.linha-detalhes) {
 	cursor: pointer;
 }

@@ -4,9 +4,10 @@
  * Médias de visitas do relatório do módulo Recepção.
  *
  * Uma visita é uma entrada registrada (o grupo de visitantes e visitados que entrou junto), e não cada par
- * visitante × visitado gravado na tabela visita. Cada visita conta uma vez só, no dia da entrada: a listagem
- * também traz visitas que entraram antes do período e continuavam em andamento nele, mas essas não entram nos
- * totais nem nas médias (ficam em entradas_anteriores).
+ * visitante × visitado gravado na tabela visita. Cada visita conta uma vez só:
+ * - período por presença (padrão): no dia da entrada. A listagem também traz visitas que entraram antes do período
+ *   e continuavam em andamento nele, mas essas não entram nos totais nem nas médias (ficam em entradas_anteriores);
+ * - período por entrada ou por saída: todas as visitas listadas contam, porque o horário filtrado já está no período.
  *
  * Período considerado:
  * - início: a data inicial do filtro ou, sem ela, o dia da primeira entrada encontrada;
@@ -25,7 +26,10 @@ class EstatisticaVisitas
     {
         $hoje = ($hoje ?? new DateTimeImmutable('today'))->setTime(0, 0);
 
-        $inicioFiltro = !empty($filtros['data_inicio']) ? $filtros['data_inicio'] . ' 00:00:00' : null;
+        $porPresenca = ($filtros['referencia'] ?? 'presenca') === 'presenca';
+        $porSaida = ($filtros['referencia'] ?? '') === 'saida';
+
+        $inicioFiltro = $porPresenca && !empty($filtros['data_inicio']) ? $filtros['data_inicio'] . ' 00:00:00' : null;
         $anteriores = $inicioFiltro === null ? [] : array_filter($grupos, fn($g) => $g['horario_entrada'] < $inicioFiltro);
         $grupos = array_values(array_filter($grupos, fn($g) => $inicioFiltro === null || $g['horario_entrada'] >= $inicioFiltro));
 
@@ -48,7 +52,9 @@ class EstatisticaVisitas
         if (!empty($filtros['data_inicio'])) {
             $inicio = new DateTimeImmutable($filtros['data_inicio']);
         } elseif ($totalEntradas > 0) {
-            $primeira = min(array_map(fn($g) => $g['horario_entrada'], $grupos));
+            // Sem data inicial, o período começa no primeiro horário usado pelo filtro (a saída, quando é por saída).
+            $saidas = array_filter(array_map(fn($g) => $g['horario_saida'] ?? null, $grupos));
+            $primeira = $porSaida && $saidas ? min($saidas) : min(array_map(fn($g) => $g['horario_entrada'], $grupos));
             $inicio = (new DateTimeImmutable($primeira))->setTime(0, 0);
         } else {
             return $resultado;

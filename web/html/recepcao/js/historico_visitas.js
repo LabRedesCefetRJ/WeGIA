@@ -62,6 +62,35 @@
 
 	/* ---------- filtros ---------- */
 
+	function dataEHora(dataHora) {
+		return `${formatarData(dataHora)} <span class="hora-historico">${formatarHora(dataHora)}</span>`;
+	}
+
+	const DICAS_PERIODO = {
+		presenca: "O período mostra as visitas que estavam em andamento em algum momento dele, inclusive as que entraram antes ou saíram depois.",
+		entrada: "O período mostra as visitas que entraram nele.",
+		saida: "O período mostra as visitas que saíram nele; as que ainda estão em andamento não aparecem."
+	};
+
+	/* Coluna da tabela usada na ordenação padrão de cada referência do período. */
+	const COLUNA_REFERENCIA = { presenca: 1, entrada: 1, saida: 2 };
+
+	function atualizarReferencia() {
+		const referencia = $("#filtroReferencia").val() || "presenca";
+		$("#dicaPeriodo").text(DICAS_PERIODO[referencia] || DICAS_PERIODO.presenca);
+
+		// Por data de saída, uma visita em andamento nunca aparece: a opção não faz sentido.
+		// Lê o valor antes de desativar: o jQuery devolve null para uma opção selecionada e desativada.
+		if (referencia === "saida" && $("#filtroSituacao").val() === "andamento") {
+			$("#filtroSituacao").val("");
+		}
+		$("#filtroSituacao option[value='andamento']").prop("disabled", referencia === "saida");
+
+		if (tabela) {
+			tabela.order([[COLUNA_REFERENCIA[referencia] || 1, "desc"]]);
+		}
+	}
+
 	function lerFiltrosDoFormulario() {
 		const filtros = {};
 		$("#formFiltros").serializeArray().forEach(function (campo) {
@@ -215,27 +244,19 @@
 				},
 				{
 					data: "horario_entrada",
+					className: "coluna-horario",
 					render: function (valor, tipo) {
-						return tipo === "display" ? formatarData(valor) : valor;
-					}
-				},
-				{
-					data: "horario_entrada",
-					render: function (valor, tipo) {
-						return tipo === "display" ? formatarHora(valor) : valor;
+						return tipo === "display" ? dataEHora(valor) : valor;
 					}
 				},
 				{
 					data: null,
+					className: "coluna-horario",
 					render: function (grupo, tipo) {
 						if (grupo.em_andamento) {
 							return tipo === "display" ? rotuloEmAndamento(grupo) : "9999";
 						}
-						if (tipo !== "display") {
-							return grupo.horario_saida;
-						}
-						const mesmoDia = formatarData(grupo.horario_saida) === formatarData(grupo.horario_entrada);
-						return mesmoDia ? formatarHora(grupo.horario_saida) : `${formatarData(grupo.horario_saida)} ${formatarHora(grupo.horario_saida)}`;
+						return tipo === "display" ? dataEHora(grupo.horario_saida) : grupo.horario_saida;
 					}
 				},
 				{
@@ -468,6 +489,7 @@
 
 	$(function () {
 		iniciarTabela();
+		atualizarReferencia();
 
 		if ($.fn.select2) {
 			$("#filtroVisitado").select2({ width: "100%" });
@@ -483,7 +505,14 @@
 			aplicarFiltros();
 		});
 
+		$("#filtroReferencia").on("change", function () {
+			atualizarReferencia();
+			aplicarFiltros();
+		});
+
 		$("#botaoLimparFiltros").on("click", function () {
+			$("#filtroReferencia").val("presenca");
+			atualizarReferencia();
 			definirPeriodo("30");
 			$("#filtroVisitado").val("").trigger("change");
 			$("#filtroCategoria, #filtroSituacao").val("");

@@ -221,6 +221,14 @@ class VisitaControle
             throw new InvalidArgumentException('A data inicial não pode ser posterior à data final.', 412);
         }
 
+        $referencia = $texto('referencia');
+        if ($referencia !== '') {
+            if (!in_array($referencia, VisitaDAO::REFERENCIAS_PERIODO, true)) {
+                throw new InvalidArgumentException('A referência do período informada é inválida.', 412);
+            }
+            $filtros['referencia'] = $referencia;
+        }
+
         $idVisitado = $texto('id_visitado');
         if ($idVisitado !== '') {
             $id = filter_var($idVisitado, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);

@@ -215,6 +215,12 @@ class VisitaDAO
     public const CATEGORIAS_VISITADO = ['atendido', 'funcionario', 'voluntario', 'pet', 'setor', 'instituicao'];
 
     public const SITUACAO_EM_ANDAMENTO = 'andamento';
+
+    /** A qual horário o período do histórico se aplica. */
+    public const REFERENCIA_PRESENCA = 'presenca';
+    public const REFERENCIA_ENTRADA = 'entrada';
+    public const REFERENCIA_SAIDA = 'saida';
+    public const REFERENCIAS_PERIODO = [self::REFERENCIA_PRESENCA, self::REFERENCIA_ENTRADA, self::REFERENCIA_SAIDA];
     public const SITUACAO_ENCERRADA = 'encerrada';
 
     /**
@@ -419,9 +425,12 @@ class VisitaDAO
      * Histórico de entradas agrupadas, mais recentes primeiro.
      *
      * Filtros aceitos (já validados pelo controle):
-     * - data_inicio, data_fim: 'Y-m-d' (intervalo fechado). A entrada aparece se a visita esteve em andamento
-     *   em algum momento do período: entrou até o fim dele e saiu depois do início, ou ainda não saiu. Assim, quem
-     *   entra num dia e sai no outro aparece nos dois dias, e uma visita sem saída aparece até hoje, enquanto não for encerrada;
+     * - data_inicio, data_fim: 'Y-m-d' (intervalo fechado), aplicados conforme referencia:
+     *   - REFERENCIA_PRESENCA (padrão): a visita esteve em andamento em algum momento do período (entrou até o fim
+     *     dele e saiu depois do início, ou ainda não saiu). Quem entra num dia e sai no outro aparece nos dois dias,
+     *     e uma visita sem saída aparece até hoje, enquanto não for encerrada;
+     *   - REFERENCIA_ENTRADA: o horário de entrada está no período;
+     *   - REFERENCIA_SAIDA: o horário de saída está no período (visitas em andamento ficam de fora);
      * - id_visitado: entradas em que esse visitado foi visitado (a entrada aparece completa);
      * - categoria: uma de CATEGORIAS_VISITADO, com o mesmo comportamento de id_visitado;
      * - situacao: SITUACAO_EM_ANDAMENTO ou SITUACAO_ENCERRADA.
@@ -433,16 +442,31 @@ class VisitaDAO
         $condicoes = ['1 = 1'];
         $parametros = [];
 
+        $referencia = $filtros['referencia'] ?? self::REFERENCIA_PRESENCA;
+
+        if ($referencia === self::REFERENCIA_SAIDA) {
+            $condicoes[] = 'visita.horario_saida IS NOT NULL';
+        }
+
         if (!empty($filtros['data_inicio'])) {
-            // Sem saída registrada, a visita conta como em andamento até agora (não em dias que ainda não chegaram).
-            $condicoes[] = 'COALESCE(visita.horario_saida, :agora) >= :inicio';
-            $parametros[':agora'] = (new DateTimeImmutable())->format('Y-m-d H:i:s');
             $parametros[':inicio'] = $filtros['data_inicio'] . ' 00:00:00';
+
+            if ($referencia === self::REFERENCIA_ENTRADA) {
+                $condicoes[] = 'visita.horario_entrada >= :inicio';
+            } elseif ($referencia === self::REFERENCIA_SAIDA) {
+                $condicoes[] = 'visita.horario_saida >= :inicio';
+            } else {
+                // Sem saída registrada, a visita conta como em andamento até agora (não em dias que ainda não chegaram).
+                $condicoes[] = 'COALESCE(visita.horario_saida, :agora) >= :inicio';
+                $parametros[':agora'] = (new DateTimeImmutable())->format('Y-m-d H:i:s');
+            }
         }
 
         if (!empty($filtros['data_fim'])) {
-            $condicoes[] = 'visita.horario_entrada < :fimExclusivo';
             $parametros[':fimExclusivo'] = (new DateTimeImmutable($filtros['data_fim']))->modify('+1 day')->format('Y-m-d 00:00:00');
+            $condicoes[] = $referencia === self::REFERENCIA_SAIDA
+                ? 'visita.horario_saida < :fimExclusivo'
+                : 'visita.horario_entrada < :fimExclusivo';
         }
 
         if (($filtros['situacao'] ?? '') === self::SITUACAO_EM_ANDAMENTO) {
