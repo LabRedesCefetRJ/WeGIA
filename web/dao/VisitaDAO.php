@@ -514,6 +514,54 @@ class VisitaDAO
     }
 
     /**
+     * Entradas em que o atendido foi visitado, mais recentes primeiro (aba Visitas do perfil do atendido).
+     * Cada entrada vem completa, com todos os visitantes e visitados dela, como em listarHistorico.
+     */
+    public function listarVisitasDoAtendido(int $idAtendido): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT visitado.id_visitado
+            FROM visitado
+            INNER JOIN atendido ON atendido.pessoa_id_pessoa = visitado.id_pessoa
+            WHERE atendido.idatendido = :idAtendido
+        ");
+        $stmt->bindValue(':idAtendido', $idAtendido, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $grupos = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $idVisitado) {
+            foreach ($this->listarHistorico(['id_visitado' => (int) $idVisitado]) as $grupo) {
+                $grupos[implode(',', $grupo['ids_visita'])] = $grupo;
+            }
+        }
+
+        $grupos = array_values($grupos);
+        usort($grupos, fn($a, $b) => strcmp($b['horario_entrada'], $a['horario_entrada']));
+
+        return $grupos;
+    }
+
+    /**
+     * Se o visitante já visitou o atendido. Limita a ficha que o perfil do atendido pode abrir aos seus visitantes.
+     */
+    public function atendidoRecebeuVisitante(int $idAtendido, int $idVisitante): bool
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 1
+            FROM visita
+            INNER JOIN visitado ON visitado.id_visitado = visita.id_visitado
+            INNER JOIN atendido ON atendido.pessoa_id_pessoa = visitado.id_pessoa
+            WHERE atendido.idatendido = :idAtendido AND visita.id_visitante = :idVisitante
+            LIMIT 1
+        ");
+        $stmt->bindValue(':idAtendido', $idAtendido, PDO::PARAM_INT);
+        $stmt->bindValue(':idVisitante', $idVisitante, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
      * Visitados que já receberam alguma visita, para o filtro do histórico (inclui os que hoje estão inativos).
      */
     public function listarVisitadosComVisitas(): array
