@@ -142,6 +142,20 @@
 
 /* Ficha (modal) */
 
+/* Paleta do WeGIA (assets/stylesheets/theme.css e skins/default.css). */
+.modal-ficha {
+	--wegia-primaria: #0088cc;
+	--wegia-primaria-escura: #006699;
+	--wegia-primaria-clara: #e6f3fa;
+	--wegia-primaria-borda: #cce7f5;
+	--wegia-secundaria: #e36159;
+	--wegia-terciaria: #2baab1;
+	--wegia-quaternaria: #734ba9;
+	--wegia-sucesso: #47a447;
+	--wegia-escuro: #1d2127;
+	--wegia-texto-suave: #777777;
+}
+
 .modal-ficha .modal-content {
 	position: relative;
 	overflow: hidden;
@@ -169,9 +183,9 @@
 	align-items: center;
 	gap: 18px;
 	padding: 24px 48px 20px 24px;
-	background: linear-gradient(135deg, #fff7e8 0%, #ffffff 70%);
-	border-top: 4px solid #f39c12;
-	border-bottom: 1px solid #f1e4cc;
+	background: linear-gradient(135deg, var(--wegia-primaria-clara) 0%, #ffffff 70%);
+	border-top: 4px solid var(--wegia-primaria);
+	border-bottom: 1px solid var(--wegia-primaria-borda);
 }
 
 .ficha-avatar {
@@ -188,7 +202,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: #f39c12;
+	background: var(--wegia-primaria);
 	color: #fff;
 	font-size: 30px;
 	font-weight: 600;
@@ -204,7 +218,7 @@
 	font-size: 21px;
 	font-weight: 600;
 	line-height: 1.25;
-	color: #2b2f33;
+	color: var(--wegia-escuro);
 	overflow-wrap: anywhere;
 }
 
@@ -214,14 +228,14 @@
 	border-radius: 999px;
 	font-size: 12px;
 	font-weight: 600;
-	background: #e8eef7;
-	color: #2f5d9b;
+	background: rgba(0, 136, 204, 0.12);
+	color: var(--wegia-primaria-escura);
 }
 
-.ficha-tipo-atendido { background: #e3f4f1; color: #1f7a68; }
-.ficha-tipo-funcionario { background: #ece8f7; color: #5b46a3; }
-.ficha-tipo-voluntario { background: #e6f4e7; color: #2e7d32; }
-.ficha-tipo-pet { background: #fdeedd; color: #a65b00; }
+.ficha-tipo-atendido { background: rgba(43, 170, 177, 0.15); color: #1d7f85; }
+.ficha-tipo-funcionario { background: rgba(115, 75, 169, 0.13); color: var(--wegia-quaternaria); }
+.ficha-tipo-voluntario { background: rgba(71, 164, 71, 0.15); color: #357a35; }
+.ficha-tipo-pet { background: rgba(227, 97, 89, 0.14); color: #b8423b; }
 
 .ficha-corpo {
 	padding: 16px 20px 6px;
@@ -242,13 +256,13 @@
 	margin: 0 0 12px;
 	font-size: 14px;
 	font-weight: 600;
-	color: #3a3f45;
+	color: var(--wegia-escuro);
 }
 
 .ficha-secao h5 .fa {
 	width: 18px;
 	margin-right: 4px;
-	color: #f39c12;
+	color: var(--wegia-primaria);
 	text-align: center;
 }
 
@@ -274,13 +288,13 @@
 	font-weight: 600;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
-	color: #8a9099;
+	color: var(--wegia-texto-suave);
 }
 
 .ficha-campo dd {
 	margin: 0;
 	font-size: 14px;
-	color: #2b2f33;
+	color: var(--wegia-escuro);
 	overflow-wrap: anywhere;
 }
 
@@ -308,10 +322,10 @@
 	filter: brightness(0.95);
 }
 
-.ficha-acao-whatsapp { background: #25d366; color: #fff; }
+.ficha-acao-whatsapp { background: var(--wegia-sucesso); color: #fff; }
 .ficha-acao-whatsapp:hover, .ficha-acao-whatsapp:focus { color: #fff; }
-.ficha-acao-email { background: #e8eef7; color: #2f5d9b; }
-.ficha-acao-email:hover, .ficha-acao-email:focus { color: #2f5d9b; }
+.ficha-acao-email { background: rgba(0, 136, 204, 0.12); color: var(--wegia-primaria-escura); }
+.ficha-acao-email:hover, .ficha-acao-email:focus { color: var(--wegia-primaria-escura); }
 
 .ficha-estado {
 	display: flex;
@@ -319,9 +333,9 @@
 	align-items: center;
 	gap: 10px;
 	padding: 48px 24px;
-	color: #8a9099;
+	color: var(--wegia-texto-suave);
 	text-align: center;
-	border-top: 4px solid #f39c12;
+	border-top: 4px solid var(--wegia-primaria);
 }
 
 .ficha-estado .fa {
@@ -329,7 +343,7 @@
 }
 
 .ficha-estado-erro {
-	color: #b71c1c;
+	color: var(--wegia-secundaria);
 }
 
 .ficha-rodape {
@@ -352,7 +366,7 @@
 
 .ficha-aviso {
 	font-size: 12px;
-	color: #8a9099;
+	color: var(--wegia-texto-suave);
 	text-align: left;
 }
 
