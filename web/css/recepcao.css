@@ -426,7 +426,6 @@
 	--wegia-sucesso: #47a447;
 	--wegia-escuro: #1d2127;
 	--wegia-texto-suave: #777777;
-	max-width: 1000px;
 }
 
 .registro-entrada [hidden] {
@@ -437,8 +436,8 @@
 	background: #fff;
 	border-radius: 6px;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
-	margin-bottom: 18px;
-	padding: 16px 18px 10px;
+	margin-bottom: 12px;
+	padding: 10px 14px 8px;
 }
 
 .etapas-entrada ol {
@@ -461,7 +460,7 @@
 	color: var(--wegia-texto-suave);
 	display: flex;
 	gap: 10px;
-	padding: 6px 8px;
+	padding: 4px 6px;
 	text-align: left;
 	width: 100%;
 }
@@ -483,20 +482,21 @@
 	border-radius: 50%;
 	display: inline-flex;
 	flex-shrink: 0;
+	font-size: 12px;
 	font-weight: 700;
-	height: 34px;
+	height: 26px;
 	justify-content: center;
-	width: 34px;
+	width: 26px;
 }
 
 .etapa-texto strong {
 	display: block;
-	font-size: 14px;
+	font-size: 13px;
 }
 
 .etapa-texto small {
 	display: block;
-	font-size: 11.5px;
+	font-size: 11px;
 }
 
 .etapas-entrada li.atual .etapa-numero {
@@ -518,8 +518,8 @@
 .etapas-progresso {
 	background: #eee;
 	border-radius: 3px;
-	height: 4px;
-	margin: 12px 0 8px;
+	height: 3px;
+	margin: 8px 0 6px;
 	overflow: hidden;
 }
 
@@ -535,7 +535,7 @@
 	color: var(--wegia-texto-suave);
 	display: flex;
 	flex-wrap: wrap;
-	font-size: 12.5px;
+	font-size: 12px;
 	justify-content: space-between;
 	margin: 0;
 }
@@ -572,8 +572,8 @@
 }
 
 .busca-cpf {
-	margin-bottom: 14px;
-	max-width: 480px;
+	margin-bottom: 10px;
+	max-width: 420px;
 }
 
 .cartao-visitante,
@@ -588,8 +588,8 @@
 	background: var(--wegia-primaria-clara);
 	border: 1px solid var(--wegia-primaria-borda);
 	border-radius: 6px;
-	margin-bottom: 16px;
-	padding: 10px 14px;
+	margin-bottom: 12px;
+	padding: 8px 12px;
 }
 
 .cartao-visitante .btn,
@@ -601,9 +601,9 @@
 .lista-foto {
 	border-radius: 50%;
 	flex-shrink: 0;
-	height: 40px;
+	height: 32px;
 	object-fit: cover;
-	width: 40px;
+	width: 32px;
 }
 
 .lista-nome {
@@ -621,9 +621,9 @@
 
 .lista-titulo {
 	border-top: 1px solid #eee;
-	font-size: 15px;
-	margin: 18px 0 8px;
-	padding-top: 14px;
+	font-size: 14px;
+	margin: 12px 0 4px;
+	padding-top: 10px;
 }
 
 .lista-titulo .badge {
@@ -639,7 +639,7 @@
 
 .lista-entrada li {
 	border-bottom: 1px solid #f0f0f0;
-	padding: 8px 0;
+	padding: 5px 0;
 }
 
 .lista-vazia {
@@ -652,7 +652,7 @@
 	border: 1px solid #e5e7ea;
 	border-radius: 6px;
 	margin-bottom: 8px;
-	padding: 16px;
+	padding: 12px;
 }
 
 .cadastro-visitante h4 {
@@ -662,10 +662,10 @@
 .cadastro-foto {
 	border-radius: 50%;
 	display: block;
-	height: 110px;
-	margin: 0 auto 8px;
+	height: 80px;
+	margin: 0 auto 6px;
 	object-fit: cover;
-	width: 110px;
+	width: 80px;
 }
 
 .cadastro-foto-botao {
@@ -696,7 +696,7 @@
 }
 
 .visitados-escolhidos {
-	margin-bottom: 14px;
+	margin-bottom: 10px;
 }
 
 .chip-visitado {
@@ -727,7 +727,7 @@
 .lista-visitados {
 	border: 1px solid #e5e7ea;
 	border-radius: 6px;
-	max-height: 340px;
+	max-height: 300px;
 	overflow-y: auto;
 }
 
@@ -747,7 +747,7 @@
 	cursor: pointer;
 	font-weight: 400;
 	margin: 0;
-	padding: 8px 12px;
+	padding: 5px 10px;
 	width: 100%;
 }
 
@@ -763,22 +763,22 @@
 }
 
 .cadastro-visitado-dica {
-	font-size: 12.5px;
-	margin: 8px 0 16px;
+	font-size: 12px;
+	margin: 6px 0 12px;
 }
 
 .resumo-entrada {
 	display: grid;
-	gap: 14px;
+	gap: 10px;
 	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-	margin-bottom: 12px;
+	margin-bottom: 8px;
 }
 
 .resumo-entrada > div {
 	background: #f9fafb;
 	border: 1px solid #e5e7ea;
 	border-radius: 6px;
-	padding: 12px 14px;
+	padding: 8px 12px;
 }
 
 .resumo-entrada dt {
@@ -797,17 +797,17 @@
 
 .resumo-entrada dd {
 	color: var(--wegia-escuro);
-	margin-top: 6px;
+	margin-top: 4px;
 	overflow-wrap: anywhere;
 }
 
 .entrada-concluida .panel-body {
-	padding: 32px 16px;
+	padding: 20px 16px;
 }
 
 .entrada-concluida-icone {
 	color: var(--wegia-sucesso);
-	font-size: 54px;
+	font-size: 40px;
 }
 
 .entrada-concluida-acoes {
@@ -815,7 +815,7 @@
 	flex-wrap: wrap;
 	gap: 8px;
 	justify-content: center;
-	margin-top: 18px;
+	margin-top: 12px;
 }
 
 @media (max-width: 600px) {
@@ -838,6 +838,26 @@
 	align-items: center;
 	display: inline-flex;
 	gap: 6px;
-	height: 46px;
+	height: 34px;
 	white-space: nowrap;
+}
+
+/* Botão "Cadastrar visitado" alinhado aos campos de filtro (que têm rótulo acima). */
+.filtros-acao {
+	padding-top: 27px;
+}
+
+.lista-nome,
+.lista-nome small {
+	line-height: 1.35;
+}
+
+@media (max-width: 767px) {
+	.filtros-acao {
+		padding-top: 0;
+	}
+
+	.filtros-acao .btn {
+		margin-bottom: 4px;
+	}
 }

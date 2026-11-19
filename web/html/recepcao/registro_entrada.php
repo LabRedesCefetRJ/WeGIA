@@ -127,9 +127,9 @@ require_once "../personalizacao_display.php";
 							<form id="formBuscaCpf" class="busca-cpf" autocomplete="off" novalidate>
 								<label for="cpfBusca">CPF do visitante</label>
 								<div class="input-group">
-									<input type="text" class="form-control input-lg" id="cpfBusca" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" aria-describedby="ajudaCpf">
+									<input type="text" class="form-control" id="cpfBusca" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" aria-describedby="ajudaCpf">
 									<span class="input-group-btn">
-										<button type="submit" class="btn btn-primary btn-lg" id="botaoBuscarCpf"><i class="fa fa-search" aria-hidden="true"></i> Buscar</button>
+										<button type="submit" class="btn btn-primary" id="botaoBuscarCpf"><i class="fa fa-search" aria-hidden="true"></i> Buscar</button>
 									</span>
 								</div>
 								<p class="help-block" id="ajudaCpf">Digite o CPF e tecle Enter. Se a pessoa ainda não for visitante, o cadastro abre aqui mesmo.</p>
@@ -238,7 +238,7 @@ require_once "../personalizacao_display.php";
 							</div>
 
 							<div class="row filtros-visitados">
-								<div class="form-group col-sm-4">
+								<div class="form-group col-sm-3">
 									<label for="tipoVisitado">Tipo</label>
 									<select id="tipoVisitado" class="form-control">
 										<option value="">Todos</option>
@@ -249,17 +249,21 @@ require_once "../personalizacao_display.php";
 										<option value="setor">Setor</option>
 									</select>
 								</div>
-								<div class="form-group col-sm-8">
+								<div class="form-group col-sm-6">
 									<label for="pesquisaVisitado">Pesquisar</label>
 									<input type="search" id="pesquisaVisitado" class="form-control" placeholder="Nome ou identificador">
+								</div>
+								<div class="form-group col-sm-3 filtros-acao">
+									<a href="cadastro_visitado.php?origem=entrada" id="linkCadastrarVisitado" class="btn btn-default btn-block" title="A entrada fica salva e você volta para esta etapa">
+										<i class="fa fa-user-plus" aria-hidden="true"></i> Cadastrar visitado
+									</a>
 								</div>
 							</div>
 
 							<div id="alertaVisitados"></div>
 							<ul class="lista-visitados" id="listaVisitados" aria-label="Visitados disponíveis"></ul>
 							<p class="text-muted cadastro-visitado-dica">
-								Não encontrou? <a href="cadastro_visitado.php?origem=entrada" id="linkCadastrarVisitado">Cadastrar visitado</a>.
-								A entrada fica salva e você volta para esta etapa.
+								<i class="fa fa-info-circle" aria-hidden="true"></i> Ao cadastrar um visitado, a entrada fica salva e você volta para esta etapa.
 							</p>
 
 							<div class="form-group">
@@ -298,7 +302,7 @@ require_once "../personalizacao_display.php";
 						</div>
 						<footer class="panel-footer etapa-rodape">
 							<button type="button" class="btn btn-default" data-ir-etapa="2"><i class="fa fa-arrow-left" aria-hidden="true"></i> Voltar</button>
-							<button type="button" class="btn btn-success btn-lg" id="botaoRegistrar"><i class="fa fa-sign-in" aria-hidden="true"></i> Registrar entrada</button>
+							<button type="button" class="btn btn-success" id="botaoRegistrar"><i class="fa fa-sign-in" aria-hidden="true"></i> Registrar entrada</button>
 						</footer>
 					</section>
 
