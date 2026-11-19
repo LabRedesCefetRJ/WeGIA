@@ -61,8 +61,8 @@ The following table indicates which versions of WeGIA receive security updates:
 
 | Version | Supported |
 |---------|-----------|
-| ≥ 3.8   | ✅ Yes     |
-| < 3.8   | ❌ No      |
+| ≥ 4.2   | ✅ Yes     |
+| < 4.1   | ❌ No      |
 
 > Only versions 3.8 and above are actively maintained for security.
 
