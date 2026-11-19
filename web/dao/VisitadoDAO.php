@@ -10,10 +10,13 @@ class VisitadoDAO
     private PDO $pdo;
 
     private const VINCULOS = [
-        'atendido' => ['tabela' => 'atendido', 'campoPessoa' => 'pessoa_id_pessoa', 'rotulo' => 'Atendido'],
-        'funcionario' => ['tabela' => 'funcionario', 'campoPessoa' => 'id_pessoa', 'rotulo' => 'Funcionário'],
-        'voluntario' => ['tabela' => 'voluntario', 'campoPessoa' => 'id_pessoa', 'rotulo' => 'Voluntário'],
+        'atendido' => ['tabela' => 'atendido', 'campoPessoa' => 'pessoa_id_pessoa', 'campoSituacao' => 'atendido_status_idatendido_status', 'rotulo' => 'Atendido'],
+        'funcionario' => ['tabela' => 'funcionario', 'campoPessoa' => 'id_pessoa', 'campoSituacao' => 'id_situacao', 'rotulo' => 'Funcionário'],
+        'voluntario' => ['tabela' => 'voluntario', 'campoPessoa' => 'id_pessoa', 'campoSituacao' => 'id_situacao', 'rotulo' => 'Voluntário'],
     ];
+
+    /** Id da situação "Inativo" em atendido_status e em situacao (o login usa o mesmo valor). */
+    private const SITUACAO_INATIVO = 2;
 
     private const CPF_ADMIN = 'admin';
 
@@ -41,7 +44,11 @@ class VisitadoDAO
         return $tipo;
     }
 
-    private function condicaoVinculo(string $aliasPessoa, ?string $filtro = null): string
+    /**
+     * Condição SQL que exige que a pessoa tenha o vínculo (atendido, funcionário ou voluntário).
+     * Com $somenteAtivos, o vínculo precisa estar em uma situação diferente de inativo.
+     */
+    private function condicaoVinculo(string $aliasPessoa, ?string $filtro = null, bool $somenteAtivos = true): string
     {
         if ($filtro !== null && $filtro !== '') {
             if (!isset(self::VINCULOS[$filtro])) {
@@ -52,8 +59,11 @@ class VisitadoDAO
             $vinculos = array_values(self::VINCULOS);
         }
 
-        $condicoes = array_map(function ($v) use ($aliasPessoa) {
-            return "EXISTS (SELECT 1 FROM {$v['tabela']} WHERE {$v['tabela']}.{$v['campoPessoa']} = {$aliasPessoa}.id_pessoa)";
+        $condicoes = array_map(function ($v) use ($aliasPessoa, $somenteAtivos) {
+            $situacao = $somenteAtivos
+                ? " AND {$v['tabela']}.{$v['campoSituacao']} <> " . self::SITUACAO_INATIVO
+                : '';
+            return "EXISTS (SELECT 1 FROM {$v['tabela']} WHERE {$v['tabela']}.{$v['campoPessoa']} = {$aliasPessoa}.id_pessoa{$situacao})";
         }, $vinculos);
 
         return '(' . implode(' OR ', $condicoes) . ')';
@@ -99,6 +109,9 @@ class VisitadoDAO
             $stmtElegivel->execute();
 
             if ($stmtElegivel->fetchColumn() === false) {
+                if ($campo === 'id_pessoa' && $this->pessoaComVinculoInativo($id, $tipo)) {
+                    throw new InvalidArgumentException(self::VINCULOS[$tipo]['rotulo'] . ' inativo não pode ser cadastrado como visitado.', 412);
+                }
                 throw new InvalidArgumentException($mensagemInexistente, 404);
             }
 
@@ -122,6 +135,54 @@ class VisitadoDAO
         } catch (Exception $e) {
             $this->pdo->rollBack();
             throw $e;
+        }
+    }
+
+    private function pessoaComVinculoInativo(int $idPessoa, string $tipo): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT 1 FROM pessoa p WHERE p.id_pessoa = :id AND " . $this->condicaoVinculo('p', $tipo, false) . " LIMIT 1");
+        $stmt->bindValue(':id', $idPessoa, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
+     * Garante que todos os visitados informados ainda podem receber visitas:
+     * a instituição, pets, setores ativos e pessoas com algum vínculo ativo.
+     *
+     * @throws InvalidArgumentException (412) quando algum visitado não existe ou está inativo.
+     */
+    public function validarElegiveis(array $idsVisitado): void
+    {
+        $idsVisitado = array_values(array_unique(array_filter(array_map('intval', $idsVisitado), fn($id) => $id > 0)));
+
+        if (empty($idsVisitado)) {
+            return;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($idsVisitado), '?'));
+
+        $sql = "SELECT COUNT(*)
+                FROM visitado v
+                LEFT JOIN pessoa p ON p.id_pessoa = v.id_pessoa
+                LEFT JOIN setor s ON s.id_setor = v.id_setor AND s.status = " . Setor::STATUS_ATIVO . "
+                WHERE v.id_visitado IN ($placeholders)
+                  AND (
+                        (v.id_pessoa IS NULL AND v.id_pet IS NULL AND v.id_setor IS NULL)
+                     OR v.id_pet IS NOT NULL
+                     OR s.id_setor IS NOT NULL
+                     OR (p.id_pessoa IS NOT NULL AND " . $this->condicaoVinculo('p') . ")
+                  )";
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($idsVisitado as $i => $idVisitado) {
+            $stmt->bindValue($i + 1, $idVisitado, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+
+        if ((int) $stmt->fetchColumn() !== count($idsVisitado)) {
+            throw new InvalidArgumentException('Um ou mais visitados selecionados não existem ou estão inativos. Atualize a lista e selecione novamente.', 412);
         }
     }
 

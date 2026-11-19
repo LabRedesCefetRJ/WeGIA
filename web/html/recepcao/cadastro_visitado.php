@@ -64,6 +64,7 @@ $vindoDaEntrada = filter_input(INPUT_GET, 'origem', FILTER_UNSAFE_RAW) === 'entr
 
     <!-- Vendor -->
     <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
+    <script src="<?php echo WWW; ?>html/recepcao/js/datatables-pt-br.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
@@ -233,7 +234,7 @@ $vindoDaEntrada = filter_input(INPUT_GET, 'origem', FILTER_UNSAFE_RAW) === 'entr
                         <p class="text-muted" style="margin:10px 0 0;">Somente aparecem registros que ainda não foram cadastrados como visitado.</p>
                     </header>
                     <div class="panel-body">
-                        <table class="table table-bordered table-striped mb-none" id="datatable-default">
+                        <table class="table table-bordered table-striped mb-none" id="datatable-default" data-plugin-options='{"searchPlaceholder": "Pesquisar"}'>
                             <thead>
                                 <tr>
                                     <th>Foto</th>

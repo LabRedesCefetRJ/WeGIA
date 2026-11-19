@@ -266,31 +266,31 @@ endif; ?>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">CEP</label>
                                         <div class="col-md-8">
-                                            <input type="text" name="cep" id="cep" class="form-control" value="" size="10" maxlength="9" onblur="pesquisacep(this.value);" required>
+                                            <input type="text" name="cep" id="cep" class="form-control" value="" size="10" maxlength="9" onblur="pesquisacep(this.value);">
                                         </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Estado</label>
                                         <div class="col-md-8">
-                                            <input type="text" name="uf" id="uf" class="form-control" required readonly>
+                                            <input type="text" name="uf" id="uf" class="form-control" readonly>
                                         </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Cidade</label>
                                         <div class="col-md-8">
-                                            <input type="text" name="cidade" id="cidade" class="form-control" required readonly>
+                                            <input type="text" name="cidade" id="cidade" class="form-control" readonly>
                                         </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Bairro</label>
                                         <div class="col-md-8">
-                                            <input type="text" name="bairro" id="bairro" class="form-control" required readonly>
+                                            <input type="text" name="bairro" id="bairro" class="form-control" readonly>
                                         </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Logradouro</label>
                                         <div class="col-md-8">
-                                            <input type="text" name="rua" id="rua" class="form-control" required readonly>
+                                            <input type="text" name="rua" id="rua" class="form-control" readonly>
                                         </div>
                                 </div>
                                 <div class="form-group">
@@ -311,7 +311,7 @@ endif; ?>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">IBGE</label>
                                         <div class="col-md-8">
-                                            <input type="text" name="ibge" id="ibge" class="form-control" required readonly>
+                                            <input type="text" name="ibge" id="ibge" class="form-control" readonly>
                                         </div>
                                 </div>
                             </div>

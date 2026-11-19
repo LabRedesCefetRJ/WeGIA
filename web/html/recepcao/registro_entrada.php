@@ -99,6 +99,7 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 	<script src="../../Functions/onlyChars.js"></script>
 	<script src="../../Functions/enviar_dados.js"></script>
 	<script src="../../Functions/mascara.js"></script>
+	<script src="js/datatables-pt-br.js"></script>
 	<!-- jquery functions -->
 	<script>
 		const WWW_BASE = <?= json_encode(WWW) ?>;
@@ -158,9 +159,40 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 			$("#totalVisitasGeradas").text(Math.max(ids.length, 1) * idsVisitantes.length);
 		}
 
+		const ROTULOS_TIPO = {
+			atendido: "atendido",
+			funcionario: "funcionário",
+			pet: "pet",
+			setor: "setor",
+			voluntario: "voluntário"
+		};
+
+		function urlCadastroVisitado(tipo) {
+			let url = "cadastro_visitado.php?origem=entrada";
+			if (tipo && tipo !== "todos") {
+				url += "&tipo=" + encodeURIComponent(tipo);
+			}
+			return url;
+		}
+
+		// A lista mostra só quem já foi cadastrado como visitado; sem isso a tabela ficava vazia sem explicação.
+		function avisarListaVazia(tipo) {
+			const rotulo = ROTULOS_TIPO[tipo];
+			const texto = (rotulo ? `Nenhum ${rotulo} disponível para esta visita.` : "Nenhum visitado disponível para esta visita.")
+				+ " A lista mostra apenas quem já foi cadastrado como visitado e está ativo.";
+			$("#alertaVisitados").html(
+				`<div class="alert alert-info" role="status">
+					${escaparHtml(texto)}
+					<a href="${urlCadastroVisitado(tipo)}" class="alert-link">Cadastrar visitado</a>
+				</div>`
+			);
+		}
+
 		function carregar(tipo) {
 
 			if (!tipo) return;
+
+			$("#linkCadastrarVisitado").attr("href", urlCadastroVisitado(tipo));
 
 			$.ajax({
 				url: "../../controle/control.php",
@@ -191,6 +223,11 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 					});
 
 					tabela.draw();
+
+					$("#alertaVisitados").empty();
+					if (!dados.length) {
+						avisarListaVazia(tipo);
+					}
 				},
 				error: function (xhr) {
 					const erro = xhr.responseJSON && xhr.responseJSON.erro ? xhr.responseJSON.erro : "Não foi possível carregar a lista de visitados.";
@@ -202,7 +239,7 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 
 		$(function () {
 			$("#datatable-default").DataTable();
-			
+
             $("#header").load("../header.php");
             $(".menuu").load("../menu.php");
 
@@ -304,10 +341,6 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 				</header>
 
 				<!-- start: page -->
-
-				</header>
-
-				<!-- start: page -->
 				<?php
 					if (isset($_GET['msg']) && $_GET['msg'] !== '') {
 						echo ('<div class="alert alert-danger" role="alert">' . htmlspecialchars($_GET['msg']) . '</div>');
@@ -349,9 +382,6 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 								<a href="pre_registro_entrada.php" class="btn btn-default">
 									<i class="fa fa-user-plus"></i> Adicionar visitante
 								</a>
-								<a href="cadastro_visitado.php?origem=entrada" class="btn btn-primary">
-									<i class="fa fa-user-plus"></i> Cadastrar Visitado
-								</a>
 							</div>
 						</div>
 					</div>
@@ -385,8 +415,8 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 							<a href="#" class="fa fa-caret-down"></a>
 						</div>
 						<h2 class="panel-title">Selecione o tipo de visitado:</h2><br>
-						<form method="GET" action="#" id="select_tipo" name="select_tipo">
-							<select name="select_tipo" id="tipo">
+						<form method="GET" action="#" id="select_tipo" name="select_tipo" style="display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap;">
+							<select name="select_tipo" id="tipo" aria-label="Tipo de visitado">
 								<option value="todos" selected>Todos</option>
 								<option value="atendido">Atendido</option>
 								<option value="funcionario">Funcionário</option>
@@ -394,7 +424,9 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 								<option value="setor">Setor</option>
 								<option value="voluntario">Voluntário</option>
 							</select>
-							<br>
+							<a href="cadastro_visitado.php?origem=entrada" id="linkCadastrarVisitado" class="btn btn-primary">
+								<i class="fa fa-user-plus"></i> Cadastrar visitado
+							</a>
 						</form>
 						<div class="form-group" style="margin-top:15px;">
 							<label for="descricaoVisita">Descrição da visita (opcional):</label>
@@ -404,7 +436,7 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 					<div class="panel-body">
 						<div id="alertaVisitados"></div>
 						<table class="table table-bordered table-striped mb-none"
-							id="datatable-default">
+							id="datatable-default" data-plugin-options='{"searchPlaceholder": "Pesquisar"}'>
 							<thead>
 								<tr>
 									<th>Foto</th>

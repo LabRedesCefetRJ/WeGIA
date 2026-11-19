@@ -5,6 +5,7 @@ require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/classes/Visita.php";
 require_once ROOT . "/classes/Visitado.php";
 require_once ROOT . "/dao/SelecaoParagrafoDAO.php";
+require_once ROOT . "/dao/VisitadoDAO.php";
 
 class VisitaDAO
 {
@@ -35,6 +36,7 @@ class VisitaDAO
             return [];
         }
 
+        (new VisitadoDAO($this->pdo))->validarElegiveis($idsVisitado);
         $this->validarVisitantesNaoVisitados($idsVisitante, $idsVisitado);
 
         $this->pdo->beginTransaction();
