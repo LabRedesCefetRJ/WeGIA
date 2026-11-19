@@ -142,43 +142,251 @@
 
 /* Ficha (modal) */
 
+.modal-ficha .modal-content {
+	position: relative;
+	overflow: hidden;
+	border: 0;
+	border-radius: 10px;
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.ficha-fechar {
+	position: absolute;
+	top: 12px;
+	right: 16px;
+	z-index: 2;
+	font-size: 26px;
+	opacity: 0.55;
+}
+
+.ficha-fechar:hover,
+.ficha-fechar:focus {
+	opacity: 0.9;
+}
+
 .ficha-cabecalho {
 	display: flex;
 	align-items: center;
-	gap: 15px;
-	margin-bottom: 10px;
+	gap: 18px;
+	padding: 24px 48px 20px 24px;
+	background: linear-gradient(135deg, #fff7e8 0%, #ffffff 70%);
+	border-top: 4px solid #f39c12;
+	border-bottom: 1px solid #f1e4cc;
 }
 
-.ficha-foto {
-	width: 72px;
-	height: 72px;
+.ficha-avatar {
+	flex: 0 0 auto;
+	width: 84px;
+	height: 84px;
 	border-radius: 50%;
 	object-fit: cover;
-	border: 1px solid #ddd;
+	border: 3px solid #fff;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ficha-avatar-vazio {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #f39c12;
+	color: #fff;
+	font-size: 30px;
+	font-weight: 600;
+	letter-spacing: 1px;
+}
+
+.ficha-identificacao {
+	min-width: 0;
 }
 
 .ficha-nome {
-	font-size: 18px;
-	font-weight: bold;
-	margin-bottom: 4px;
+	margin-bottom: 6px;
+	font-size: 21px;
+	font-weight: 600;
+	line-height: 1.25;
+	color: #2b2f33;
+	overflow-wrap: anywhere;
+}
+
+.ficha-tipo {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	background: #e8eef7;
+	color: #2f5d9b;
+}
+
+.ficha-tipo-atendido { background: #e3f4f1; color: #1f7a68; }
+.ficha-tipo-funcionario { background: #ece8f7; color: #5b46a3; }
+.ficha-tipo-voluntario { background: #e6f4e7; color: #2e7d32; }
+.ficha-tipo-pet { background: #fdeedd; color: #a65b00; }
+
+.ficha-corpo {
+	padding: 16px 20px 6px;
+	background: #f6f7f9;
+	max-height: 60vh;
+	overflow-y: auto;
 }
 
 .ficha-secao {
-	margin: 15px 0 5px;
-	padding-bottom: 4px;
-	border-bottom: 1px solid #eee;
-	font-weight: bold;
+	margin-bottom: 14px;
+	padding: 14px 16px 6px;
+	background: #fff;
+	border: 1px solid #e8eaee;
+	border-radius: 8px;
 }
 
-.ficha-campos {
-	margin-bottom: 0;
+.ficha-secao h5 {
+	margin: 0 0 12px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #3a3f45;
 }
 
-.ficha-campos dt,
-.ficha-campos dd {
-	margin-bottom: 4px;
+.ficha-secao h5 .fa {
+	width: 18px;
+	margin-right: 4px;
+	color: #f39c12;
+	text-align: center;
+}
+
+.ficha-grade {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0 20px;
+	margin: 0;
+}
+
+.ficha-campo {
+	margin-bottom: 10px;
+	min-width: 0;
+}
+
+.ficha-campo-largo {
+	grid-column: 1 / -1;
+}
+
+.ficha-campo dt {
+	margin-bottom: 2px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #8a9099;
+}
+
+.ficha-campo dd {
+	margin: 0;
+	font-size: 14px;
+	color: #2b2f33;
+	overflow-wrap: anywhere;
+}
+
+.ficha-vazio {
+	color: #a3a8ae;
+	font-style: italic;
+}
+
+.ficha-acao {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	margin-left: 8px;
+	padding: 2px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	vertical-align: middle;
+	text-decoration: none;
+}
+
+.ficha-acao:hover,
+.ficha-acao:focus {
+	text-decoration: none;
+	filter: brightness(0.95);
+}
+
+.ficha-acao-whatsapp { background: #25d366; color: #fff; }
+.ficha-acao-whatsapp:hover, .ficha-acao-whatsapp:focus { color: #fff; }
+.ficha-acao-email { background: #e8eef7; color: #2f5d9b; }
+.ficha-acao-email:hover, .ficha-acao-email:focus { color: #2f5d9b; }
+
+.ficha-estado {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	padding: 48px 24px;
+	color: #8a9099;
+	text-align: center;
+	border-top: 4px solid #f39c12;
+}
+
+.ficha-estado .fa {
+	font-size: 26px;
+}
+
+.ficha-estado-erro {
+	color: #b71c1c;
+}
+
+.ficha-rodape {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	background: #fff;
+}
+
+/* O clearfix do Bootstrap vira um item vazio no flex e empurra o aviso. */
+.ficha-rodape::before,
+.ficha-rodape::after {
+	display: none;
+}
+
+.ficha-rodape .btn {
+	margin-left: auto;
 }
 
 .ficha-aviso {
-	margin-top: 8px;
+	font-size: 12px;
+	color: #8a9099;
+	text-align: left;
+}
+
+@media (max-width: 480px) {
+	.ficha-cabecalho {
+		padding: 20px 44px 16px 16px;
+		gap: 14px;
+	}
+
+	.ficha-avatar {
+		width: 64px;
+		height: 64px;
+	}
+
+	.ficha-avatar-vazio {
+		font-size: 22px;
+	}
+
+	.ficha-nome {
+		font-size: 18px;
+	}
+
+	.ficha-corpo {
+		padding: 12px 12px 2px;
+		max-height: none;
+	}
+
+	.ficha-grade {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.ficha-acao {
+		margin: 4px 0 0;
+		display: flex;
+		width: fit-content;
+	}
 }
