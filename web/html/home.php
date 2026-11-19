@@ -940,7 +940,7 @@ require_once ROOT . "/html/geral/msg.php";
 
 				<div class="row category-row-third">
 					<div id="livro-visitas" class="removeIn collapse">
-						<a href="<?= WWW ?>html/recepcao/pre_registro_entrada.php">
+						<a href="<?= WWW ?>html/recepcao/registro_entrada.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fas fa-sign-in-alt"></i>
 								<h4>Registro de Entrada</h4>

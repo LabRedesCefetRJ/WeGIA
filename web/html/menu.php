@@ -613,7 +613,7 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 						</a>
 						<ul class="nav nav-children">
 							<li>
-								<a href="<?= WWW ?>html/recepcao/pre_registro_entrada.php">
+								<a href="<?= WWW ?>html/recepcao/registro_entrada.php">
 									<span>Registro de Entrada</span>
 								</a>
 							</li>

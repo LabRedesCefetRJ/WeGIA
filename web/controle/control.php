@@ -86,6 +86,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'VisitanteControle' => [20],
             'VisitaControle' => [20],
             'VisitadoControle' => [20],
+            'RegistroVisitaControle' => [20],
             'SetorControle' => [20]
         ];
 

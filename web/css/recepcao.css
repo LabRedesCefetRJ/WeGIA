@@ -414,3 +414,430 @@
 		width: fit-content;
 	}
 }
+
+/* ---------- Registro de entrada em etapas (registro_entrada.php) ---------- */
+
+.registro-entrada {
+	--wegia-primaria: #0088cc;
+	--wegia-primaria-escura: #006699;
+	--wegia-primaria-clara: #e6f3fa;
+	--wegia-primaria-borda: #cce7f5;
+	--wegia-secundaria: #e36159;
+	--wegia-sucesso: #47a447;
+	--wegia-escuro: #1d2127;
+	--wegia-texto-suave: #777777;
+	max-width: 1000px;
+}
+
+.registro-entrada [hidden] {
+	display: none !important;
+}
+
+.etapas-entrada {
+	background: #fff;
+	border-radius: 6px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+	margin-bottom: 18px;
+	padding: 16px 18px 10px;
+}
+
+.etapas-entrada ol {
+	display: flex;
+	gap: 8px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.etapas-entrada li {
+	flex: 1;
+}
+
+.etapa-botao {
+	align-items: center;
+	background: none;
+	border: 0;
+	border-radius: 6px;
+	color: var(--wegia-texto-suave);
+	display: flex;
+	gap: 10px;
+	padding: 6px 8px;
+	text-align: left;
+	width: 100%;
+}
+
+.etapa-botao:not(:disabled):hover,
+.etapa-botao:focus-visible {
+	background: var(--wegia-primaria-clara);
+	outline: none;
+}
+
+.etapa-botao:disabled {
+	cursor: not-allowed;
+	opacity: .55;
+}
+
+.etapa-numero {
+	align-items: center;
+	border: 2px solid #ccc;
+	border-radius: 50%;
+	display: inline-flex;
+	flex-shrink: 0;
+	font-weight: 700;
+	height: 34px;
+	justify-content: center;
+	width: 34px;
+}
+
+.etapa-texto strong {
+	display: block;
+	font-size: 14px;
+}
+
+.etapa-texto small {
+	display: block;
+	font-size: 11.5px;
+}
+
+.etapas-entrada li.atual .etapa-numero {
+	background: var(--wegia-primaria);
+	border-color: var(--wegia-primaria);
+	color: #fff;
+}
+
+.etapas-entrada li.atual .etapa-texto strong {
+	color: var(--wegia-escuro);
+}
+
+.etapas-entrada li.concluida .etapa-numero {
+	background: var(--wegia-primaria-clara);
+	border-color: var(--wegia-primaria);
+	color: var(--wegia-primaria-escura);
+}
+
+.etapas-progresso {
+	background: #eee;
+	border-radius: 3px;
+	height: 4px;
+	margin: 12px 0 8px;
+	overflow: hidden;
+}
+
+.etapas-progresso span {
+	background: var(--wegia-primaria);
+	display: block;
+	height: 100%;
+	transition: width .3s ease;
+	width: 0;
+}
+
+.etapas-status {
+	color: var(--wegia-texto-suave);
+	display: flex;
+	flex-wrap: wrap;
+	font-size: 12.5px;
+	justify-content: space-between;
+	margin: 0;
+}
+
+.etapas-salvo {
+	color: var(--wegia-sucesso);
+}
+
+.entrada-retomada .btn-link {
+	padding: 0 0 0 6px;
+	vertical-align: baseline;
+}
+
+.etapa-rodape {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: space-between;
+}
+
+.etapa-rodape::before,
+.etapa-rodape::after {
+	display: none;
+}
+
+.etapa-rodape > :last-child {
+	margin-left: auto;
+}
+
+.texto-perigo,
+.texto-perigo:hover {
+	color: var(--wegia-secundaria);
+}
+
+.busca-cpf {
+	margin-bottom: 14px;
+	max-width: 480px;
+}
+
+.cartao-visitante,
+.lista-entrada li,
+.lista-visitados label {
+	align-items: center;
+	display: flex;
+	gap: 12px;
+}
+
+.cartao-visitante {
+	background: var(--wegia-primaria-clara);
+	border: 1px solid var(--wegia-primaria-borda);
+	border-radius: 6px;
+	margin-bottom: 16px;
+	padding: 10px 14px;
+}
+
+.cartao-visitante .btn,
+.cartao-visitante .label,
+.lista-entrada li .btn {
+	margin-left: auto;
+}
+
+.lista-foto {
+	border-radius: 50%;
+	flex-shrink: 0;
+	height: 40px;
+	object-fit: cover;
+	width: 40px;
+}
+
+.lista-nome {
+	color: var(--wegia-escuro);
+	font-weight: 600;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.lista-nome small {
+	color: var(--wegia-texto-suave);
+	display: block;
+	font-weight: 400;
+}
+
+.lista-titulo {
+	border-top: 1px solid #eee;
+	font-size: 15px;
+	margin: 18px 0 8px;
+	padding-top: 14px;
+}
+
+.lista-titulo .badge {
+	background: var(--wegia-primaria);
+}
+
+.lista-entrada,
+.lista-visitados {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.lista-entrada li {
+	border-bottom: 1px solid #f0f0f0;
+	padding: 8px 0;
+}
+
+.lista-vazia {
+	color: var(--wegia-texto-suave);
+	padding: 10px 0;
+}
+
+.cadastro-visitante {
+	background: #f9fafb;
+	border: 1px solid #e5e7ea;
+	border-radius: 6px;
+	margin-bottom: 8px;
+	padding: 16px;
+}
+
+.cadastro-visitante h4 {
+	margin-top: 0;
+}
+
+.cadastro-foto {
+	border-radius: 50%;
+	display: block;
+	height: 110px;
+	margin: 0 auto 8px;
+	object-fit: cover;
+	width: 110px;
+}
+
+.cadastro-foto-botao {
+	margin-bottom: 12px;
+}
+
+.control-label-like {
+	display: block;
+	font-weight: 700;
+	margin-bottom: 5px;
+}
+
+.cadastro-sexo .radio-inline {
+	padding-top: 6px;
+}
+
+.cadastro-endereco legend {
+	border: 0;
+	font-size: 14px;
+	font-weight: 700;
+	margin-bottom: 8px;
+}
+
+.cadastro-acoes {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+}
+
+.visitados-escolhidos {
+	margin-bottom: 14px;
+}
+
+.chip-visitado {
+	background: var(--wegia-primaria-clara);
+	border: 1px solid var(--wegia-primaria-borda);
+	border-radius: 14px;
+	color: var(--wegia-primaria-escura);
+	display: inline-block;
+	font-weight: 600;
+	margin: 2px 4px 2px 0;
+	padding: 3px 4px 3px 10px;
+}
+
+.chip-visitado button {
+	background: none;
+	border: 0;
+	color: inherit;
+	font-size: 16px;
+	line-height: 1;
+	padding: 0 4px;
+}
+
+.chip-vazio {
+	color: var(--wegia-texto-suave);
+	font-style: italic;
+}
+
+.lista-visitados {
+	border: 1px solid #e5e7ea;
+	border-radius: 6px;
+	max-height: 340px;
+	overflow-y: auto;
+}
+
+.lista-visitados li {
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.lista-visitados li:last-child {
+	border-bottom: 0;
+}
+
+.lista-visitados .lista-vazia {
+	padding: 12px;
+}
+
+.lista-visitados label {
+	cursor: pointer;
+	font-weight: 400;
+	margin: 0;
+	padding: 8px 12px;
+	width: 100%;
+}
+
+.lista-visitados input[type=checkbox] {
+	flex-shrink: 0;
+	height: 18px;
+	margin: 0;
+	width: 18px;
+}
+
+.lista-visitados li.marcado {
+	background: var(--wegia-primaria-clara);
+}
+
+.cadastro-visitado-dica {
+	font-size: 12.5px;
+	margin: 8px 0 16px;
+}
+
+.resumo-entrada {
+	display: grid;
+	gap: 14px;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	margin-bottom: 12px;
+}
+
+.resumo-entrada > div {
+	background: #f9fafb;
+	border: 1px solid #e5e7ea;
+	border-radius: 6px;
+	padding: 12px 14px;
+}
+
+.resumo-entrada dt {
+	color: var(--wegia-texto-suave);
+	font-size: 11.5px;
+	letter-spacing: .4px;
+	text-transform: uppercase;
+}
+
+.resumo-entrada dt .btn-link {
+	float: right;
+	font-size: 11.5px;
+	padding: 0;
+	text-transform: none;
+}
+
+.resumo-entrada dd {
+	color: var(--wegia-escuro);
+	margin-top: 6px;
+	overflow-wrap: anywhere;
+}
+
+.entrada-concluida .panel-body {
+	padding: 32px 16px;
+}
+
+.entrada-concluida-icone {
+	color: var(--wegia-sucesso);
+	font-size: 54px;
+}
+
+.entrada-concluida-acoes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: center;
+	margin-top: 18px;
+}
+
+@media (max-width: 600px) {
+	.etapa-texto small {
+		display: none;
+	}
+
+	.etapas-entrada ol {
+		gap: 2px;
+	}
+
+	.etapa-botao {
+		flex-direction: column;
+		gap: 4px;
+		text-align: center;
+	}
+}
+
+.busca-cpf .input-group-btn .btn {
+	align-items: center;
+	display: inline-flex;
+	gap: 6px;
+	height: 46px;
+	white-space: nowrap;
+}

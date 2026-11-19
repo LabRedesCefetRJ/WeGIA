@@ -235,7 +235,7 @@ function escaparHistorico($texto)
 									<i class="fa fa-file-pdf-o" aria-hidden="true"></i>
 									<span>Baixar relatório (PDF)</span>
 								</button>
-								<a href="pre_registro_entrada.php" class="btn btn-app-recepcao">
+								<a href="registro_entrada.php" class="btn btn-app-recepcao">
 									<i class="fa fa-sign-in" aria-hidden="true"></i>
 									<span>Registrar entrada</span>
 								</a>

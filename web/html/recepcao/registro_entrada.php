@@ -5,479 +5,354 @@ if (session_status() === PHP_SESSION_NONE)
 	session_start();
 
 if (!isset($_SESSION['usuario'])) {
-	header("Location: ../index.php");
+	header("Location: ../../index.php");
 	exit();
-} else {
-	session_regenerate_id();
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
-//verifica permissão do usuário
-permissao($_SESSION['id_pessoa'], 20, 5);
+// Registrar entradas exige ler e gravar no módulo Recepção (as ações também são verificadas no backend).
+permissao($_SESSION['id_pessoa'], 20, 7);
 
 require_once ROOT . '/classes/Csrf.php';
-
-// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+require_once ROOT . '/classes/Visitante.php';
+require_once ROOT . '/classes/RascunhoEntrada.php';
 require_once "../personalizacao_display.php";
 
-require_once ROOT . '/controle/VisitanteControle.php';
-
-$visitantesSelecionados = (new VisitanteDAO())->buscarResumoPorIds(VisitanteControle::obterIdsSelecionados());
-
-if (empty($visitantesSelecionados)) {
-    header('Location: pre_registro_entrada.php?msg_e=' . urlencode('Adicione ao menos um visitante para registrar a entrada.'));
-    exit();
-}
-
-$idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSelecionados);
-
+/*
+ * Registro de entrada em etapas (issue #2157): 1) visitantes, 2) visitados e descrição, 3) confirmação.
+ * Tudo acontece nesta página por fetch (js/registro_entrada.js e RegistroVisitaControle). A entrada em andamento fica
+ * salva na sessão, então o recepcionista pode pausar, sair da página e retomar de onde parou.
+ */
 ?>
-
-
 <!doctype html>
 <html class="fixed">
 
 <head>
-
-	<!-- Basic -->
 	<meta charset="UTF-8">
-
 	<title>Registro de Entrada</title>
-
-	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-	<!-- Vendor CSS -->
 	<link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
 	<link rel="stylesheet" href="../../assets/vendor/font-awesome/css/font-awesome.css" />
-	<link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
-	<link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
-
-	<!-- Specific Page Vendor CSS -->
-	<link rel="stylesheet" href="../../assets/vendor/select2/select2.css" />
-	<link rel="stylesheet" href="../../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
-
-	<!-- Theme CSS -->
-	<link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
-
-	<!-- Skin CSS -->
-	<link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
-
-	<!-- Theme Custom CSS -->
-	<link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
-
-	<!-- Head Libs -->
-	<script src="../../assets/vendor/modernizr/modernizr.js"></script>
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
+	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
+	<link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
+	<link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
+	<link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
+	<link rel="stylesheet" href="../../css/recepcao.css">
 
-	<!-- Vendor -->
+	<script src="../../assets/vendor/modernizr/modernizr.js"></script>
 	<script src="../../assets/vendor/jquery/jquery.min.js"></script>
 	<script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
 	<script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
 	<script src="../../assets/vendor/nanoscroller/nanoscroller.js"></script>
-	<script src="../../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 	<script src="../../assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 
-	<!-- Specific Page Vendor -->
-	<script src="../../assets/vendor/jquery-autosize/jquery.autosize.js"></script>
-
-	<!-- Theme Base, Components and Settings -->
-	<script src="../../assets/javascripts/theme.js"></script>
-
-	<!-- Theme Custom -->
-	<script src="../../assets/javascripts/theme.custom.js"></script>
-
-	<!-- Theme Initialization Files -->
-	<script src="../../assets/javascripts/theme.init.js"></script>
-
-	<!-- javascript functions -->
-	<script src="../../Functions/onlyNumbers.js"></script>
-	<script src="../../Functions/onlyChars.js"></script>
-	<script src="../../Functions/enviar_dados.js"></script>
-	<script src="../../Functions/mascara.js"></script>
-	<script src="js/datatables-pt-br.js"></script>
-	<!-- jquery functions -->
 	<script>
-		const WWW_BASE = <?= json_encode(WWW) ?>;
-		const fotoSemFoto = WWW_BASE + "img/semfoto.png";
-		const idsVisitantes = <?= json_encode($idsVisitantes) ?>;
-
-		// A seleção fica no sessionStorage para não se perder ao cadastrar um visitado ou recarregar a página.
-		const CHAVE_SELECAO = "recepcaoVisitadosSelecionados";
-
-		function lerSelecao() {
-			try {
-				const salvo = JSON.parse(sessionStorage.getItem(CHAVE_SELECAO) || "{}");
-				return salvo && typeof salvo === "object" ? salvo : {};
-			} catch (e) {
-				return {};
-			}
-		}
-
-		function salvarSelecao() {
-			try {
-				sessionStorage.setItem(CHAVE_SELECAO, JSON.stringify(visitadosSelecionados));
-			} catch (e) {}
-		}
-
-		let visitadosSelecionados = lerSelecao();
-
-		function fotoVisitadoHtml(item) {
-			const src = item.imagem ? ("data:image;base64," + item.imagem) : fotoSemFoto;
-			return `<img src="${src}" alt="Foto" class="rounded" style="width:40px;height:40px;object-fit:cover;">`;
-		}
-
-		function escaparHtml(texto) {
-			return $("<div>").text(texto == null ? "" : texto).html();
-		}
-
-		function atualizarSelecionados() {
-			const ids = Object.keys(visitadosSelecionados);
-
-			const $lista = $("#listaVisitadosSelecionados");
-			$lista.empty();
-
-			if (ids.length === 0) {
-				$lista.append('<li class="text-muted" style="list-style:none;">Nenhum visitado selecionado — a visita será registrada para a instituição</li>');
-			} else {
-				ids.forEach(function (id) {
-					$lista.append(
-						`<li class="label label-primary" style="list-style:none; display:inline-block; margin:2px 6px 2px 0; padding:6px 10px; font-size:100%;">
-							${escaparHtml(visitadosSelecionados[id])}
-						</li>`
-					);
-				});
-			}
-
-			$("#contadorVisitadosSelecionados").text(ids.length);
-			$("#contadorVisitadosBotao").text(ids.length || "instituição");
-			$("#contadorVisitadosResumo").text(ids.length || "1 (instituição)");
-			$("#totalVisitasGeradas").text(Math.max(ids.length, 1) * idsVisitantes.length);
-		}
-
-		const ROTULOS_TIPO = {
-			atendido: "atendido",
-			funcionario: "funcionário",
-			pet: "pet",
-			setor: "setor",
-			voluntario: "voluntário"
-		};
-
-		function urlCadastroVisitado(tipo) {
-			let url = "cadastro_visitado.php?origem=entrada";
-			if (tipo && tipo !== "todos") {
-				url += "&tipo=" + encodeURIComponent(tipo);
-			}
-			return url;
-		}
-
-		// A lista mostra só quem já foi cadastrado como visitado; sem isso a tabela ficava vazia sem explicação.
-		function avisarListaVazia(tipo) {
-			const rotulo = ROTULOS_TIPO[tipo];
-			const texto = (rotulo ? `Nenhum ${rotulo} disponível para esta visita.` : "Nenhum visitado disponível para esta visita.")
-				+ " A lista mostra apenas quem já foi cadastrado como visitado e está ativo.";
-			$("#alertaVisitados").html(
-				`<div class="alert alert-info" role="status">
-					${escaparHtml(texto)}
-					<a href="${urlCadastroVisitado(tipo)}" class="alert-link">Cadastrar visitado</a>
-				</div>`
-			);
-		}
-
-		function carregar(tipo) {
-
-			if (!tipo) return;
-
-			$("#linkCadastrarVisitado").attr("href", urlCadastroVisitado(tipo));
-
-			$.ajax({
-				url: "../../controle/control.php",
-				method: "GET",
-				data: { nomeClasse: "VisitadoControle", metodo: "listarTodos", tipo: tipo === "todos" ? "" : tipo },
-				dataType: "json",
-				success: function (dados) {
-
-					let tabela = $("#datatable-default").DataTable();
-
-					tabela.clear();
-
-					$.each(dados, function (i, item) {
-						const id = item.id_visitado;
-						const nome = [item.nome, item.sobrenome].filter(Boolean).join(" ");
-						const marcado = Object.prototype.hasOwnProperty.call(visitadosSelecionados, id) ? "checked" : "";
-
-						tabela.row.add([
-							fotoVisitadoHtml(item),
-							escaparHtml(nome),
-							escaparHtml(item.identificador || "—"),
-							`
-							<div class="text-center">
-								<input type="checkbox" class="checkbox-visitado" data-id="${id}" data-nome="${escaparHtml(nome)}" ${marcado} style="width:18px;height:18px;">
-							</div>
-							`
-						]);
-					});
-
-					tabela.draw();
-
-					$("#alertaVisitados").empty();
-					if (!dados.length) {
-						avisarListaVazia(tipo);
-					}
-				},
-				error: function (xhr) {
-					const erro = xhr.responseJSON && xhr.responseJSON.erro ? xhr.responseJSON.erro : "Não foi possível carregar a lista de visitados.";
-					$("#datatable-default").DataTable().clear().draw();
-					$("#alertaVisitados").html(`<div class="alert alert-danger" role="alert">${escaparHtml(erro)}</div>`);
-				}
-			});
-		}
-
 		$(function () {
-			$("#datatable-default").DataTable();
-
-            $("#header").load("../header.php");
-            $(".menuu").load("../menu.php");
-
-			let tipoSalvo = null;
-			try {
-				tipoSalvo = localStorage.getItem("tipoVisitado");
-			} catch (e) {}
-
-			const tipoAtual = tipoSalvo && $("#tipo option[value='" + tipoSalvo + "']").length ? tipoSalvo : "todos";
-			$("#tipo").val(tipoAtual);
-			carregar(tipoAtual);
-			atualizarSelecionados();
-
-			$("#tipo").on("change", function () {
-   				let tipo = $(this).val();
-				try {
-					localStorage.setItem("tipoVisitado", tipo);
-				} catch (e) {}
-				$("#alertaVisitados").empty();
-    			carregar(tipo);
-			});
-
-			$(document).on("change", ".checkbox-visitado", function () {
-				const id = $(this).data("id");
-				const nome = $(this).data("nome");
-
-				if (this.checked) {
-					visitadosSelecionados[id] = nome;
-				} else {
-					delete visitadosSelecionados[id];
-				}
-
-				salvarSelecao();
-
-				atualizarSelecionados();
-			});
-
-			$("#botaoRegistrarEntradaTopo").on("click", function () {
-				const ids = Object.keys(visitadosSelecionados);
-
-				const csrfField = <?= json_encode(Csrf::inputField()) ?>;
-				const descricao = $("#descricaoVisita").val() || "";
-
-				let camposIdVisitante = "";
-				idsVisitantes.forEach(function (id) {
-					camposIdVisitante += `<input type="hidden" name="idVisitante[]" value="${id}">`;
-				});
-
-				let camposIdVisitado = "";
-				ids.forEach(function (id) {
-					camposIdVisitado += `<input type="hidden" name="idVisitado[]" value="${id}">`;
-				});
-
-				const formHtml = `
-					<form method="POST" action="../../controle/control.php" id="formRegistrarEntradaMultipla" style="display:none;">
-						${csrfField}
-						<input type="hidden" name="nomeClasse" value="VisitaControle">
-						<input type="hidden" name="metodo" value="incluir">
-						${camposIdVisitante}
-						<input type="hidden" name="descricao" value="${escaparHtml(descricao)}">
-						${camposIdVisitado}
-					</form>
-				`;
-
-				$("#formRegistrarEntradaMultipla").remove();
-				$("body").append(formHtml);
-				try {
-					sessionStorage.removeItem(CHAVE_SELECAO);
-				} catch (e) {}
-				$("#formRegistrarEntradaMultipla").trigger("submit");
-			});
-        });
+			$("#header").load("../header.php");
+			$(".menuu").load("../menu.php");
+		});
 	</script>
 </head>
 
 <body>
 	<section class="body">
-		<!-- start: header -->
 		<div id="header"></div>
-		<!-- end: header -->
+
 		<div class="inner-wrapper">
-			<!-- start: sidebar -->
 			<aside id="sidebar-left" class="sidebar-left menuu"></aside>
 
-			<!-- end: sidebar -->
 			<section role="main" class="content-body">
 				<header class="page-header">
-					<h2>Registro Entrada</h2>
-
+					<h2>Registro de entrada</h2>
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
-							<li><a href="../index.php"> <i class="fa fa-home"></i>
-								</a></li>
-							<li><span>Registro Entrada</span></li>
+							<li><a href="../home.php"><i class="fa fa-home"></i></a></li>
+							<li><span>Recepção</span></li>
+							<li><span>Registro de entrada</span></li>
 						</ol>
-
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
 					</div>
 				</header>
 
 				<!-- start: page -->
-				<?php
-					if (isset($_GET['msg']) && $_GET['msg'] !== '') {
-						echo ('<div class="alert alert-danger" role="alert">' . htmlspecialchars($_GET['msg']) . '</div>');
-					}
-					if (isset($_SESSION['msg_c']) && !empty($_SESSION['msg_c'])) {
-						echo ('<div class="alert alert-success" role="alert">' . htmlspecialchars($_SESSION['msg_c']) . '</div>');
-						$_SESSION['msg_c'] = "";
-					}
-					else if (isset($_SESSION['msg_e']) && !empty($_SESSION['msg_e'])) {
-						echo ('<div class="alert alert-danger" role="alert">' . htmlspecialchars($_SESSION['msg_e']) . '</div>');
-						$_SESSION['msg_e'] = "";
-					}
-				?>
+				<div class="registro-entrada" id="registroEntrada">
 
-				<section class="panel">
-					<header class="panel-heading">
-						<h2 class="panel-title">Visitantes (<?= count($visitantesSelecionados) ?>)</h2>
-					</header>
-					<div class="panel-body">
-						<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:15px; flex-wrap:wrap;">
-							<div style="flex:1; min-width:260px;">
-								<?php foreach ($visitantesSelecionados as $visitanteSelecionado) : ?>
-									<?php $fotoSelecionado = !empty($visitanteSelecionado['imagem']) ? 'data:image;base64,' . $visitanteSelecionado['imagem'] : WWW . 'img/semfoto.png'; ?>
-									<div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-										<img src="<?= $fotoSelecionado ?>" alt="Foto do visitante" class="rounded" style="width:44px;height:44px;object-fit:cover;margin-left:0;">
-										<span><?= htmlspecialchars($visitanteSelecionado['nome'] . ' ' . $visitanteSelecionado['sobrenome'], ENT_QUOTES, 'UTF-8') ?></span>
-										<form method="POST" action="../../controle/control.php" style="display:inline; margin:0;">
-											<?= Csrf::inputField() ?>
-											<input type="hidden" name="nomeClasse" value="VisitanteControle">
-											<input type="hidden" name="metodo" value="removerVisita">
-											<input type="hidden" name="retorno" value="registro_entrada">
-											<input type="hidden" name="idVisitante" value="<?= (int) $visitanteSelecionado['id_visitante'] ?>">
-											<button type="submit" class="btn btn-danger btn-xs" title="Remover visitante"><i class="fa fa-times"></i></button>
-										</form>
+					<div class="alert alert-info entrada-retomada" id="avisoRetomada" role="status" hidden>
+						<i class="fa fa-clock-o" aria-hidden="true"></i>
+						<span id="textoRetomada"></span>
+						<button type="button" class="btn btn-link btn-xs" data-acao="descartar">Descartar e começar outra</button>
+					</div>
+
+					<nav class="etapas-entrada" aria-label="Etapas do registro de entrada">
+						<ol>
+							<li data-etapa="1">
+								<button type="button" class="etapa-botao" data-ir-etapa="1">
+									<span class="etapa-numero">1</span>
+									<span class="etapa-texto"><strong>Visitantes</strong><small>Quem está chegando</small></span>
+								</button>
+							</li>
+							<li data-etapa="2">
+								<button type="button" class="etapa-botao" data-ir-etapa="2">
+									<span class="etapa-numero">2</span>
+									<span class="etapa-texto"><strong>Visitados</strong><small>Quem vai receber a visita</small></span>
+								</button>
+							</li>
+							<li data-etapa="3">
+								<button type="button" class="etapa-botao" data-ir-etapa="3">
+									<span class="etapa-numero">3</span>
+									<span class="etapa-texto"><strong>Confirmação</strong><small>Revisar e registrar</small></span>
+								</button>
+							</li>
+						</ol>
+						<div class="etapas-progresso" aria-hidden="true"><span id="barraProgresso"></span></div>
+						<p class="etapas-status">
+							<span id="textoEtapa" aria-live="polite">Etapa 1 de 3</span>
+							<span class="etapas-salvo" id="statusSalvo"></span>
+						</p>
+					</nav>
+
+					<div id="mensagemEntrada" aria-live="assertive"></div>
+
+					<!-- Etapa 1: visitantes -->
+					<section class="panel etapa-painel" data-painel="1" hidden>
+						<header class="panel-heading">
+							<h2 class="panel-title">Quem está chegando?</h2>
+						</header>
+						<div class="panel-body">
+							<form id="formBuscaCpf" class="busca-cpf" autocomplete="off" novalidate>
+								<label for="cpfBusca">CPF do visitante</label>
+								<div class="input-group">
+									<input type="text" class="form-control input-lg" id="cpfBusca" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" aria-describedby="ajudaCpf">
+									<span class="input-group-btn">
+										<button type="submit" class="btn btn-primary btn-lg" id="botaoBuscarCpf"><i class="fa fa-search" aria-hidden="true"></i> Buscar</button>
+									</span>
+								</div>
+								<p class="help-block" id="ajudaCpf">Digite o CPF e tecle Enter. Se a pessoa ainda não for visitante, o cadastro abre aqui mesmo.</p>
+							</form>
+
+							<div id="resultadoCpf"></div>
+
+							<form id="formCadastroVisitante" class="cadastro-visitante" enctype="multipart/form-data" novalidate hidden>
+								<h4 id="tituloCadastro">Cadastrar visitante</h4>
+								<p class="text-muted" id="explicacaoCadastro"></p>
+
+								<div class="row">
+									<div class="col-sm-3 text-center" id="blocoFoto">
+										<img src="<?= WWW ?>img/semfoto.png" alt="Foto do visitante" class="cadastro-foto" id="previaFoto">
+										<label class="btn btn-default btn-sm cadastro-foto-botao">
+											<i class="fa fa-camera" aria-hidden="true"></i> Foto (opcional)
+											<input type="file" name="imgperfil" id="fotoVisitante" accept="image/*" class="sr-only">
+										</label>
 									</div>
-								<?php endforeach; ?>
+									<div class="col-sm-9">
+										<div class="row">
+											<div class="form-group col-sm-6">
+												<label for="cadNome">Nome <span class="campo-obrigatorio">*</span></label>
+												<input type="text" class="form-control" name="nome" id="cadNome" required>
+											</div>
+											<div class="form-group col-sm-6">
+												<label for="cadSobrenome">Sobrenome <span class="campo-obrigatorio">*</span></label>
+												<input type="text" class="form-control" name="sobrenome" id="cadSobrenome" required>
+											</div>
+											<div class="form-group col-sm-6">
+												<span class="control-label-like">Sexo <span class="campo-obrigatorio">*</span></span>
+												<div class="cadastro-sexo" role="radiogroup" aria-label="Sexo">
+													<label class="radio-inline"><input type="radio" name="gender" value="f"> Feminino</label>
+													<label class="radio-inline"><input type="radio" name="gender" value="m"> Masculino</label>
+													<label class="radio-inline"><input type="radio" name="gender" value="o"> Outro</label>
+												</div>
+											</div>
+											<div class="form-group col-sm-6">
+												<label for="cadNascimento">Data de nascimento <span class="campo-obrigatorio">*</span></label>
+												<input type="date" class="form-control" name="nascimento" id="cadNascimento" min="<?= Visitante::getDataNascimentoMinima() ?>" max="<?= Visitante::getDataNascimentoMaxima() ?>" required>
+											</div>
+										</div>
+
+										<fieldset class="cadastro-endereco">
+											<legend>Endereço <small class="text-muted">(opcional)</small></legend>
+											<div class="row">
+												<div class="form-group col-sm-4">
+													<label for="cadCep">CEP</label>
+													<input type="text" class="form-control" name="cep" id="cadCep" maxlength="9" inputmode="numeric" placeholder="00000-000">
+												</div>
+												<div class="form-group col-sm-5">
+													<label for="cadCidade">Cidade</label>
+													<input type="text" class="form-control" name="cidade" id="cadCidade">
+												</div>
+												<div class="form-group col-sm-3">
+													<label for="cadUf">UF</label>
+													<input type="text" class="form-control" name="uf" id="cadUf" maxlength="2">
+												</div>
+												<div class="form-group col-sm-8">
+													<label for="cadRua">Logradouro</label>
+													<input type="text" class="form-control" name="rua" id="cadRua">
+												</div>
+												<div class="form-group col-sm-4">
+													<label for="cadNumero">Número</label>
+													<input type="text" class="form-control" name="numero_residencia" id="cadNumero" inputmode="numeric" placeholder="Sem número">
+												</div>
+												<div class="form-group col-sm-6">
+													<label for="cadBairro">Bairro</label>
+													<input type="text" class="form-control" name="bairro" id="cadBairro">
+												</div>
+												<div class="form-group col-sm-6">
+													<label for="cadComplemento">Complemento</label>
+													<input type="text" class="form-control" name="complemento" id="cadComplemento" maxlength="50">
+												</div>
+											</div>
+											<input type="hidden" name="ibge" id="cadIbge">
+										</fieldset>
+									</div>
+								</div>
+
+								<input type="hidden" name="cpf" id="cadCpf">
+								<div class="cadastro-acoes">
+									<button type="button" class="btn btn-default" data-acao="cancelar-cadastro">Cancelar</button>
+									<button type="submit" class="btn btn-primary" id="botaoCadastrar"><i class="fa fa-user-plus" aria-hidden="true"></i> Cadastrar e adicionar</button>
+								</div>
+							</form>
+
+							<h4 class="lista-titulo">Visitantes desta entrada <span class="badge" id="contadorVisitantes">0</span></h4>
+							<ul class="lista-entrada" id="listaVisitantes"></ul>
+						</div>
+						<footer class="panel-footer etapa-rodape">
+							<button type="button" class="btn btn-link texto-perigo" data-acao="descartar"><i class="fa fa-trash-o" aria-hidden="true"></i> Descartar entrada</button>
+							<button type="button" class="btn btn-primary" data-ir-etapa="2" id="botaoParaVisitados">Próximo: visitados <i class="fa fa-arrow-right" aria-hidden="true"></i></button>
+						</footer>
+					</section>
+
+					<!-- Etapa 2: visitados e descrição -->
+					<section class="panel etapa-painel" data-painel="2" hidden>
+						<header class="panel-heading">
+							<h2 class="panel-title">Quem vai receber a visita?</h2>
+						</header>
+						<div class="panel-body">
+							<div class="visitados-escolhidos">
+								<span class="text-muted">Selecionados:</span>
+								<span id="chipsVisitados"></span>
 							</div>
-							<div>
-								<a href="pre_registro_entrada.php" class="btn btn-default">
-									<i class="fa fa-user-plus"></i> Adicionar visitante
-								</a>
+
+							<div class="row filtros-visitados">
+								<div class="form-group col-sm-4">
+									<label for="tipoVisitado">Tipo</label>
+									<select id="tipoVisitado" class="form-control">
+										<option value="">Todos</option>
+										<option value="atendido">Atendido</option>
+										<option value="funcionario">Funcionário</option>
+										<option value="voluntario">Voluntário</option>
+										<option value="pet">Pet</option>
+										<option value="setor">Setor</option>
+									</select>
+								</div>
+								<div class="form-group col-sm-8">
+									<label for="pesquisaVisitado">Pesquisar</label>
+									<input type="search" id="pesquisaVisitado" class="form-control" placeholder="Nome ou identificador">
+								</div>
+							</div>
+
+							<div id="alertaVisitados"></div>
+							<ul class="lista-visitados" id="listaVisitados" aria-label="Visitados disponíveis"></ul>
+							<p class="text-muted cadastro-visitado-dica">
+								Não encontrou? <a href="cadastro_visitado.php?origem=entrada" id="linkCadastrarVisitado">Cadastrar visitado</a>.
+								A entrada fica salva e você volta para esta etapa.
+							</p>
+
+							<div class="form-group">
+								<label for="descricaoVisita">Descrição da visita <small class="text-muted">(opcional)</small></label>
+								<textarea id="descricaoVisita" class="form-control" rows="2" maxlength="<?= RascunhoEntrada::TAMANHO_MAXIMO_DESCRICAO ?>" placeholder="Ex.: visita da família, entrega de doações"></textarea>
+								<small class="text-muted"><span id="contadorDescricao">0</span>/<?= RascunhoEntrada::TAMANHO_MAXIMO_DESCRICAO ?></small>
 							</div>
 						</div>
-					</div>
-				</section>
+						<footer class="panel-footer etapa-rodape">
+							<button type="button" class="btn btn-default" data-ir-etapa="1"><i class="fa fa-arrow-left" aria-hidden="true"></i> Voltar</button>
+							<button type="button" class="btn btn-primary" data-ir-etapa="3">Próximo: confirmar <i class="fa fa-arrow-right" aria-hidden="true"></i></button>
+						</footer>
+					</section>
 
-				<section class="panel">
-    				<header class="panel-heading">
-        				<h2 class="panel-title">Visitados (<span id="contadorVisitadosSelecionados">0</span>)</h2>
-    				</header>
-
-    				<div class="panel-body" style="display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap;">
-        				<div style="flex:1; min-width:260px;">
-            				<ul id="listaVisitadosSelecionados" style="margin:0; padding:0;">
-                				<li class="text-muted" style="list-style:none;">
-                    				Nenhum visitado selecionado — a visita será registrada para a instituição
-                				</li>
-            				</ul>
-        				</div>
-
-        				<button type="button" id="botaoRegistrarEntradaTopo" class="btn btn-primary">
-            				<i class="fa fa-sign-in"></i>
-            				Registrar Entrada (<span id="contadorVisitadosBotao">instituição</span>)
-        				</button>
-    				</div>
-				</section>
-
-				<!-- start: page -->
-				<section class="panel">
-					<header class="panel-heading">
-						<div class="panel-actions">
-							<a href="#" class="fa fa-caret-down"></a>
+					<!-- Etapa 3: confirmação -->
+					<section class="panel etapa-painel" data-painel="3" hidden>
+						<header class="panel-heading">
+							<h2 class="panel-title">Confira antes de registrar</h2>
+						</header>
+						<div class="panel-body">
+							<dl class="resumo-entrada">
+								<div>
+									<dt>Visitantes <button type="button" class="btn btn-link btn-xs" data-ir-etapa="1">alterar</button></dt>
+									<dd id="resumoVisitantes"></dd>
+								</div>
+								<div>
+									<dt>Visitados <button type="button" class="btn btn-link btn-xs" data-ir-etapa="2">alterar</button></dt>
+									<dd id="resumoVisitados"></dd>
+								</div>
+								<div>
+									<dt>Descrição <button type="button" class="btn btn-link btn-xs" data-ir-etapa="2">alterar</button></dt>
+									<dd id="resumoDescricao"></dd>
+								</div>
+							</dl>
+							<p class="text-muted" id="resumoRegistros"></p>
 						</div>
-						<h2 class="panel-title">Selecione o tipo de visitado:</h2><br>
-						<form method="GET" action="#" id="select_tipo" name="select_tipo" style="display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap;">
-							<select name="select_tipo" id="tipo" aria-label="Tipo de visitado">
-								<option value="todos" selected>Todos</option>
-								<option value="atendido">Atendido</option>
-								<option value="funcionario">Funcionário</option>
-								<option value="pet">Pet</option>
-								<option value="setor">Setor</option>
-								<option value="voluntario">Voluntário</option>
-							</select>
-							<a href="cadastro_visitado.php?origem=entrada" id="linkCadastrarVisitado" class="btn btn-primary">
-								<i class="fa fa-user-plus"></i> Cadastrar visitado
-							</a>
-						</form>
-						<div class="form-group" style="margin-top:15px;">
-							<label for="descricaoVisita">Descrição da visita (opcional):</label>
-							<textarea id="descricaoVisita" name="descricaoVisita" class="form-control" rows="2" maxlength="255" placeholder="Digite uma breve descrição da visita (até 255 caracteres)"></textarea>
+						<footer class="panel-footer etapa-rodape">
+							<button type="button" class="btn btn-default" data-ir-etapa="2"><i class="fa fa-arrow-left" aria-hidden="true"></i> Voltar</button>
+							<button type="button" class="btn btn-success btn-lg" id="botaoRegistrar"><i class="fa fa-sign-in" aria-hidden="true"></i> Registrar entrada</button>
+						</footer>
+					</section>
+
+					<!-- Concluído -->
+					<section class="panel etapa-painel entrada-concluida" data-painel="concluida" hidden>
+						<div class="panel-body text-center">
+							<i class="fa fa-check-circle entrada-concluida-icone" aria-hidden="true"></i>
+							<h3>Entrada registrada</h3>
+							<p id="textoConcluida"></p>
+							<div class="entrada-concluida-acoes">
+								<button type="button" class="btn btn-primary" data-acao="nova"><i class="fa fa-plus" aria-hidden="true"></i> Registrar outra entrada</button>
+								<a href="registro_saida.php" class="btn btn-default"><i class="fa fa-sign-out" aria-hidden="true"></i> Ir para o registro de saída</a>
+							</div>
 						</div>
-					</header>
-					<div class="panel-body">
-						<div id="alertaVisitados"></div>
-						<table class="table table-bordered table-striped mb-none"
-							id="datatable-default" data-plugin-options='{"searchPlaceholder": "Pesquisar"}'>
-							<thead>
-								<tr>
-									<th>Foto</th>
-									<th>Nome</th>
-									<th>Identificador</th>
-									<th class="text-center">Selecionar</th>
-								</tr>
-							</thead>
-							<tbody id="tabela">
-
-							</tbody>
-						</table>
-					</div>
-					<br>
-				</section>
-				<!-- end: page -->
-
-				<!-- Vendor -->
-				<script src="../../assets/vendor/select2/select2.js"></script>
-				<script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-				<script src="../../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
-				<script src="../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
-
-				<!-- Theme Base, Components and Settings -->
-				<script src="../../assets/javascripts/theme.js"></script>
-
-				<!-- Theme Custom -->
-				<script src="../../assets/javascripts/theme.custom.js"></script>
-
-				<!-- Theme Initialization Files -->
-				<script src="../../assets/javascripts/theme.init.js"></script>
-
-
-				<!-- Examples -->
-				<script src="../../assets/javascripts/tables/examples.datatables.default.js"></script>
-				<script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-				<script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
-
-				<div align="right">
-					<iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+					</section>
 				</div>
+
+				<!-- Confirmação de descarte -->
+				<div class="modal fade" id="modalDescartar" tabindex="-1" role="dialog" aria-labelledby="tituloDescartar" aria-hidden="true">
+					<div class="modal-dialog modal-sm" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h4 class="modal-title" id="tituloDescartar">Descartar a entrada?</h4>
+							</div>
+							<div class="modal-body">
+								Os visitantes e visitados escolhidos serão removidos desta entrada. Os cadastros de visitantes feitos nela continuam no sistema.
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-default" data-dismiss="modal">Continuar a entrada</button>
+								<button type="button" class="btn btn-danger" id="confirmarDescarte">Descartar</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- end: page -->
+			</section>
+		</div>
+	</section>
+
+	<script>
+		window.REGISTRO_ENTRADA = {
+			controle: "../../controle/control.php",
+			csrf: <?= json_encode(Csrf::generateToken()) ?>,
+			fotoPadrao: <?= json_encode(WWW . 'img/semfoto.png') ?>
+		};
+	</script>
+	<script src="../../assets/javascripts/theme.js"></script>
+	<script src="../../assets/javascripts/theme.custom.js"></script>
+	<script src="../../assets/javascripts/theme.init.js"></script>
+	<script src="js/registro_entrada.js"></script>
+
+	<div align="right">
+		<iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+	</div>
 </body>
 
 </html>

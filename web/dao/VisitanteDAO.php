@@ -188,6 +188,52 @@ class VisitanteDAO
         }
     }
 
+    /**
+     * Id do visitante com o CPF informado, ou null se o CPF não é de um visitante.
+     */
+    public function buscarIdPorCpf(string $cpf): ?int
+    {
+        $stmt = $this->pdo->prepare("SELECT v.id_visitante FROM visitante v INNER JOIN pessoa p ON p.id_pessoa = v.id_pessoa WHERE p.cpf = :cpf LIMIT 1");
+        $stmt->bindValue(':cpf', $cpf, PDO::PARAM_STR);
+        $stmt->execute();
+        $id = $stmt->fetchColumn();
+
+        return $id === false ? null : (int) $id;
+    }
+
+    /**
+     * Dados de uma pessoa já cadastrada (ainda não visitante) para completar o cadastro de visitante.
+     *
+     * Devolve só o necessário para identificar a pessoa e os campos obrigatórios; do endereço informa apenas quais
+     * campos já estão preenchidos, sem os valores (incluirExistente nunca sobrescreve o que já existe).
+     */
+    public function buscarPessoaParaCadastro(string $cpf): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT nome, sobrenome, sexo, data_nascimento, imagem, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge FROM pessoa WHERE cpf = :cpf LIMIT 1");
+        $stmt->bindValue(':cpf', $cpf, PDO::PARAM_STR);
+        $stmt->execute();
+        $pessoa = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$pessoa) {
+            return null;
+        }
+
+        $preenchido = fn($valor) => $valor !== null && trim((string) $valor) !== '';
+        $endereco = [
+            'cep' => 'cep', 'uf' => 'estado', 'cidade' => 'cidade', 'bairro' => 'bairro', 'rua' => 'logradouro',
+            'numero_residencia' => 'numero_endereco', 'complemento' => 'complemento', 'ibge' => 'ibge',
+        ];
+
+        return [
+            'nome' => $pessoa['nome'],
+            'sobrenome' => $pessoa['sobrenome'],
+            'sexo' => $pessoa['sexo'],
+            'nascimento' => $pessoa['data_nascimento'],
+            'tem_foto' => $preenchido($pessoa['imagem']),
+            'endereco_preenchido' => array_map(fn($coluna) => $preenchido($pessoa[$coluna]), $endereco),
+        ];
+    }
+
     public function buscarResumoPorIds(array $idsVisitante): array
     {
         $ids = array_values(array_unique(array_filter(array_map('intval', $idsVisitante), fn($id) => $id > 0)));
