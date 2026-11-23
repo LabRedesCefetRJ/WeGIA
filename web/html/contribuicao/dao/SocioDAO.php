@@ -334,6 +334,45 @@ class SocioDAO
         return $socio;
     }
 
+    /** Atualiza a periodicidade sem perder pessoa física/jurídica ou forma de pagamento. */
+    public function atualizarModalidadeContribuicao(string $documento, string $modalidade, string $familia): bool
+    {
+        $periodicidades = [
+            'casual' => 0,
+            'mensal' => 2,
+            'bimestral' => 6,
+            'trimestral' => 8,
+            'semestral' => 10,
+        ];
+        $familias = ['boleto' => 0, 'cartao' => 20, 'outros' => 40];
+
+        if (!isset($periodicidades[$modalidade], $familias[$familia])) {
+            throw new InvalidArgumentException('Modalidade ou família de contribuição inválida.');
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT s.id_socio, s.id_sociotipo, p.cpf
+             FROM socio s JOIN pessoa p ON p.id_pessoa = s.id_pessoa
+             WHERE p.cpf = :documento LIMIT 1'
+        );
+        $stmt->execute([':documento' => $documento]);
+        $socio = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$socio) {
+            throw new RuntimeException('Sócio não encontrado para atualização da modalidade.', 404);
+        }
+
+        $tipoAtual = (int) $socio['id_sociotipo'];
+        $digitosDocumento = preg_replace('/\\D/', '', (string) $socio['cpf']);
+        $juridica = strlen($digitosDocumento) === 14 || (strlen($digitosDocumento) !== 11 && ($tipoAtual % 2) === 1);
+        $novoTipo = $familias[$familia] + $periodicidades[$modalidade] + ($juridica ? 1 : 0);
+
+        $update = $this->pdo->prepare('UPDATE socio SET id_sociotipo = :tipo WHERE id_socio = :id');
+        if (!$update->execute([':tipo' => $novoTipo, ':id' => (int) $socio['id_socio']])) {
+            throw new RuntimeException('Não foi possível atualizar a modalidade do sócio.', 500);
+        }
+        return true;
+    }
+
     //refatorar para receber parâmetros via objeto
     public function registrarLog(Socio $socio, string $mensagem, ?string $ip = null, ?string $userAgent = null)
     {

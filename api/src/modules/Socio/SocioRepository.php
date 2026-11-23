@@ -49,6 +49,69 @@ class SocioRepository
         return $result ? (int)$result['id_pessoa'] : null;
     }
 
+    public function updateContributionModality(int $idSocio, string $modality): ?int
+    {
+        $rotulosModalidade = [
+            'casual' => 'Casual',
+            'mensal' => 'Mensal',
+            'bimestral' => 'Bimestral',
+            'trimestral' => 'Trimestral',
+            'semestral' => 'Semestral',
+        ];
+        if (!isset($rotulosModalidade[$modality])) {
+            throw new \InvalidArgumentException('Modalidade de contribuição inválida.');
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT s.id_sociotipo, st.tipo AS tipo_socio, p.cpf
+             FROM socio s
+             INNER JOIN pessoa p ON p.id_pessoa = s.id_pessoa
+             INNER JOIN socio_tipo st ON st.id_sociotipo = s.id_sociotipo
+             WHERE s.id_socio = :id_socio AND s.deletado = 0 LIMIT 1'
+        );
+        $stmt->execute([':id_socio' => $idSocio]);
+        $socio = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$socio) {
+            return null;
+        }
+
+        $tipoAtualRotulo = (string) $socio['tipo_socio'];
+        $digitosDocumento = preg_replace('/\\D/', '', (string) $socio['cpf']);
+        if (str_starts_with($tipoAtualRotulo, 'Jurídica -')) {
+            $categoriaPessoa = 'Jurídica';
+        } elseif (str_starts_with($tipoAtualRotulo, 'Física -')) {
+            $categoriaPessoa = 'Física';
+        } else {
+            $categoriaPessoa = strlen($digitosDocumento) === 14 ? 'Jurídica' : 'Física';
+        }
+
+        if (str_ends_with($tipoAtualRotulo, ' - Cartão')) {
+            $familiaPagamento = 'Cartão';
+        } elseif (str_ends_with($tipoAtualRotulo, ' - Outros')) {
+            $familiaPagamento = 'Outros';
+        } else {
+            // Sócios sem informação de modalidade seguem a família padrão de boleto.
+            $familiaPagamento = 'Boleto';
+        }
+
+        $rotuloDestino = sprintf('%s - %s - %s', $categoriaPessoa, $rotulosModalidade[$modality], $familiaPagamento);
+        $tipoDestinoStmt = $this->db->prepare(
+            'SELECT id_sociotipo FROM socio_tipo WHERE tipo = :tipo LIMIT 1'
+        );
+        $tipoDestinoStmt->execute([':tipo' => $rotuloDestino]);
+        $novoTipo = $tipoDestinoStmt->fetchColumn();
+        if ($novoTipo === false) {
+            throw new \RuntimeException('Modalidade correspondente não cadastrada em socio_tipo.', 500);
+        }
+        $novoTipo = (int) $novoTipo;
+
+        $update = $this->db->prepare('UPDATE socio SET id_sociotipo = :tipo WHERE id_socio = :id_socio');
+        if (!$update->execute([':tipo' => $novoTipo, ':id_socio' => $idSocio])) {
+            throw new \RuntimeException('Não foi possível atualizar a modalidade do sócio.', 500);
+        }
+        return $novoTipo;
+    }
+
     public function findByPessoaId(int $idPessoa): ?array
     {
         $query = "SELECT 

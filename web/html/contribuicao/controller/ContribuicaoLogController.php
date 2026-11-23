@@ -157,6 +157,11 @@ class ContribuicaoLogController
                 $this->pdo->rollBack();
             } else {
                 $contribuicaoLogDao->alterarCodigoPorId($codigoApi, $contribuicaoLog->getId());
+                if ($porEmail) {
+                    $socioDao->atualizarModalidadeContribuicao($documento, 'casual', 'boleto');
+                } elseif (($_POST['tipoGeracao'] ?? null) === '0' && filter_var($_POST['atualizarTipoSocio'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                    $socioDao->atualizarModalidadeContribuicao($documento, 'casual', 'boleto');
+                }
                 $this->pdo->commit();
             }
         } catch (Exception $e) {
@@ -404,6 +409,17 @@ class ContribuicaoLogController
                     $contribuicaoLogDao->alterarCodigoPorId($contribuicao->getCodigo(), $contribuicao->getId());
                 }
 
+                $modalidadeGerada = $porEmail ? 'mensal' : match ((string) ($_POST['tipoGeracao'] ?? '')) {
+                    '1' => 'mensal',
+                    '2' => 'bimestral',
+                    '3' => 'trimestral',
+                    '6' => 'semestral',
+                    default => null,
+                };
+                if ($modalidadeGerada !== null && ($porEmail || filter_var($_POST['atualizarTipoSocio'] ?? false, FILTER_VALIDATE_BOOLEAN))) {
+                    $socioDao->atualizarModalidadeContribuicao($documento, $modalidadeGerada, 'boleto');
+                }
+
                 $this->pdo->commit();
 
                 $primeiraContribuicao = $resultado['contribuicoes']->getIterator()->current();
@@ -503,7 +519,7 @@ class ContribuicaoLogController
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
             }
 
-            $socioDao = new SocioDAO();
+            $socioDao = new SocioDAO($this->pdo);
             $socio = $socioDao->buscarPorDocumento($documento);
 
             if (is_null($socio)) {
@@ -595,6 +611,7 @@ class ContribuicaoLogController
                 $this->pdo->rollBack();
             } else {
                 $contribuicaoLogDao->alterarCodigoPorId($codigoApi, $contribuicaoLog->getId());
+                $socioDao->atualizarModalidadeContribuicao($documento, 'casual', 'outros');
                 $this->pdo->commit();
             }
         } catch (Exception $e) {
@@ -717,6 +734,7 @@ class ContribuicaoLogController
             // Registrar log do sócio
             $mensagem = 'Pagamento com cartão processado - ID: ' . htmlspecialchars($codigoTransacao) . ' - status: ' . $statusPagamento;
             $socioDao->registrarLog($socio, $mensagem, Util::getUserIp(), Util::getUserAgent());
+            $socioDao->atualizarModalidadeContribuicao($documento, 'casual', 'cartao');
 
             $this->pdo->commit();
 

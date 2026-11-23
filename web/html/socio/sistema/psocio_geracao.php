@@ -98,7 +98,6 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
   <!-- Vendor -->
   <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
   <script src="<?php echo WWW; ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
   <script src="<?php echo WWW; ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
   <script src="<?php echo WWW; ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
   <script src="<?php echo WWW; ?>assets/vendor/magnific-popup/magnific-popup.js"></script>

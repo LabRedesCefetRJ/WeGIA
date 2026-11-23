@@ -41,6 +41,11 @@ class SocioService implements SocioServiceInterface
         return $this->socioRepository->getIdPessoaByIdSocio($idSocio);
     }
 
+    public function atualizarModalidadeContribuicao(int $idSocio, string $modalidade): ?int
+    {
+        return $this->socioRepository->updateContributionModality($idSocio, $modalidade);
+    }
+
     public function obterSocioPorPessoaId(int $idPessoa, PessoaInterface $pessoa): ?SocioInterface
     {
         $resultado = $this->socioRepository->findByPessoaId($idPessoa);

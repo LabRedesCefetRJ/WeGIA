@@ -1231,6 +1231,45 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 
 ---
 
+## 18. PATCH `/socios/{id}/modalidade-contribuicao`
+
+Atualiza a modalidade de contribuição do sócio, preservando a classificação de pessoa física/jurídica e a família de forma de pagamento já associadas ao cadastro. Requer token JWT válido. O próprio sócio pode atualizar seu cadastro; para atualizar o cadastro de outra pessoa, o usuário precisa ter acesso ao recurso de sócios validado pelo `SocioMiddleware`.
+
+### Parâmetros
+- **id** (path parameter, obrigatório): ID do sócio
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+- **modalidade** (JSON body, obrigatório): `casual`, `mensal`, `bimestral`, `trimestral` ou `semestral`
+
+### Exemplo de Requisição
+```http
+PATCH /socios/1/modalidade-contribuicao
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+```json
+{
+  "modalidade": "mensal"
+}
+```
+
+### Resposta - 200 OK
+```json
+{
+  "message": "Modalidade de contribuição atualizada com sucesso.",
+  "idSocioTipo": 2
+}
+```
+
+### Erros
+- **400 Bad Request**: ID ou modalidade inválidos.
+- **401 Unauthorized**: Token ausente ou inválido.
+- **403 Forbidden**: Tentativa de atualizar outro sócio sem permissão do módulo de sócios.
+- **404 Not Found**: Sócio não localizado.
+- **500 Internal Server Error**: Falha inesperada ao atualizar a modalidade.
+
+---
+
 ## Observações Gerais
 
 1. **Autenticação das rotas de parceiros**: 

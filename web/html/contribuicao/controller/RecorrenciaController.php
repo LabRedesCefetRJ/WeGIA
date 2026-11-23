@@ -145,6 +145,7 @@ class RecorrenciaController
             // Registrar log do sócio
             $mensagem = 'Assinatura mensal criada - ID:' . htmlspecialchars($codigoAssinatura) . ' - status: ' . $statusAssinatura;
             $socioDao->registrarLog($socio, $mensagem, Util::getUserIp(), Util::getUserAgent());
+            $socioDao->atualizarModalidadeContribuicao($documento, 'mensal', 'cartao');
 
             $this->pdo->commit();
 

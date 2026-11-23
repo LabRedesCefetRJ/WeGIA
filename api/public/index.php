@@ -19,6 +19,7 @@ use api\modules\Auth\UserRepository;
 use api\modules\Auth\JwtBlacklistRepository;
 use api\modules\Socio\SocioRepository;
 use api\modules\Socio\SocioMiddleware;
+use api\modules\Socio\SocioOwnerOrPermissionMiddleware;
 use api\modules\Contribuicao\ContribuicaoController;
 use api\modules\Contribuicao\ContribuicaoService;
 use api\modules\Contribuicao\ContribuicaoRepository;
@@ -126,6 +127,12 @@ $container = new AppContainer([
     },
     SocioMiddleware::class => function ($c) {
         return new SocioMiddleware($c->get(UserRepository::class), 4);
+    },
+    SocioOwnerOrPermissionMiddleware::class => function ($c) {
+        return new SocioOwnerOrPermissionMiddleware(
+            $c->get(SocioRepository::class),
+            $c->get(SocioMiddleware::class)
+        );
     },
     CorsMiddleware::class => function ($c) {
         $origin = defined('CORS_ORIGIN') ? CORS_ORIGIN : '*';
@@ -250,6 +257,10 @@ $app->delete('/socios/parceiros/{id}', [SocioController::class, 'deleteSocioParc
     ->add($container->get(AuthMiddleware::class));
 
 $app->get('/socios/{cpf}', [SocioController::class, 'getSocioByCpf'])
+    ->add($container->get(AuthMiddleware::class));
+
+$app->patch('/socios/{id}/modalidade-contribuicao', [SocioController::class, 'updateContributionModality'])
+    ->add($container->get(SocioOwnerOrPermissionMiddleware::class))
     ->add($container->get(AuthMiddleware::class));
 
 //Módulo Contribuição

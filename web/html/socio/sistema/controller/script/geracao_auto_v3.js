@@ -1,5 +1,4 @@
 $(document).ready(function () {
-
     // Geração para sócio único
     function procurar_desejado(id_socio) {
         $.get("./get_socio.php", {
@@ -175,13 +174,8 @@ $(document).ready(function () {
                     $(".div_btn_gerar").css("display", "block");
 
                     $("#btn_geracao_unica").click(function (event) {
-                        //Ligação com a nova API, posteriormente passar a URL indicando para a refatoração em POO
                         const tipoGeracao = document.getElementById('tipo_geracao').value;
-
-                        const btnGeracaoUnica = event.target;
-
-                        btnGeracaoUnica.disabled = true;
-
+                        const btnGeracaoUnica = event.currentTarget;
                         let url = '';
 
                         switch (tipoGeracao) {
@@ -193,48 +187,57 @@ $(document).ready(function () {
                             default: alert('O tipo de geração escolhido é inválido'); return;
                         }
 
-                        const valor = document.getElementById('valor_u').value;
-                        const socio = document.getElementById('id_pesquisa').value;
-                        const dia = document.getElementById('data_vencimento').value;
-                        const csrfToken = document.getElementsByName('csrf_token').item(0).value;
-                        let parcela = document.getElementById('num_parcelas').value;
+                        const gerar = function (atualizarTipoSocio) {
+                            btnGeracaoUnica.disabled = true;
+                            const valor = document.getElementById('valor_u').value;
+                            const socio = document.getElementById('id_pesquisa').value;
+                            const dia = document.getElementById('data_vencimento').value;
+                            const csrfToken = document.getElementsByName('csrf_token').item(0).value;
+                            let parcela = document.getElementById('num_parcelas').value;
+                            const modo = $('input[name="escolha-modo"]:checked').val();
+                            if (modo === 'fim-ano') parcela = calcularParcelasAteFinalAno(dia, Number(tipoGeracao));
+                            const cpfCnpj = socio.split('|')[1];
 
-                        //verificar se fim-ano está selecionado, caso esteja, o número de parcelas deve ser calculado automaticamente
-                        const modo = $('input[name="escolha-modo"]:checked').val();
-                        if (modo === 'fim-ano') {
-                            parcela = calcularParcelasAteFinalAno(dia, tipo);
+                            $.post(url, {
+                                "documento_socio": cpfCnpj,
+                                "valor": valor,
+                                "dia": dia,
+                                "parcelas": parcela,
+                                "tipoGeracao": tipoGeracao,
+                                "atualizarTipoSocio": atualizarTipoSocio,
+                                "csrf_token": csrfToken
+                            }).done(function (r) {
+                                const resposta = typeof r === 'string' ? JSON.parse(r) : r;
+                                if (resposta.link) {
+                                    window.open(resposta.link, '_blank');
+                                } else if (resposta.erro) {
+                                    alert('Erro: ' + resposta.erro);
+                                } else {
+                                    alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
+                                }
+                            }).fail(function (xhr, status, errorThrown) {
+                                console.error("Erro AJAX:", status, errorThrown);
+                                alert("Erro no servidor: " + (xhr.responseText || "Erro desconhecido"));
+                            }).always(function () {
+                                btnGeracaoUnica.disabled = false;
+                            });
+                        };
+
+                        const modalidadeAtual = mapearTipoGeracao(Number(socios[0].id_sociotipo));
+                        if (modalidadeAtual !== tipoGeracao) {
+                            const modal = $('#modalAtualizarTipoSocio');
+                            document.getElementById('atualizarTipoSocio').onclick = function () {
+                                modal.modal('hide');
+                                gerar(true);
+                            };
+                            document.getElementById('manterTipoSocio').onclick = function () {
+                                modal.modal('hide');
+                                gerar(false);
+                            };
+                            modal.modal('show');
+                            return;
                         }
-
-                        const cpfCnpj = socio.split('|')[1];
-
-                        console.log(dia);
-
-                        $.post(url, {
-                            "documento_socio": cpfCnpj,
-                            "valor": valor,
-                            "dia": dia,
-                            "parcelas": parcela,
-                            "tipoGeracao": tipoGeracao,
-                            "csrf_token": csrfToken
-                        }).done(function (r) {
-                            const resposta = JSON.parse(r);
-                            if (resposta.link) {
-                                console.log(resposta.link);
-                                // Redirecionar o usuário para o link do boleto em uma nova aba
-                                window.open(resposta.link, '_blank');
-                            } else if (resposta.erro) {
-                                alert('Erro: ' + resposta.erro);
-                            } else {
-                                alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
-                            }
-
-                            btnGeracaoUnica.disabled = false;
-                        }).fail(function (xhr, status, errorThrown) {
-                            console.error("Erro AJAX:", status, errorThrown);
-                            alert("Erro no servidor: " + (xhr.responseText || "Erro desconhecido"));
-                        }).always(function () {
-                            btnGeracaoUnica.disabled = false;
-                        });
+                        gerar(false);
                     });
                 } else {
                     alert(`Para gerar carnês/boletos para o sócio desejado você deve completar o cadastro dele primeiro com os seguintes dados: valor por período, data de referência e a periodicidade.`);
@@ -332,11 +335,11 @@ $(document).ready(function () {
     }
 
     function mapearTipoGeracao(id) {
-        if ([0, 1, 20, 21].includes(id)) return "0";
-        if ([2, 3, 22, 23].includes(id)) return "1";
-        if ([6, 7, 24, 25].includes(id)) return "2";
-        if ([8, 9, 26, 27].includes(id)) return "3";
-        if ([10, 11, 28, 29].includes(id)) return "6";
+        if ([0, 1, 20, 21, 40, 41].includes(id)) return "0";
+        if ([2, 3, 22, 23, 42, 43].includes(id)) return "1";
+        if ([6, 7, 24, 25, 44, 45].includes(id)) return "2";
+        if ([8, 9, 26, 27, 46, 47].includes(id)) return "3";
+        if ([10, 11, 28, 29, 48, 49].includes(id)) return "6";
         return "7";
     }
 

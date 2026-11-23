@@ -294,6 +294,38 @@ class SocioController
         }
     }
 
+    public function updateContributionModality(Request $request, Response $response, array $args): Response
+    {
+        $idSocio = filter_var($args['id'] ?? null, FILTER_VALIDATE_INT);
+        $body = $request->getParsedBody();
+        $modality = is_array($body) ? ($body['modalidade'] ?? null) : null;
+
+        if (!$idSocio || $idSocio < 1 || !is_string($modality) || !in_array($modality, ['casual', 'mensal', 'bimestral', 'trimestral', 'semestral'], true)) {
+            $response->getBody()->write(json_encode(['error' => 'Sócio e modalidade válida são obrigatórios.']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        try {
+            $idSocioTipo = $this->socioService->atualizarModalidadeContribuicao((int) $idSocio, $modality);
+            if ($idSocioTipo === null) {
+                $response->getBody()->write(json_encode(['error' => 'Sócio não localizado.']));
+                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'message' => 'Modalidade de contribuição atualizada com sucesso.',
+                'idSocioTipo' => $idSocioTipo,
+            ], JSON_UNESCAPED_UNICODE));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\InvalidArgumentException $e) {
+            $response->getBody()->write(json_encode(['error' => $e->getMessage()], JSON_UNESCAPED_UNICODE));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        } catch (\Throwable $e) {
+            $response->getBody()->write(json_encode(['error' => 'Erro ao atualizar modalidade de contribuição.']));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     public function checkSocioExistsByCpf(Request $request, Response $response, array $args)
     {
         try {

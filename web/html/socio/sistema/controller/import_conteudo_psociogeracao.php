@@ -174,6 +174,21 @@ permissao($_SESSION['id_pessoa'], 4, 7);
 							</div>
 						</form>
 
+				<div class="modal fade" id="modalAtualizarTipoSocio" tabindex="-1" role="dialog" aria-labelledby="modalAtualizarTipoSocioLabel">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h4 class="modal-title" id="modalAtualizarTipoSocioLabel">Atualizar contribuição do sócio?</h4>
+							</div>
+							<div class="modal-body">A modalidade selecionada é diferente da modalidade atual do sócio. Deseja atualizar também o perfil?</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-default" id="manterTipoSocio">Continuar sem alterar</button>
+								<button type="button" class="btn btn-primary" id="atualizarTipoSocio">Sim, atualizar perfil</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
 					</div>
 				</div>
 
