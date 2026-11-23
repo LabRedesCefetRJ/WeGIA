@@ -8,6 +8,8 @@ include_once ROOT . "/dao/Conexao.php";
 include_once ROOT . '/classes/Visitante.php';
 include_once ROOT . '/dao/VisitanteDAO.php';
 require_once ROOT . '/classes/Util.php';
+require_once ROOT . '/html/permissao/permissao.php';
+require_once ROOT . '/classes/FichaRecepcao.php';
 
 class VisitanteControle
 {
@@ -205,6 +207,29 @@ class VisitanteControle
             exit();
         }
         catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    /**
+     * Ficha do visitante (JSON) exibida no histórico de visitas, com CPF e RG mascarados.
+     */
+    public function detalhar()
+    {
+        try {
+            permissao($_SESSION['id_pessoa'], 20, 5);
+
+            $idVisitante = filter_input(INPUT_GET, 'id_visitante', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if (!$idVisitante)
+                throw new InvalidArgumentException('O visitante informado é inválido.', 412);
+
+            $dados = (new VisitanteDAO())->buscarDetalhes($idVisitante);
+            if ($dados === null)
+                throw new InvalidArgumentException('Visitante não encontrado.', 404);
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(FichaRecepcao::visitante($dados), JSON_INVALID_UTF8_SUBSTITUTE);
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }

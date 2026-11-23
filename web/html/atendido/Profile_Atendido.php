@@ -202,6 +202,7 @@ require_once "../../controle/AtendidoControle.php";
   <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
   <!-- Theme Custom CSS -->
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
+  <link rel="stylesheet" href="../../css/recepcao.css">
   <!-- Head Libs -->
   <script src="../../assets/vendor/modernizr/modernizr.js"></script>
   <script src="../../Functions/lista.js"></script>
@@ -842,6 +843,9 @@ require_once "../../controle/AtendidoControle.php";
                 <li>
                   <a href="#ocorrencias" data-toggle="tab">Ocorrências</a>
                 </li>
+                <li>
+                  <a href="#visitas" data-toggle="tab">Visitas</a>
+                </li>
                   <li>
                     <a href="#processo-aceitacao" data-toggle="tab">Processo de Aceitação</a>
                   </li>
@@ -1379,6 +1383,87 @@ require_once "../../controle/AtendidoControle.php";
                         <div>
                           <a href="cadastro_ocorrencia.php?atendido_id=<?= (int)$id ?>" class="btn btn-primary">Cadastrar Ocorrência</a>
                         </div>
+                      </div>
+                    </section>
+                  </div>
+
+                  <div id="visitas" class="tab-pane">
+                    <section class="panel">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a href="#" class="fa fa-caret-down"></a>
+                        </div>
+                        <h2 class="panel-title">Visitas recebidas</h2>
+                      </header>
+                      <div class="panel-body">
+                        <?php
+                        // Visitas registradas pela Recepção em que este atendido foi visitado (issue #2153).
+                        require_once "../../dao/VisitaDAO.php";
+                        $visitasAtendido = (new VisitaDAO($pdo))->listarVisitasDoAtendido((int) $id);
+
+                        $escaparVisita = fn($texto) => htmlspecialchars((string) $texto, ENT_QUOTES, 'UTF-8');
+                        $dataHoraVisita = fn($valor) => (new DateTimeImmutable($valor))->format('d/m/Y H:i');
+
+                        $idsVisitantesAtendido = [];
+                        foreach ($visitasAtendido as $visitaAtendido) {
+                          foreach ($visitaAtendido['visitantes'] as $visitanteAtendido) {
+                            $idsVisitantesAtendido[(int) $visitanteAtendido['id_visitante']] = true;
+                          }
+                        }
+                        ?>
+
+                        <?php if (empty($visitasAtendido)) : ?>
+                          <p class="text-center text-muted">Nenhuma visita registrada para este atendido.</p>
+                        <?php else : ?>
+                          <p class="text-muted">
+                            <i class="fa fa-info-circle" aria-hidden="true"></i>
+                            <?= count($visitasAtendido) ?> <?= count($visitasAtendido) === 1 ? 'visita' : 'visitas' ?>
+                            de <?= count($idsVisitantesAtendido) ?> <?= count($idsVisitantesAtendido) === 1 ? 'visitante' : 'visitantes' ?>.
+                            A última entrada foi em <?= $escaparVisita($dataHoraVisita($visitasAtendido[0]['horario_entrada'])) ?>.
+                            Clique no nome de um visitante para ver a ficha dele.
+                          </p>
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-none tabela-visitas-atendido">
+                              <thead>
+                                <tr>
+                                  <th>Entrada</th>
+                                  <th>Saída</th>
+                                  <th>Visitantes</th>
+                                  <th>Descrição</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <?php foreach ($visitasAtendido as $visitaAtendido) : ?>
+                                  <tr>
+                                    <td class="text-nowrap"><?= $escaparVisita($dataHoraVisita($visitaAtendido['horario_entrada'])) ?></td>
+                                    <td class="text-nowrap">
+                                      <?php if ($visitaAtendido['em_andamento']) : ?>
+                                        <?php $diasVisita = (int) ($visitaAtendido['dias_em_andamento'] ?? 0); ?>
+                                        <span class="label <?= $diasVisita > 0 ? 'label-danger' : 'label-warning' ?>">
+                                          Em andamento<?= $diasVisita > 0 ? ' há ' . $diasVisita . ($diasVisita === 1 ? ' dia' : ' dias') : '' ?>
+                                        </span>
+                                      <?php else : ?>
+                                        <?= $escaparVisita($dataHoraVisita($visitaAtendido['horario_saida'])) ?>
+                                      <?php endif; ?>
+                                    </td>
+                                    <td>
+                                      <?php foreach ($visitaAtendido['visitantes'] as $indiceVisitante => $visitanteAtendido) : ?>
+                                        <?= $indiceVisitante > 0 ? '<br>' : '' ?>
+                                        <a href="#" class="link-visitante-atendido" data-id="<?= (int) $visitanteAtendido['id_visitante'] ?>">
+                                          <?= $escaparVisita(trim($visitanteAtendido['nome'] . ' ' . $visitanteAtendido['sobrenome'])) ?>
+                                        </a>
+                                      <?php endforeach; ?>
+                                    </td>
+                                    <td>
+                                      <?php $descricaoVisita = trim((string) $visitaAtendido['descricao']); ?>
+                                      <?= $descricaoVisita === '' ? '<span class="text-muted">Sem descrição</span>' : $escaparVisita($descricaoVisita) ?>
+                                    </td>
+                                  </tr>
+                                <?php endforeach; ?>
+                              </tbody>
+                            </table>
+                          </div>
+                        <?php endif; ?>
                       </div>
                     </section>
                   </div>
@@ -1921,6 +2006,21 @@ require_once "../../controle/AtendidoControle.php";
         <?php if ($openModal === 'depFormModal'): ?>
           $('#depFormModal').modal('show');
         <?php endif; ?>
+      });
+    </script>
+
+    <!-- Aba Visitas: ficha do visitante (mesmo modal do histórico da Recepção) -->
+    <?php require dirname(__DIR__) . '/recepcao/modal_ficha.php'; ?>
+    <script src="../recepcao/js/ficha_recepcao.js"></script>
+    <script>
+      $(document).on('click', '.link-visitante-atendido', function (evento) {
+        evento.preventDefault();
+        window.FichaRecepcao.abrir('../../controle/control.php', {
+          nomeClasse: 'AtendidoVisitaControle',
+          metodo: 'fichaVisitante',
+          id_atendido: <?= (int) $id ?>,
+          id_visitante: Number($(this).data('id'))
+        }, 'Ficha do visitante');
       });
     </script>
 

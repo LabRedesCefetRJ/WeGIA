@@ -7,13 +7,40 @@ class Visitado
 
     public static function identificadorPessoa(?string $cpf): string
     {
+        $cpfMascarado = self::mascararCpf($cpf);
+
+        return $cpfMascarado === null ? 'CPF não informado' : 'CPF: ' . $cpfMascarado;
+    }
+
+    /**
+     * CPF no formato ***.123.456-** (padrão usado pelo governo para exibição parcial).
+     * Devolve null quando não há um CPF de 11 dígitos.
+     */
+    public static function mascararCpf(?string $cpf): ?string
+    {
         $digitos = preg_replace('/\D/', '', (string) $cpf);
 
         if (strlen($digitos) !== 11) {
-            return 'CPF não informado';
+            return null;
         }
 
-        return 'CPF: ***.' . substr($digitos, 3, 3) . '.' . substr($digitos, 6, 3) . '-**';
+        return '***.' . substr($digitos, 3, 3) . '.' . substr($digitos, 6, 3) . '-**';
+    }
+
+    /**
+     * RG mostrando apenas os 3 últimos caracteres. Devolve null quando não informado.
+     */
+    public static function mascararRg(?string $rg): ?string
+    {
+        $caracteres = preg_replace('/[^0-9A-Za-z]/', '', (string) $rg);
+
+        if ($caracteres === '') {
+            return null;
+        }
+
+        $visiveis = min(3, max(strlen($caracteres) - 3, 1));
+
+        return str_repeat('*', strlen($caracteres) - $visiveis) . substr($caracteres, -$visiveis);
     }
 
     public static function identificadorPet(?string $especie, ?string $raca, ?string $cor, ?string $sexo): string

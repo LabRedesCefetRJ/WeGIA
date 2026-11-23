@@ -12,6 +12,14 @@ if (!isset($_SESSION['usuario'])) {
 require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 9);
 
+// Gerar backup altera estado (grava arquivos no servidor): só por POST e com token CSRF.
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+$csrfToken = $_POST['csrf_token'] ?? null;
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !is_string($csrfToken) || !Csrf::validateToken($csrfToken)) {
+    header("Location: ./configuracao_geral.php?msg=error&err=" . urlencode("Requisição inválida. Recarregue a página e tente novamente."));
+    exit();
+}
+
 require_once "./config_funcoes.php";
 
 /*Buscando arquivo de configuração.. */
@@ -39,7 +47,7 @@ if (PHP_OS != 'Linux') {
             site: backup do site apenas
             default: Backup do banco de dados e do site
     */
-    $action = $_GET['action'] ?? false;
+    $action = $_POST['action'] ?? false;
     if (!$action) {
         $redirect = REDIRECT_URLS[0];
 

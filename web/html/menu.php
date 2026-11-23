@@ -605,18 +605,31 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 					<span>Recepção</span>
 				</a>
 				<ul class="nav nav-children">
-					<li>
-						<a href="<?= WWW ?>html/recepcao/pre_registro_entrada.php">
-							<i class="fa-solid fa-sign-in-alt"></i>
-							<span>Registro de Entrada</span>
+					<!--livro de visitas-->
+					<li class="nav-parent nav-active">
+						<a>
+							<i class="fa-solid fa-book-open" aria-hidden="true"></i>
+							<span>Livro de Visitas</span>
 						</a>
+						<ul class="nav nav-children">
+							<li>
+								<a href="<?= WWW ?>html/recepcao/registro_entrada.php">
+									<span>Registro de Entrada</span>
+								</a>
+							</li>
+							<li>
+								<a href="<?= WWW ?>html/recepcao/registro_saida.php">
+									<span>Registro de Saída</span>
+								</a>
+							</li>
+							<li>
+								<a href="<?= WWW ?>html/recepcao/historico_visitas.php">
+									<span>Histórico de Visitas</span>
+								</a>
+							</li>
+						</ul>
 					</li>
-					<li>
-						<a href="<?= WWW ?>html/recepcao/registro_saida.php">
-							<i class="fa-solid fa-sign-out-alt"></i>
-							<span>Registro de Saída</span>
-						</a>
-					</li>
+					<!--fim livro de visitas-->
 				</ul>
 			</li>
 			<!--fim recepção-->

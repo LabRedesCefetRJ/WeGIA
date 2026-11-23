@@ -8,6 +8,8 @@ include_once ROOT . "/dao/Conexao.php";
 include_once ROOT . '/classes/Visitado.php';
 include_once ROOT . '/dao/VisitadoDAO.php';
 require_once ROOT . '/classes/Util.php';
+require_once ROOT . '/html/permissao/permissao.php';
+require_once ROOT . '/classes/FichaRecepcao.php';
 require_once ROOT . '/controle/VisitanteControle.php';
 
 class VisitadoControle
@@ -72,6 +74,49 @@ class VisitadoControle
 
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode($candidatos, JSON_INVALID_UTF8_SUBSTITUTE);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    /**
+     * Ficha do visitado (JSON) exibida no histórico de visitas. Setor e instituição não têm ficha.
+     */
+    public function detalhar()
+    {
+        try {
+            permissao($_SESSION['id_pessoa'], 20, 5);
+
+            $idVisitado = filter_input(INPUT_GET, 'id_visitado', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if (!$idVisitado)
+                throw new InvalidArgumentException('O visitado informado é inválido.', 412);
+
+            $detalhes = (new VisitadoDAO())->buscarDetalhes($idVisitado);
+            if ($detalhes === null)
+                throw new InvalidArgumentException('Visitado não encontrado.', 404);
+
+            switch ($detalhes['categoria']) {
+                case 'atendido':
+                    $ficha = FichaRecepcao::atendido($detalhes['dados']);
+                    break;
+                case 'funcionario':
+                    $ficha = FichaRecepcao::colaborador($detalhes['dados'], 'Funcionário');
+                    break;
+                case 'voluntario':
+                    $ficha = FichaRecepcao::colaborador($detalhes['dados'], 'Voluntário');
+                    break;
+                case 'pessoa':
+                    $ficha = FichaRecepcao::pessoa($detalhes['dados']);
+                    break;
+                case 'pet':
+                    $ficha = FichaRecepcao::pet($detalhes['dados']);
+                    break;
+                default:
+                    throw new InvalidArgumentException('Este visitado não possui ficha.', 404);
+            }
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($ficha, JSON_INVALID_UTF8_SUBSTITUTE);
         } catch (Exception $e) {
             Util::tratarException($e);
         }

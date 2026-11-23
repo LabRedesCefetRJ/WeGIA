@@ -23,6 +23,7 @@ require_once "../personalizacao_display.php";
 require_once "../geral/msg.php";
 
 require_once "../../config.php";
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 
 function loadDatabaseBackups(string $backupDir): array
 {
@@ -232,7 +233,11 @@ $bkpFiles = loadDatabaseBackups(BKP_DIR);
 						<div class="space-between padding-down">
 							<a href="./configuracao_geral.php" class="btn btn-outline-primary btn-sm"><i class="fa fa-chevron-left" aria-hidden="true"></i> Configurações Gerais</a>
 							<div class="flex">
-								<a href="./backup.php?action=bd" class="btn btn-primary btn-sm">Gerar Backup <i class="fa fa-floppy-o" aria-hidden="true"></i></a>
+								<form method="post" action="./backup.php" style="display: inline;">
+									<?= Csrf::inputField() ?>
+									<input type="hidden" name="action" value="bd">
+									<button type="submit" class="btn btn-primary btn-sm">Gerar Backup <i class="fa fa-floppy-o" aria-hidden="true"></i></button>
+								</form>
 							</div>
 						</div>
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
@@ -296,6 +301,8 @@ $bkpFiles = loadDatabaseBackups(BKP_DIR);
 		window.location.href = btn.firstElementChild.href;
 	}
 
+	const csrfToken = <?= json_encode(Csrf::generateToken()) ?>;
+
 	function confirmDelete(file) {
 		if (window.confirm("ATENÇÃO! Você tem certeza que deseja deletar esse arquivo de backup do sistema?")) {
 			$('.panel form').remove();
@@ -315,6 +322,12 @@ $bkpFiles = loadDatabaseBackups(BKP_DIR);
 				type: "hidden",
 				name: "action",
 				value: "remove"
+			}));
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "csrf_token",
+				value: csrfToken
 			}));
 
 			$('.panel').append(form);
@@ -341,6 +354,12 @@ $bkpFiles = loadDatabaseBackups(BKP_DIR);
 				type: "hidden",
 				name: "action",
 				value: "restore"
+			}));
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "csrf_token",
+				value: csrfToken
 			}));
 
 			$('.panel').append(form);

@@ -422,7 +422,7 @@ class SocioController
                 $resultado['pessoa']->getEmail()
             );
 
-            $statusCode = $verificationResult['success'] ? 200 : 500;
+            $statusCode = $verificationResult['success'] ? 200 : (!empty($verificationResult['rate_limited']) ? 429 : 500);
 
             $response->getBody()->write(json_encode($verificationResult));
 

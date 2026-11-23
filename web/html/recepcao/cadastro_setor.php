@@ -55,6 +55,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
     <!-- Theme Custom CSS -->
     <link rel="stylesheet" href="<?php echo WWW; ?>assets/stylesheets/theme-custom.css">
+    <link rel="stylesheet" href="<?= WWW ?>css/recepcao.css">
 
     <!-- Head Libs -->
     <script src="<?php echo WWW; ?>assets/vendor/modernizr/modernizr.js"></script>
@@ -157,8 +158,9 @@ require_once ROOT . "/html/personalizacao_display.php";
                             <?= Csrf::inputField() ?>
                             <input type="hidden" name="nomeClasse" value="SetorControle">
                             <input type="hidden" name="metodo" value="incluir">
+                            <p class="legenda-obrigatorio">Os campos marcados com <span class="campo-obrigatorio">*</span> são de preenchimento obrigatório.</p>
                             <div class="form-group">
-                                <label for="descricaoSetor" class="col-md-2 control-label">Descrição <span class="required">*</span></label>
+                                <label for="descricaoSetor" class="col-md-2 control-label">Descrição <span class="campo-obrigatorio" aria-hidden="true">*</span></label>
                                 <div class="col-md-6">
                                     <input type="text" class="form-control" id="descricaoSetor" name="descricao" maxlength="<?= Setor::TAMANHO_MAXIMO_DESCRICAO ?>" placeholder="Ex: Secretaria" required autofocus>
                                     <p class="help-block">Até <?= Setor::TAMANHO_MAXIMO_DESCRICAO ?> caracteres. Depois de criado, o setor poderá ser adicionado como visitado.</p>

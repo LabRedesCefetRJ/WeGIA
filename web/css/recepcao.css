@@ -1,0 +1,863 @@
+/* Estilos compartilhados do módulo Recepção */
+
+/* Marcador de campo obrigatório.
+   #b71c1c sobre fundo branco tem contraste de 6.6:1 (WCAG AA para texto normal). */
+.campo-obrigatorio {
+	color: #b71c1c;
+	font-weight: bold;
+	font-size: 1.1em;
+	line-height: 1;
+}
+
+/* Legenda exibida no início dos formulários explicando o marcador */
+.legenda-obrigatorio {
+	margin: 0 0 20px;
+	padding: 8px 12px;
+	border-left: 4px solid #b71c1c;
+	background-color: #fdf3f3;
+	color: #333;
+}
+
+/* ---------- Histórico de visitas (mesmo visual dos boxes do módulo Sócios) ---------- */
+
+.box-recepcao {
+	position: relative;
+	margin-bottom: 20px;
+	background: #fff;
+	border-top: 3px solid #f39c12;
+	border-radius: 3px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.box-recepcao-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 15px;
+	border-bottom: 1px solid #f4f4f4;
+}
+
+.box-recepcao-title {
+	margin: 0;
+	font-size: 18px;
+	color: #444;
+}
+
+.box-recepcao-recolher {
+	color: #97a0b3;
+}
+
+.box-recepcao-body {
+	padding: 15px;
+}
+
+.filtros-historico {
+	margin-bottom: 10px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #f4f4f4;
+}
+
+.filtros-acoes {
+	padding-top: 25px;
+}
+
+.filtros-atalhos .btn {
+	margin: 2px 2px 2px 0;
+}
+
+.dica-historico {
+	margin: 10px 0;
+}
+
+/* Data e hora numa célula só, sem quebrar entre as duas. */
+#tabelaHistorico .coluna-horario {
+	white-space: nowrap;
+}
+
+.hora-historico {
+	margin-left: 4px;
+	font-weight: 600;
+}
+
+#tabelaHistorico tbody tr:not(.linha-detalhes) {
+	cursor: pointer;
+}
+
+#tabelaHistorico .coluna-expandir {
+	width: 30px;
+}
+
+#tabelaHistorico .botao-expandir .fa {
+	transition: transform 0.15s;
+}
+
+#tabelaHistorico tr.linha-aberta .botao-expandir .fa {
+	transform: rotate(90deg);
+}
+
+.mais-itens {
+	margin-left: 2px;
+	color: #666;
+	white-space: nowrap;
+}
+
+.detalhes-entrada {
+	padding: 5px 10px;
+}
+
+.detalhes-entrada h5 {
+	margin-top: 0;
+	font-weight: bold;
+}
+
+.lista-detalhes {
+	padding-left: 18px;
+	margin-bottom: 10px;
+}
+
+.lista-detalhes li {
+	margin-bottom: 4px;
+}
+
+.box-recepcao-acoes {
+	margin-top: 15px;
+}
+
+.btn-app-recepcao {
+	display: inline-block;
+	min-width: 90px;
+	height: 60px;
+	margin: 0 10px 10px 0;
+	padding: 10px 8px;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	background-color: #f4f4f4;
+	color: #444;
+	font-size: 12px;
+	text-align: center;
+}
+
+.btn-app-recepcao > .fa {
+	display: block;
+	font-size: 20px;
+	margin-bottom: 4px;
+}
+
+.btn-app-recepcao:hover,
+.btn-app-recepcao:focus {
+	background-color: #e7e7e7;
+	border-color: #aaa;
+	color: #444;
+}
+
+/* Ficha (modal) */
+
+/* Paleta do WeGIA (assets/stylesheets/theme.css e skins/default.css). */
+.modal-ficha {
+	--wegia-primaria: #0088cc;
+	--wegia-primaria-escura: #006699;
+	--wegia-primaria-clara: #e6f3fa;
+	--wegia-primaria-borda: #cce7f5;
+	--wegia-secundaria: #e36159;
+	--wegia-terciaria: #2baab1;
+	--wegia-quaternaria: #734ba9;
+	--wegia-sucesso: #47a447;
+	--wegia-escuro: #1d2127;
+	--wegia-texto-suave: #777777;
+}
+
+.modal-ficha .modal-content {
+	position: relative;
+	overflow: hidden;
+	border: 0;
+	border-radius: 10px;
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.ficha-fechar {
+	position: absolute;
+	top: 12px;
+	right: 16px;
+	z-index: 2;
+	font-size: 26px;
+	opacity: 0.55;
+}
+
+.ficha-fechar:hover,
+.ficha-fechar:focus {
+	opacity: 0.9;
+}
+
+.ficha-cabecalho {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	padding: 24px 48px 20px 24px;
+	background: linear-gradient(135deg, var(--wegia-primaria-clara) 0%, #ffffff 70%);
+	border-top: 4px solid var(--wegia-primaria);
+	border-bottom: 1px solid var(--wegia-primaria-borda);
+}
+
+.ficha-avatar {
+	flex: 0 0 auto;
+	width: 84px;
+	height: 84px;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 3px solid #fff;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ficha-avatar-vazio {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--wegia-primaria);
+	color: #fff;
+	font-size: 30px;
+	font-weight: 600;
+	letter-spacing: 1px;
+}
+
+.ficha-identificacao {
+	min-width: 0;
+}
+
+.ficha-nome {
+	margin-bottom: 6px;
+	font-size: 21px;
+	font-weight: 600;
+	line-height: 1.25;
+	color: var(--wegia-escuro);
+	overflow-wrap: anywhere;
+}
+
+.ficha-tipo {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	background: rgba(0, 136, 204, 0.12);
+	color: var(--wegia-primaria-escura);
+}
+
+.ficha-tipo-atendido { background: rgba(43, 170, 177, 0.15); color: #1d7f85; }
+.ficha-tipo-funcionario { background: rgba(115, 75, 169, 0.13); color: var(--wegia-quaternaria); }
+.ficha-tipo-voluntario { background: rgba(71, 164, 71, 0.15); color: #357a35; }
+.ficha-tipo-pet { background: rgba(227, 97, 89, 0.14); color: #b8423b; }
+
+.ficha-corpo {
+	padding: 16px 20px 6px;
+	background: #f6f7f9;
+	max-height: 60vh;
+	overflow-y: auto;
+}
+
+.ficha-secao {
+	margin-bottom: 14px;
+	padding: 14px 16px 6px;
+	background: #fff;
+	border: 1px solid #e8eaee;
+	border-radius: 8px;
+}
+
+.ficha-secao h5 {
+	margin: 0 0 12px;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--wegia-escuro);
+}
+
+.ficha-secao h5 .fa {
+	width: 18px;
+	margin-right: 4px;
+	color: var(--wegia-primaria);
+	text-align: center;
+}
+
+.ficha-grade {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0 20px;
+	margin: 0;
+}
+
+.ficha-campo {
+	margin-bottom: 10px;
+	min-width: 0;
+}
+
+.ficha-campo-largo {
+	grid-column: 1 / -1;
+}
+
+.ficha-campo dt {
+	margin-bottom: 2px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--wegia-texto-suave);
+}
+
+.ficha-campo dd {
+	margin: 0;
+	font-size: 14px;
+	color: var(--wegia-escuro);
+	overflow-wrap: anywhere;
+}
+
+.ficha-vazio {
+	color: #a3a8ae;
+	font-style: italic;
+}
+
+.ficha-acao {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	margin-left: 8px;
+	padding: 2px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	vertical-align: middle;
+	text-decoration: none;
+}
+
+.ficha-acao:hover,
+.ficha-acao:focus {
+	text-decoration: none;
+	filter: brightness(0.95);
+}
+
+.ficha-acao-whatsapp { background: var(--wegia-sucesso); color: #fff; }
+.ficha-acao-whatsapp:hover, .ficha-acao-whatsapp:focus { color: #fff; }
+.ficha-acao-email { background: rgba(0, 136, 204, 0.12); color: var(--wegia-primaria-escura); }
+.ficha-acao-email:hover, .ficha-acao-email:focus { color: var(--wegia-primaria-escura); }
+
+.ficha-estado {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	padding: 48px 24px;
+	color: var(--wegia-texto-suave);
+	text-align: center;
+	border-top: 4px solid var(--wegia-primaria);
+}
+
+.ficha-estado .fa {
+	font-size: 26px;
+}
+
+.ficha-estado-erro {
+	color: var(--wegia-secundaria);
+}
+
+.ficha-rodape {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	background: #fff;
+}
+
+/* O clearfix do Bootstrap vira um item vazio no flex e empurra o aviso. */
+.ficha-rodape::before,
+.ficha-rodape::after {
+	display: none;
+}
+
+.ficha-rodape .btn {
+	margin-left: auto;
+}
+
+.ficha-aviso {
+	font-size: 12px;
+	color: var(--wegia-texto-suave);
+	text-align: left;
+}
+
+@media (max-width: 480px) {
+	.ficha-cabecalho {
+		padding: 20px 44px 16px 16px;
+		gap: 14px;
+	}
+
+	.ficha-avatar {
+		width: 64px;
+		height: 64px;
+	}
+
+	.ficha-avatar-vazio {
+		font-size: 22px;
+	}
+
+	.ficha-nome {
+		font-size: 18px;
+	}
+
+	.ficha-corpo {
+		padding: 12px 12px 2px;
+		max-height: none;
+	}
+
+	.ficha-grade {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.ficha-acao {
+		margin: 4px 0 0;
+		display: flex;
+		width: fit-content;
+	}
+}
+
+/* ---------- Registro de entrada em etapas (registro_entrada.php) ---------- */
+
+.registro-entrada {
+	--wegia-primaria: #0088cc;
+	--wegia-primaria-escura: #006699;
+	--wegia-primaria-clara: #e6f3fa;
+	--wegia-primaria-borda: #cce7f5;
+	--wegia-secundaria: #e36159;
+	--wegia-sucesso: #47a447;
+	--wegia-escuro: #1d2127;
+	--wegia-texto-suave: #777777;
+}
+
+.registro-entrada [hidden] {
+	display: none !important;
+}
+
+.etapas-entrada {
+	background: #fff;
+	border-radius: 6px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+	margin-bottom: 12px;
+	padding: 10px 14px 8px;
+}
+
+.etapas-entrada ol {
+	display: flex;
+	gap: 8px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.etapas-entrada li {
+	flex: 1;
+}
+
+.etapa-botao {
+	align-items: center;
+	background: none;
+	border: 0;
+	border-radius: 6px;
+	color: var(--wegia-texto-suave);
+	display: flex;
+	gap: 10px;
+	padding: 4px 6px;
+	text-align: left;
+	width: 100%;
+}
+
+.etapa-botao:not(:disabled):hover,
+.etapa-botao:focus-visible {
+	background: var(--wegia-primaria-clara);
+	outline: none;
+}
+
+.etapa-botao:disabled {
+	cursor: not-allowed;
+	opacity: .55;
+}
+
+.etapa-numero {
+	align-items: center;
+	border: 2px solid #ccc;
+	border-radius: 50%;
+	display: inline-flex;
+	flex-shrink: 0;
+	font-size: 12px;
+	font-weight: 700;
+	height: 26px;
+	justify-content: center;
+	width: 26px;
+}
+
+.etapa-texto strong {
+	display: block;
+	font-size: 13px;
+}
+
+.etapa-texto small {
+	display: block;
+	font-size: 11px;
+}
+
+.etapas-entrada li.atual .etapa-numero {
+	background: var(--wegia-primaria);
+	border-color: var(--wegia-primaria);
+	color: #fff;
+}
+
+.etapas-entrada li.atual .etapa-texto strong {
+	color: var(--wegia-escuro);
+}
+
+.etapas-entrada li.concluida .etapa-numero {
+	background: var(--wegia-primaria-clara);
+	border-color: var(--wegia-primaria);
+	color: var(--wegia-primaria-escura);
+}
+
+.etapas-progresso {
+	background: #eee;
+	border-radius: 3px;
+	height: 3px;
+	margin: 8px 0 6px;
+	overflow: hidden;
+}
+
+.etapas-progresso span {
+	background: var(--wegia-primaria);
+	display: block;
+	height: 100%;
+	transition: width .3s ease;
+	width: 0;
+}
+
+.etapas-status {
+	color: var(--wegia-texto-suave);
+	display: flex;
+	flex-wrap: wrap;
+	font-size: 12px;
+	justify-content: space-between;
+	margin: 0;
+}
+
+.etapas-salvo {
+	color: var(--wegia-sucesso);
+}
+
+.entrada-retomada .btn-link {
+	padding: 0 0 0 6px;
+	vertical-align: baseline;
+}
+
+.etapa-rodape {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: space-between;
+}
+
+.etapa-rodape::before,
+.etapa-rodape::after {
+	display: none;
+}
+
+.etapa-rodape > :last-child {
+	margin-left: auto;
+}
+
+.texto-perigo,
+.texto-perigo:hover {
+	color: var(--wegia-secundaria);
+}
+
+.busca-cpf {
+	margin-bottom: 10px;
+	max-width: 420px;
+}
+
+.cartao-visitante,
+.lista-entrada li,
+.lista-visitados label {
+	align-items: center;
+	display: flex;
+	gap: 12px;
+}
+
+.cartao-visitante {
+	background: var(--wegia-primaria-clara);
+	border: 1px solid var(--wegia-primaria-borda);
+	border-radius: 6px;
+	margin-bottom: 12px;
+	padding: 8px 12px;
+}
+
+.cartao-visitante .btn,
+.cartao-visitante .label,
+.lista-entrada li .btn {
+	margin-left: auto;
+}
+
+.lista-foto {
+	border-radius: 50%;
+	flex-shrink: 0;
+	height: 32px;
+	object-fit: cover;
+	width: 32px;
+}
+
+.lista-nome {
+	color: var(--wegia-escuro);
+	font-weight: 600;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.lista-nome small {
+	color: var(--wegia-texto-suave);
+	display: block;
+	font-weight: 400;
+}
+
+.lista-titulo {
+	border-top: 1px solid #eee;
+	font-size: 14px;
+	margin: 12px 0 4px;
+	padding-top: 10px;
+}
+
+.lista-titulo .badge {
+	background: var(--wegia-primaria);
+}
+
+.lista-entrada,
+.lista-visitados {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.lista-entrada li {
+	border-bottom: 1px solid #f0f0f0;
+	padding: 5px 0;
+}
+
+.lista-vazia {
+	color: var(--wegia-texto-suave);
+	padding: 10px 0;
+}
+
+.cadastro-visitante {
+	background: #f9fafb;
+	border: 1px solid #e5e7ea;
+	border-radius: 6px;
+	margin-bottom: 8px;
+	padding: 12px;
+}
+
+.cadastro-visitante h4 {
+	margin-top: 0;
+}
+
+.cadastro-foto {
+	border-radius: 50%;
+	display: block;
+	height: 80px;
+	margin: 0 auto 6px;
+	object-fit: cover;
+	width: 80px;
+}
+
+.cadastro-foto-botao {
+	margin-bottom: 12px;
+}
+
+.control-label-like {
+	display: block;
+	font-weight: 700;
+	margin-bottom: 5px;
+}
+
+.cadastro-sexo .radio-inline {
+	padding-top: 6px;
+}
+
+.cadastro-endereco legend {
+	border: 0;
+	font-size: 14px;
+	font-weight: 700;
+	margin-bottom: 8px;
+}
+
+.cadastro-acoes {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+}
+
+.visitados-escolhidos {
+	margin-bottom: 10px;
+}
+
+.chip-visitado {
+	background: var(--wegia-primaria-clara);
+	border: 1px solid var(--wegia-primaria-borda);
+	border-radius: 14px;
+	color: var(--wegia-primaria-escura);
+	display: inline-block;
+	font-weight: 600;
+	margin: 2px 4px 2px 0;
+	padding: 3px 4px 3px 10px;
+}
+
+.chip-visitado button {
+	background: none;
+	border: 0;
+	color: inherit;
+	font-size: 16px;
+	line-height: 1;
+	padding: 0 4px;
+}
+
+.chip-vazio {
+	color: var(--wegia-texto-suave);
+	font-style: italic;
+}
+
+.lista-visitados {
+	border: 1px solid #e5e7ea;
+	border-radius: 6px;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.lista-visitados li {
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.lista-visitados li:last-child {
+	border-bottom: 0;
+}
+
+.lista-visitados .lista-vazia {
+	padding: 12px;
+}
+
+.lista-visitados label {
+	cursor: pointer;
+	font-weight: 400;
+	margin: 0;
+	padding: 5px 10px;
+	width: 100%;
+}
+
+.lista-visitados input[type=checkbox] {
+	flex-shrink: 0;
+	height: 18px;
+	margin: 0;
+	width: 18px;
+}
+
+.lista-visitados li.marcado {
+	background: var(--wegia-primaria-clara);
+}
+
+.cadastro-visitado-dica {
+	font-size: 12px;
+	margin: 6px 0 12px;
+}
+
+.resumo-entrada {
+	display: grid;
+	gap: 10px;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	margin-bottom: 8px;
+}
+
+.resumo-entrada > div {
+	background: #f9fafb;
+	border: 1px solid #e5e7ea;
+	border-radius: 6px;
+	padding: 8px 12px;
+}
+
+.resumo-entrada dt {
+	color: var(--wegia-texto-suave);
+	font-size: 11.5px;
+	letter-spacing: .4px;
+	text-transform: uppercase;
+}
+
+.resumo-entrada dt .btn-link {
+	float: right;
+	font-size: 11.5px;
+	padding: 0;
+	text-transform: none;
+}
+
+.resumo-entrada dd {
+	color: var(--wegia-escuro);
+	margin-top: 4px;
+	overflow-wrap: anywhere;
+}
+
+.entrada-concluida .panel-body {
+	padding: 20px 16px;
+}
+
+.entrada-concluida-icone {
+	color: var(--wegia-sucesso);
+	font-size: 40px;
+}
+
+.entrada-concluida-acoes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: center;
+	margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+	.etapa-texto small {
+		display: none;
+	}
+
+	.etapas-entrada ol {
+		gap: 2px;
+	}
+
+	.etapa-botao {
+		flex-direction: column;
+		gap: 4px;
+		text-align: center;
+	}
+}
+
+.busca-cpf .input-group-btn .btn {
+	align-items: center;
+	display: inline-flex;
+	gap: 6px;
+	height: 34px;
+	white-space: nowrap;
+}
+
+/* Botão "Cadastrar visitado" alinhado aos campos de filtro (que têm rótulo acima). */
+.filtros-acao {
+	padding-top: 27px;
+}
+
+.lista-nome,
+.lista-nome small {
+	line-height: 1.35;
+}
+
+@media (max-width: 767px) {
+	.filtros-acao {
+		padding-top: 0;
+	}
+
+	.filtros-acao .btn {
+		margin-bottom: 4px;
+	}
+}
