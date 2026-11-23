@@ -19,7 +19,12 @@ require_once dirname(__FILE__, 2) . '/html/geral/msg.php';
 
 class FuncionarioControle
 {
+    private PDO $pdo;
 
+    public function __construct(?PDO $pdo = null)
+    {
+        isset($pdo) ? $this->pdo = $pdo : $this->pdo = Conexao::connect();
+    }
     /**
      * Recebe uma data no formato dd/mm/yyyy e retorna no formato yyyy/mm/dd
      */
@@ -565,6 +570,10 @@ class FuncionarioControle
         if ((!isset($nome)) || (empty($nome))) {
             $nome = 'Pessoa existente';
         }
+        /*error_log("Escala: " . $escala);
+        error_log("Tipo de Carga Horária: " . $tipoCargaHoraria);
+        exit();*/
+
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = '';
         }
@@ -1185,9 +1194,6 @@ class FuncionarioControle
         }
     }
 
-
-
-
     public function incluirExistente()
     {
         $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -1197,8 +1203,6 @@ class FuncionarioControle
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
             $funcionario = $this->verificarExistente();
-            //error_log("Verificando campos do RG: " ."rg" . $funcionario->getRegistroGeral() . "orgao_emissor" . $funcionario->getOrgaoEmissor() . "data_expedicao" . $funcionario->getDataExpedicao());
-            //exit();
             $idPessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
             $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
 
@@ -1208,9 +1212,31 @@ class FuncionarioControle
             if (!empty($dataAdmissao) && !empty($dataNascimento)) {
                 $this->validarDataAdmissao($dataNascimento, $dataAdmissao);
             }
+            $escala = filter_input(INPUT_POST, 'escala', FILTER_SANITIZE_NUMBER_INT);
+            $tipoCargaHoraria = filter_input(INPUT_POST, 'tipoCargaHoraria', FILTER_SANITIZE_NUMBER_INT);  
 
-            $funcionarioDAO = new FuncionarioDAO();
-            $funcionarioDAO->incluirExistente($funcionario, $idPessoa, $sobrenome);
+
+            /*error_log("Escala: " . $escala);
+            error_log("Tipo de Carga Horária: " . $tipoCargaHoraria);*/
+        
+
+            $quadroHorario = new QuadroHorario();
+            $quadroHorario->setTipo($tipoCargaHoraria);
+            $quadroHorario->setEscala($escala);
+
+            $this->pdo->beginTransaction();
+            
+            $funcionarioDAO = new FuncionarioDAO($this->pdo);
+            $idFuncionario = $funcionarioDAO->incluirExistente($funcionario, $idPessoa, $sobrenome);
+            if(!$idFuncionario){
+                throw new PDOException('Erro ao buscar o id do funcionário recém cadastrado.', 500);
+            }
+            $quadroHorarioDAO = new QuadroHorarioDAO($this->pdo);
+            $resultado = $quadroHorarioDAO->incluirFuncionarioExistente($quadroHorario, $idFuncionario);
+            if(!$resultado){
+                throw new PDOException("Erro ao cadastrar funcionário existente.");
+            }
+            $this->pdo->commit();
 
             $_SESSION['proxima'] = "Cadastrar outro funcionario";
             $_SESSION['link'] = "../html/funcionario/cadastro_funcionario.php";
@@ -1218,6 +1244,9 @@ class FuncionarioControle
         }
         catch (InvalidArgumentException $e) {
             setSessionFormData($_POST);
+            if($this->pdo->inTransaction()){
+                $this->pdo->rollBack();
+            }
             $fieldErrors = [];
             $message = $e->getMessage();
             if (stripos($message, 'data de admissão') !== false || stripos($message, 'idade mínima') !== false || stripos($message, 'admissão') !== false) {
@@ -1233,6 +1262,9 @@ class FuncionarioControle
             exit();
         }
         catch (PDOException $e) {
+            if($this->pdo->inTransaction()){
+                $this->pdo->rollBack();
+            }
             error_log("Erro ao cadastrar funcionário existente: " . $e->getFile() . ":" . $e->getLine() . " - " . $e->getMessage());
             $message = $e->getCode() == 23000 ? 'CPF já cadastrado no sistema.' : 'Erro ao cadastrar funcionário.';
             setSessionFormData($_POST);
@@ -1242,6 +1274,9 @@ class FuncionarioControle
             exit();
         }
         catch (Exception $e) {
+            if($this->pdo->inTransaction()){
+                $this->pdo->rollBack();
+            }
             Util::tratarException($e);
         }
     }
