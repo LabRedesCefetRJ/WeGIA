@@ -98,8 +98,12 @@ require_once "../personalizacao_display.php";
 			return d.toLocaleString("pt-BR");
 		}
 
+		function escaparHtml(texto) {
+			return $("<div>").text(texto == null ? "" : String(texto)).html();
+		}
+
 		function nomeCompleto(item) {
-			return [item.nome, item.sobrenome].filter(Boolean).join(" ");
+			return escaparHtml([item.nome, item.sobrenome].filter(Boolean).join(" "));
 		}
 
 		const iconesTipo = {
@@ -118,7 +122,7 @@ require_once "../personalizacao_display.php";
 		}
 
 		function itemDetalhe(item) {
-			const identificador = item.identificador && item.identificador.trim() !== "" ? item.identificador : "—";
+			const identificador = item.identificador && item.identificador.trim() !== "" ? escaparHtml(item.identificador) : "—";
 			return `
 				<li class="list-group-item">
 					<div style="display:flex; align-items:flex-start; gap:10px;">
@@ -149,31 +153,57 @@ require_once "../personalizacao_display.php";
 			$("#modalDetalhesVisita").modal("show");
 		}
 
-		function registrarSaida(indice) {
-			const grupo = gruposPorIndice[indice];
-			if (!grupo) return;
+		const CSRF_TOKEN = <?= json_encode(Csrf::generateToken()) ?>;
+		let grupoSaida = null;
 
-			const csrfField = <?= json_encode(Csrf::inputField()) ?>;
-
-			let camposIdVisita = "";
-			grupo.ids_visita.forEach(function (id) {
-				camposIdVisita += `<input type="hidden" name="idVisita[]" value="${id}">`;
-			});
-
-			const formHtml = `
-				<form method="POST" action="../../controle/control.php" id="formRegistrarSaidaLote" style="display:none;">
-					${csrfField}
-					<input type="hidden" name="nomeClasse" value="VisitaControle">
-					<input type="hidden" name="metodo" value="encerrar">
-					${camposIdVisita}
-				</form>
-			`;
-
-			$("#formRegistrarSaidaLote").remove();
-			$("body").append(formHtml);
-			$("#formRegistrarSaidaLote").trigger("submit");
+		function mostrarAvisoSaida(tipo, texto) {
+			$("#avisoSaida").html(
+				`<div class="alert alert-${tipo} alert-dismissible" role="alert">
+					<button type="button" class="close" data-dismiss="alert" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+					${escaparHtml(texto)}
+				</div>`
+			);
 		}
 
+		// Pede confirmação antes de registrar, mostrando quem está saindo.
+		function registrarSaida(indice) {
+			grupoSaida = gruposPorIndice[indice];
+			if (!grupoSaida) return;
+			$("#confirmarSaidaVisitantes").html(grupoSaida.visitantes.map(nomeCompleto).join(", "));
+			$("#confirmarSaidaVisitados").html(grupoSaida.visitados.map(nomeCompleto).join(", "));
+			$("#confirmarSaidaEntrada").text(formatarDataHora(grupoSaida.horario_entrada));
+			$("#modalConfirmarSaida").modal("show");
+		}
+
+		// Registra a saída sem recarregar a página (RegistroVisitaControle::registrarSaida).
+		async function confirmarSaida() {
+			if (!grupoSaida) return;
+			const $botao = $("#botaoConfirmarSaida").prop("disabled", true);
+			const dados = new FormData();
+			dados.set("nomeClasse", "RegistroVisitaControle");
+			dados.set("metodo", "registrarSaida");
+			dados.set("csrf_token", CSRF_TOKEN);
+			dados.set("ids_visita", grupoSaida.ids_visita.join(","));
+
+			try {
+				const resposta = await fetch("../../controle/control.php", { method: "POST", body: dados, credentials: "same-origin", headers: { Accept: "application/json" } });
+				if (!(resposta.headers.get("Content-Type") || "").includes("application/json"))
+					throw new Error("Sua sessão expirou ou você não tem permissão para esta ação. Recarregue a página.");
+				const json = await resposta.json();
+				if (!resposta.ok)
+					throw new Error(json.erro || "Não foi possível registrar a saída.");
+
+				const nomes = $("<div>").html(grupoSaida.visitantes.map(nomeCompleto).join(", ")).text();
+				mostrarAvisoSaida("success", `Saída de ${nomes} registrada às ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}.`);
+			} catch (erro) {
+				mostrarAvisoSaida("danger", erro.message);
+			} finally {
+				$botao.prop("disabled", false);
+				$("#modalConfirmarSaida").modal("hide");
+				grupoSaida = null;
+				carregar();
+			}
+		}
 		function carregar() {
 
 			$.ajax({
@@ -220,6 +250,7 @@ require_once "../personalizacao_display.php";
             $(".menuu").load("../menu.php");
 
 			carregar();
+			$("#botaoConfirmarSaida").on("click", confirmarSaida);
         });
 	</script>
 </head>
@@ -261,6 +292,7 @@ require_once "../personalizacao_display.php";
 					}
 				?>
 				</header>
+				<div id="avisoSaida" aria-live="polite"></div>
 				<section class="panel">
 					<header class="panel-heading">
 						<div class="panel-actions">
@@ -313,6 +345,25 @@ require_once "../personalizacao_display.php";
 					<iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
 				</div>
 
+				<div class="modal fade" id="modalConfirmarSaida" tabindex="-1" role="dialog" aria-labelledby="tituloConfirmarSaida" aria-hidden="true">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+								<h4 class="modal-title" id="tituloConfirmarSaida"><i class="fa fa-sign-out"></i> Registrar saída agora?</h4>
+							</div>
+							<div class="modal-body">
+								<p><strong>Visitante(s):</strong> <span id="confirmarSaidaVisitantes"></span></p>
+								<p><strong>Visitado(s):</strong> <span id="confirmarSaidaVisitados"></span></p>
+								<p class="text-muted" style="margin:0;">Entrada em <span id="confirmarSaidaEntrada"></span>. A saída fica registrada com o horário atual.</p>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+								<button type="button" class="btn btn-primary" id="botaoConfirmarSaida"><i class="fa fa-sign-out"></i> Registrar saída</button>
+							</div>
+						</div>
+					</div>
+				</div>
 				<div class="modal fade" id="modalDetalhesVisita" tabindex="-1" role="dialog" aria-hidden="true">
 					<div class="modal-dialog modal-lg" role="document">
 						<div class="modal-content">

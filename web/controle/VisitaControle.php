@@ -9,6 +9,7 @@ include_once ROOT . '/classes/Visita.php';
 include_once ROOT . '/dao/VisitaDAO.php';
 include_once ROOT . '/dao/VisitadoDAO.php';
 require_once ROOT . '/classes/Util.php';
+require_once ROOT . '/html/permissao/permissao.php';
 
 class VisitaControle
 {
@@ -169,5 +170,90 @@ class VisitaControle
         } catch (Exception $e) {
             Util::tratarException($e);
         }
+    }
+
+    /**
+     * Histórico de entradas e saídas (JSON) para a página historico_visitas.php.
+     */
+    public function listarHistorico()
+    {
+        try {
+            permissao($_SESSION['id_pessoa'], 20, 5);
+
+            $filtros = self::lerFiltrosHistorico($_GET);
+            $grupos = (new VisitaDAO())->listarHistorico($filtros);
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($grupos, JSON_INVALID_UTF8_SUBSTITUTE);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    /**
+     * Valida os filtros do histórico de visitas (usados pela listagem e pelo relatório em PDF).
+     *
+     * @throws InvalidArgumentException (412) quando algum filtro é inválido.
+     */
+    public static function lerFiltrosHistorico(array $fonte): array
+    {
+        $texto = function (string $campo) use ($fonte): string {
+            return is_string($fonte[$campo] ?? null) ? trim($fonte[$campo]) : '';
+        };
+
+        $filtros = [];
+
+        foreach (['data_inicio' => 'inicial', 'data_fim' => 'final'] as $campo => $rotulo) {
+            $valor = $texto($campo);
+            if ($valor === '') {
+                continue;
+            }
+
+            $data = DateTimeImmutable::createFromFormat('!Y-m-d', $valor);
+            if (!$data || $data->format('Y-m-d') !== $valor) {
+                throw new InvalidArgumentException("A data {$rotulo} informada é inválida.", 412);
+            }
+
+            $filtros[$campo] = $valor;
+        }
+
+        if (isset($filtros['data_inicio'], $filtros['data_fim']) && $filtros['data_inicio'] > $filtros['data_fim']) {
+            throw new InvalidArgumentException('A data inicial não pode ser posterior à data final.', 412);
+        }
+
+        $referencia = $texto('referencia');
+        if ($referencia !== '') {
+            if (!in_array($referencia, VisitaDAO::REFERENCIAS_PERIODO, true)) {
+                throw new InvalidArgumentException('A referência do período informada é inválida.', 412);
+            }
+            $filtros['referencia'] = $referencia;
+        }
+
+        $idVisitado = $texto('id_visitado');
+        if ($idVisitado !== '') {
+            $id = filter_var($idVisitado, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($id === false) {
+                throw new InvalidArgumentException('O visitado informado é inválido.', 412);
+            }
+            $filtros['id_visitado'] = $id;
+        }
+
+        $categoria = $texto('categoria');
+        if ($categoria !== '') {
+            if (!in_array($categoria, VisitaDAO::CATEGORIAS_VISITADO, true)) {
+                throw new InvalidArgumentException('O tipo de visitado informado é inválido.', 412);
+            }
+            $filtros['categoria'] = $categoria;
+        }
+
+        $situacao = $texto('situacao');
+        if ($situacao !== '') {
+            if (!in_array($situacao, [VisitaDAO::SITUACAO_EM_ANDAMENTO, VisitaDAO::SITUACAO_ENCERRADA], true)) {
+                throw new InvalidArgumentException('A situação informada é inválida.', 412);
+            }
+            $filtros['situacao'] = $situacao;
+        }
+
+        return $filtros;
     }
 }

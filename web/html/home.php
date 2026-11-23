@@ -927,9 +927,20 @@ require_once ROOT . "/html/geral/msg.php";
 				</div>
 				<!--fim da parte interna de #contribuicao-->
 				<!--parte interna de #recepcao-->
-				<div class="row">
+				<div class="row category-row-second">
 					<div id="recepcao" class="collapse">
-						<a href="<?= WWW ?>html/recepcao/pre_registro_entrada.php">
+						<a href="#">
+							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#livro-visitas">
+								<i class="fas fa-book-open"></i>
+								<h4>Livro de Visitas</h4>
+							</div>
+						</a>
+					</div>
+				</div>
+
+				<div class="row category-row-third">
+					<div id="livro-visitas" class="removeIn collapse">
+						<a href="<?= WWW ?>html/recepcao/registro_entrada.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fas fa-sign-in-alt"></i>
 								<h4>Registro de Entrada</h4>
@@ -939,6 +950,12 @@ require_once ROOT . "/html/geral/msg.php";
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fas fa-sign-out-alt"></i>
 								<h4>Registro de Saída</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/recepcao/historico_visitas.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fas fa-clock-rotate-left"></i>
+								<h4>Histórico de Visitas</h4>
 							</div>
 						</a>
 					</div>

@@ -10,10 +10,13 @@ class VisitadoDAO
     private PDO $pdo;
 
     private const VINCULOS = [
-        'atendido' => ['tabela' => 'atendido', 'campoPessoa' => 'pessoa_id_pessoa', 'rotulo' => 'Atendido'],
-        'funcionario' => ['tabela' => 'funcionario', 'campoPessoa' => 'id_pessoa', 'rotulo' => 'Funcionário'],
-        'voluntario' => ['tabela' => 'voluntario', 'campoPessoa' => 'id_pessoa', 'rotulo' => 'Voluntário'],
+        'atendido' => ['tabela' => 'atendido', 'campoPessoa' => 'pessoa_id_pessoa', 'campoSituacao' => 'atendido_status_idatendido_status', 'rotulo' => 'Atendido'],
+        'funcionario' => ['tabela' => 'funcionario', 'campoPessoa' => 'id_pessoa', 'campoSituacao' => 'id_situacao', 'rotulo' => 'Funcionário'],
+        'voluntario' => ['tabela' => 'voluntario', 'campoPessoa' => 'id_pessoa', 'campoSituacao' => 'id_situacao', 'rotulo' => 'Voluntário'],
     ];
+
+    /** Id da situação "Inativo" em atendido_status e em situacao (o login usa o mesmo valor). */
+    private const SITUACAO_INATIVO = 2;
 
     private const CPF_ADMIN = 'admin';
 
@@ -41,7 +44,11 @@ class VisitadoDAO
         return $tipo;
     }
 
-    private function condicaoVinculo(string $aliasPessoa, ?string $filtro = null): string
+    /**
+     * Condição SQL que exige que a pessoa tenha o vínculo (atendido, funcionário ou voluntário).
+     * Com $somenteAtivos, o vínculo precisa estar em uma situação diferente de inativo.
+     */
+    private function condicaoVinculo(string $aliasPessoa, ?string $filtro = null, bool $somenteAtivos = true): string
     {
         if ($filtro !== null && $filtro !== '') {
             if (!isset(self::VINCULOS[$filtro])) {
@@ -52,8 +59,11 @@ class VisitadoDAO
             $vinculos = array_values(self::VINCULOS);
         }
 
-        $condicoes = array_map(function ($v) use ($aliasPessoa) {
-            return "EXISTS (SELECT 1 FROM {$v['tabela']} WHERE {$v['tabela']}.{$v['campoPessoa']} = {$aliasPessoa}.id_pessoa)";
+        $condicoes = array_map(function ($v) use ($aliasPessoa, $somenteAtivos) {
+            $situacao = $somenteAtivos
+                ? " AND {$v['tabela']}.{$v['campoSituacao']} <> " . self::SITUACAO_INATIVO
+                : '';
+            return "EXISTS (SELECT 1 FROM {$v['tabela']} WHERE {$v['tabela']}.{$v['campoPessoa']} = {$aliasPessoa}.id_pessoa{$situacao})";
         }, $vinculos);
 
         return '(' . implode(' OR ', $condicoes) . ')';
@@ -99,6 +109,9 @@ class VisitadoDAO
             $stmtElegivel->execute();
 
             if ($stmtElegivel->fetchColumn() === false) {
+                if ($campo === 'id_pessoa' && $this->pessoaComVinculoInativo($id, $tipo)) {
+                    throw new InvalidArgumentException(self::VINCULOS[$tipo]['rotulo'] . ' inativo não pode ser cadastrado como visitado.', 412);
+                }
                 throw new InvalidArgumentException($mensagemInexistente, 404);
             }
 
@@ -122,6 +135,54 @@ class VisitadoDAO
         } catch (Exception $e) {
             $this->pdo->rollBack();
             throw $e;
+        }
+    }
+
+    private function pessoaComVinculoInativo(int $idPessoa, string $tipo): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT 1 FROM pessoa p WHERE p.id_pessoa = :id AND " . $this->condicaoVinculo('p', $tipo, false) . " LIMIT 1");
+        $stmt->bindValue(':id', $idPessoa, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
+     * Garante que todos os visitados informados ainda podem receber visitas:
+     * a instituição, pets, setores ativos e pessoas com algum vínculo ativo.
+     *
+     * @throws InvalidArgumentException (412) quando algum visitado não existe ou está inativo.
+     */
+    public function validarElegiveis(array $idsVisitado): void
+    {
+        $idsVisitado = array_values(array_unique(array_filter(array_map('intval', $idsVisitado), fn($id) => $id > 0)));
+
+        if (empty($idsVisitado)) {
+            return;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($idsVisitado), '?'));
+
+        $sql = "SELECT COUNT(*)
+                FROM visitado v
+                LEFT JOIN pessoa p ON p.id_pessoa = v.id_pessoa
+                LEFT JOIN setor s ON s.id_setor = v.id_setor AND s.status = " . Setor::STATUS_ATIVO . "
+                WHERE v.id_visitado IN ($placeholders)
+                  AND (
+                        (v.id_pessoa IS NULL AND v.id_pet IS NULL AND v.id_setor IS NULL)
+                     OR v.id_pet IS NOT NULL
+                     OR s.id_setor IS NOT NULL
+                     OR (p.id_pessoa IS NOT NULL AND " . $this->condicaoVinculo('p') . ")
+                  )";
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($idsVisitado as $i => $idVisitado) {
+            $stmt->bindValue($i + 1, $idVisitado, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+
+        if ((int) $stmt->fetchColumn() !== count($idsVisitado)) {
+            throw new InvalidArgumentException('Um ou mais visitados selecionados não existem ou estão inativos. Atualize a lista e selecione novamente.', 412);
         }
     }
 
@@ -279,5 +340,82 @@ class VisitadoDAO
         }
 
         return $visitados;
+    }
+
+    /**
+     * Dados do visitado para a ficha do histórico de visitas.
+     *
+     * Devolve ['categoria' => atendido|funcionario|voluntario|pessoa|pet|setor|instituicao, 'dados' => array]
+     * ou null quando o visitado não existe. Setor e instituição não têm ficha e vêm com 'dados' vazio.
+     */
+    public function buscarDetalhes(int $idVisitado): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT id_pessoa, id_pet, id_setor FROM visitado WHERE id_visitado = :id");
+        $stmt->bindValue(':id', $idVisitado, PDO::PARAM_INT);
+        $stmt->execute();
+        $visitado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($visitado === false) {
+            return null;
+        }
+
+        if ($visitado['id_pet'] !== null) {
+            $stmtPet = $this->pdo->prepare("
+                SELECT pet.nome, pet.sexo, especie.descricao AS especie, raca.descricao AS raca, cor.descricao AS cor, foto.arquivo_foto_pet AS imagem
+                FROM pet
+                LEFT JOIN pet_especie especie ON especie.id_pet_especie = pet.id_pet_especie
+                LEFT JOIN pet_raca raca ON raca.id_pet_raca = pet.id_pet_raca
+                LEFT JOIN pet_cor cor ON cor.id_pet_cor = pet.id_pet_cor
+                LEFT JOIN pet_foto foto ON foto.id_pet_foto = pet.id_pet_foto
+                WHERE pet.id_pet = :id
+            ");
+            $stmtPet->bindValue(':id', (int) $visitado['id_pet'], PDO::PARAM_INT);
+            $stmtPet->execute();
+            $pet = $stmtPet->fetch(PDO::FETCH_ASSOC);
+
+            return $pet === false ? null : ['categoria' => 'pet', 'dados' => $pet];
+        }
+
+        if ($visitado['id_pessoa'] === null) {
+            return ['categoria' => $visitado['id_setor'] !== null ? 'setor' : 'instituicao', 'dados' => []];
+        }
+
+        $idPessoa = (int) $visitado['id_pessoa'];
+
+        $consultas = [
+            'atendido' => "SELECT p.nome, p.sobrenome, p.cpf, p.data_nascimento, p.imagem, tipo.descricao AS atendido_tipo, st.status AS atendido_status
+                           FROM atendido a
+                           INNER JOIN pessoa p ON p.id_pessoa = a.pessoa_id_pessoa
+                           LEFT JOIN atendido_tipo tipo ON tipo.idatendido_tipo = a.atendido_tipo_idatendido_tipo
+                           LEFT JOIN atendido_status st ON st.idatendido_status = a.atendido_status_idatendido_status
+                           WHERE a.pessoa_id_pessoa = :id LIMIT 1",
+            'funcionario' => "SELECT p.nome, p.sobrenome, p.cpf, p.imagem, c.cargo, s.situacoes AS situacao
+                              FROM funcionario f
+                              INNER JOIN pessoa p ON p.id_pessoa = f.id_pessoa
+                              LEFT JOIN cargo c ON c.id_cargo = f.id_cargo
+                              LEFT JOIN situacao s ON s.id_situacao = f.id_situacao
+                              WHERE f.id_pessoa = :id LIMIT 1",
+            'voluntario' => "SELECT p.nome, p.sobrenome, p.cpf, p.imagem, c.cargo, s.situacoes AS situacao
+                             FROM voluntario vo
+                             INNER JOIN pessoa p ON p.id_pessoa = vo.id_pessoa
+                             LEFT JOIN cargo c ON c.id_cargo = vo.id_cargo
+                             LEFT JOIN situacao s ON s.id_situacao = vo.id_situacao
+                             WHERE vo.id_pessoa = :id LIMIT 1",
+            'pessoa' => "SELECT p.nome, p.sobrenome, p.cpf, p.imagem FROM pessoa p WHERE p.id_pessoa = :id",
+        ];
+
+        // Mesma ordem de prioridade da categoria usada no histórico (VisitaDAO).
+        foreach ($consultas as $categoria => $sql) {
+            $stmtPessoa = $this->pdo->prepare($sql);
+            $stmtPessoa->bindValue(':id', $idPessoa, PDO::PARAM_INT);
+            $stmtPessoa->execute();
+            $dados = $stmtPessoa->fetch(PDO::FETCH_ASSOC);
+
+            if ($dados !== false) {
+                return ['categoria' => $categoria, 'dados' => $dados];
+            }
+        }
+
+        return null;
     }
 }
