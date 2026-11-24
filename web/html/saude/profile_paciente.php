@@ -695,6 +695,46 @@ try {
       gerar_alergia();
     }
 
+    const LIMITE_CARACTERES = 30;
+
+    function truncarTexto(texto, limite = LIMITE_CARACTERES) {
+      texto = String(texto || "");
+      if (texto.length <= limite) {
+        return { texto: texto, truncado: false };
+      }
+      return { texto: texto.slice(0, limite).trimEnd() + "...", truncado: true };
+    }
+
+    function criarCelulaTruncada(conteudoCompleto, isHtml = false) {
+      const td = $("<td style='vertical-align: middle;'>");
+      const div = $("<div>");
+      const { texto, truncado } = truncarTexto(conteudoCompleto);
+
+      if (isHtml) {
+        div.html(texto);
+      } else {
+        div.text(texto);
+      }
+
+      if (truncado) {
+        div.addClass("texto-truncado")
+          .attr("title", "Clique para ver o texto completo")
+          .on("click", function(e) {
+            e.stopPropagation();
+            $(this).toggleClass("expandido");
+            const expandido = $(this).hasClass("expandido");
+            const conteudo = expandido ? conteudoCompleto : texto;
+            if (isHtml) {
+              $(this).html(conteudo);
+            } else {
+              $(this).text(conteudo);
+            }
+          });
+      }
+
+      return td.append(div);
+    }
+
     //descricao medica 
     $(function() {
       var descricao_medica = <?= $descricao_medica ?>;
@@ -711,7 +751,7 @@ try {
 
         tr.append($("<td>").text(item.medicoNome));
         tr.append($("<td>").text(item.enfermeiraNome + (item.enfermeiraSobrenome ? ' ' + item.enfermeiraSobrenome : '')));
-        tr.append($("<td>").html(item.descricao));
+        tr.append(criarCelulaTruncada(item.descricao, true));
         tr.append($("<td>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento));
         tr.append(
           $("<td class='coluna-status'>")
@@ -865,8 +905,8 @@ try {
         $("#exibimed")
           .append($("<tr>")
             .append($("<td style='text-align: center; vertical-align: middle;'>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento))
-            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.medicamento + ", " + item.dosagem + ", " + (item.horarios || 'Livre') + (item.duracao ? ", " + item.duracao : "") + "."))
-            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.descricao))
+            .append(criarCelulaTruncada(item.medicamento + ", " + item.dosagem + ", " + (item.horarios || 'Livre') + (item.duracao ? ", " + item.duracao : "") + "."))
+            .append(criarCelulaTruncada(item.descricao))
             .append($("<td style='text-align: center; vertical-align: middle;'>")
               .append($("<a onclick='editarStatusMedico(" + item.id_medicacao + ")' href='#'title='Editar'><button class='btn btn-primary' id='teste'><i class='glyphicon glyphicon-pencil'></i></button></a>"))
             )
@@ -907,12 +947,6 @@ try {
           console.error("Erro ao carregar aplicações:", err);
         });
     })
-
-
-    $(function() {
-      // DataTables removido dessas tabelas dinâmicas para evitar conflito
-      // de largura/renderização quando a aba ainda está oculta.
-    });
 
     function escrevermed() {
 
@@ -1137,6 +1171,110 @@ try {
       align-items: center;
       justify-content: center;
       font-size: 16px;
+    }
+
+    #historico_medico .table-responsive {
+      overflow-x: hidden !important;
+      table-layout: fixed;
+    }
+
+    #historico_medico table {
+      table-layout: fixed;
+      width: 100% !important;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    #historico_medico table th,
+    #historico_medico table td {
+      white-space: normal;
+      word-break: normal;
+      overflow-wrap: break-word;
+      vertical-align: middle;
+    }
+
+    /* Cabeçalhos: centralizados, com quebra por palavra (sem divisão silábica) */
+    #historico_medico table th {
+      text-align: center;
+      white-space: normal;
+      word-break: normal;
+      overflow-wrap: break-word;
+    }
+
+    /* Atendimento: larguras por coluna */
+    #de-tab th:nth-child(1),
+    #de-tab td:nth-child(1) /* Médico */ {
+      width: 12%;
+    }
+
+    #de-tab th:nth-child(2),
+    #de-tab td:nth-child(2) /* Registro */ {
+      width: 8%;
+    }
+
+    #de-tab th:nth-child(4),
+    #de-tab td:nth-child(4) /* Data */ {
+      width: 15%;
+    }
+
+    #de-tab th:nth-child(5),
+    #de-tab td:nth-child(5) /* Status */ {
+      width: 7%;
+    }
+
+    #de-tab th:nth-child(6),
+    #de-tab td:nth-child(6), /* Motivo */
+    #de-tab th:nth-child(7),
+    #de-tab td:nth-child(7)  /* Anulador */ {
+      width: 12%;
+    }
+
+    #de-tab th:nth-child(3),
+    #de-tab td:nth-child(3) /* Descrições */ {
+      width: 34%;
+    }
+
+    /* Medicações: dá mais espaço para Medicações */
+    #exibimed th:nth-child(1),
+    #exibimed td:nth-child(1) /* Data */ {
+      width: 15%;
+    }
+
+    #exibimed th:nth-child(3),
+    #exibimed td:nth-child(3) /* Status */ {
+      width: 9%;
+    }
+
+    #exibimed th:nth-child(2),
+    #exibimed td:nth-child(2) /* Medicações */ {
+      width: 62%;
+    }
+
+    /* Coluna de ações estreita e sem quebra (botões) */
+    #historico_medico table th.coluna-acao,
+    #historico_medico table td.coluna-acao,
+    #historico_medico table td:nth-last-child(1),
+    #historico_medico table th:nth-last-child(1) {
+      width: 70px;
+      white-space: nowrap;
+    }
+
+    /* Texto truncado com reticências */
+    .texto-truncado {
+      display: -webkit-box;
+      -webkit-line-clamp: 6;
+      line-clamp: 6;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+
+    .texto-truncado.expandido {
+      display: block;
+      -webkit-line-clamp: unset;
+      line-clamp: unset;
+      overflow: visible;
     }
 
   </style>
