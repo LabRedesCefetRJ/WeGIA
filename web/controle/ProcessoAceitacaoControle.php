@@ -147,9 +147,8 @@ class ProcessoAceitacaoControle
             if (isset($id_pessoa)) {
                 $processoExistente = $processoDAO->buscarProcessoAtivoPorPessoa($id_pessoa);
                 if ($processoExistente !== null) {
-                    $statusNome = $processoExistente['status_nome'] ?? 'em andamento';
                     throw new InvalidArgumentException(
-                        "Já existe um processo de aceitação associado a $nome $sobrenome, portador do CPF $cpf. " . 'Não é permitido cadastrar um novo processo para a mesma pessoa.',409);
+                        "Já existe um processo de aceitação associado a essa pessoa, não é permitido cadastrar um novo processo.",409);
                 }
             }
 
@@ -192,7 +191,7 @@ class ProcessoAceitacaoControle
 
             $mensagem = $e instanceof PDOException ? 'Erro ao manipular o banco de dados da aplicação.' : $e->getMessage();
             setSessionFormData($_POST);
-            setSessionFormErrorFromMessage($mensagem);
+            setSessionFormErrorFromMessage($mensagem, $e->getCode() === 409 ? 'cpf' : 'global');
             setSessionOpenModal('modalNovoProcesso');
             setSessionMsg($mensagem, 'err');
 
