@@ -1319,8 +1319,13 @@ class FuncionarioControle
                 $erros[] = "Sexo do funcionário é obrigatório.";
             if (!isset($nascimento) || trim($nascimento) === '')
                 $erros[] = "Data de nascimento é obrigatória.";
-            if (!isset($telefone) || trim($telefone) === '')
-                $erros[] = "Telefone do funcionário é obrigatório.";
+            if (isset($telefone) && trim($telefone) !== ''){
+                $telefone = Util::validarTelefone($telefone);
+                if(!$telefone){
+                    $erros[] = "Telefone inválido.";
+                }
+            }
+                
 
             if (!empty($erros)) {
                 setSessionMsg(implode(' ', $erros), 'err');
