@@ -1,4 +1,6 @@
 <?php
+header('Content-Type: text/html; charset=UTF-8');
+
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE)
   session_start();
@@ -80,6 +82,7 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
 
   <!-- Basic -->
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
   <title>Histórico dos prontuários</title>
 
@@ -295,7 +298,7 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
       })
     }
 
-    const prontuarios = <?= json_encode($prontuariosDoHistorico); ?>;
+    const prontuarios = <?= json_encode($prontuariosDoHistorico, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE); ?>;
 
     document.addEventListener("DOMContentLoaded", gerarOptions(prontuarios, "historicoOpcao"))
 
@@ -360,7 +363,7 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
       });
 
       const tdDescricao = document.getElementById('descricao_historico');
-      tdDescricao.textContent = descricaoCompleta;
+      tdDescricao.innerHTML = descricaoCompleta;
 
       const tableProntuario = document.getElementById('table-prontuario');
 
