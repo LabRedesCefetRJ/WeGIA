@@ -8,24 +8,32 @@ if(!$meioPagamentoController->verificarStatus('Recorrencia', true)){
 }
 
 $title = 'Apoio Mensal - Pagamento Recorrente';
+$useBootstrap5Contribution = true;
+$publicsFiles = ['css' => ['contribution-refresh.css']];
 require_once './templates/header.php';
 
 $textoTipoContribuicao = 'ASSINATURA MENSAL';
 $tipoContribuicao = 'Apoio Mensal';
 
 ?>
-<div class="container-contact100">
-    <div class="wrap-contact100">
+<div class="container-contact100 contribution-page">
+    <div class="wrap-contact100 contribution-card">
 
         <!--Adiciona a logo e o título ao topo da página-->
         <?php include('./components/contribuicao_brand.php'); ?>
 
-        <p class="text-center">Campos obrigatórios <span class="obrigatorio">*</span></p>
-        <p class="text-center text-info">
-            <small><i class="fa fa-info-circle"></i> Esta é uma assinatura mensal que será cobrada automaticamente todos os meses</small>
-        </p>
+        <div class="contribution-feedback-region" aria-live="polite" aria-atomic="true"></div>
+        <header class="contribution-page-heading">
+            <h1 class="h2"><i class="fa fa-refresh" aria-hidden="true"></i> Apoio mensal recorrente</h1>
+            <p>Preencha seus dados com segurança para configurar sua contribuição mensal.</p>
+        </header>
+        <div class="alert alert-info contribution-recurring-note" role="note">
+            <i class="fa fa-info-circle" aria-hidden="true"></i>
+            Esta assinatura será cobrada automaticamente todos os meses.
+        </div>
+        <p class="contribution-required-note"><i class="fa fa-info-circle" aria-hidden="true"></i> Campos obrigatórios marcados com <span class="obrigatorio">*</span>.</p>
 
-        <form id="formulario">
+        <form id="formulario" class="contribution-form" autocomplete="off">
             <input type="hidden" name="forma-contribuicao" id="forma-contribuicao" value="boleto">
             <?= Csrf::inputField() ?>
 
@@ -61,31 +69,30 @@ $tipoContribuicao = 'Apoio Mensal';
                 <div class="text-center">
                     <div id="loading" class="mt-4 mb-4">
                         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                            <span class="sr-only">Carregando...</span>
+                            <span class="visually-hidden">Carregando...</span>
                         </div>
                         <h3 class="mt-3">Criando sua assinatura...</h3>
                         <p class="text-muted">Processando dados da assinatura mensal</p>
                     </div>
                     <div id="payment-result" class="mt-4 hidden">
-                        <div id="success-message" class="alert alert-success p-4">
+                        <div id="success-message" class="alert alert-success p-4" role="status">
                             <div class="d-flex justify-content-center mb-3">
-                                <i id="success-icon" class="fa fa-check-circle fa-4x text-success"></i>
+                                <i id="success-icon" class="fa fa-check-circle fa-4x text-primary" aria-hidden="true"></i>
                             </div>
-                            <h3 id="success-title" class="text-success">Assinatura criada com sucesso!</h3>
+                            <h3 id="success-title" class="text-primary">Assinatura criada com sucesso!</h3>
                             <p id="success-text">Agradecemos pelo seu apoio mensal!</p>
                         </div>
-                        <div id="error-message" class="alert alert-danger p-4 hidden">
+                        <div id="error-message" class="alert alert-danger p-4 hidden" role="alert">
                             <div class="d-flex justify-content-center mb-3">
-                                <i class="fa fa-exclamation-triangle fa-4x text-danger"></i>
+                                <i class="fa fa-exclamation-triangle fa-4x text-danger" aria-hidden="true"></i>
                             </div>
                             <h4 class="text-danger">Erro na Assinatura</h4>
                             <p class="mt-2" id="error-text"></p>
                         </div>
                     </div>
                     <div class="container-contact100-form-btn">
-                        <button type="button" class="contact100-form-btn btn-voltar" id="volta-endereco">
-                            <i style="margin-right: 15px; " class="fa fa-long-arrow-left m-l-7" aria-hidden="true"></i>
-                            VOLTAR
+                        <button type="button" class="btn btn-outline-secondary" id="volta-endereco">
+                            <i class="fa fa-arrow-left me-2" aria-hidden="true"></i> Voltar
                         </button>
                     </div>
                 </div>
@@ -100,7 +107,6 @@ $tipoContribuicao = 'Apoio Mensal';
      ativo para este meio de pagamento é o Mercado Pago. -->
 <script src="https://sdk.mercadopago.com/js/v2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
-<script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 <script src="../vendor/select2/select2.min.js"></script>
 <script src="../public/js/util.js?v=<?= filemtime(dirname(__FILE__) . '/../public/js/util.js') ?>"></script>
 <script src="../public/js/tokenizacao_cartao.js?v=<?= filemtime(dirname(__FILE__) . '/../public/js/tokenizacao_cartao.js') ?>"></script>

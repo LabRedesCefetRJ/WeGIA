@@ -8,22 +8,30 @@ if (!$meioPagamentoController->verificarStatus('Pix', true)) {
 }
 
 $title = 'Emitir QRCode';
+$useBootstrap5Contribution = true;
+$publicsFiles = ['css' => ['contribution-refresh.css']];
 require_once './templates/header.php';
 
 $textoTipoContribuicao = 'GERAR QRCode';
 $tipoContribuicao = 'QRCode';
+$iconeTipoContribuicao = 'fa-qrcode';
 
 ?>
 
-<div class="container-contact100" id="pix-page">
-    <div class="wrap-contact100">
+<div class="container-contact100 contribution-page" id="pix-page">
+    <div class="wrap-contact100 contribution-card">
 
         <!--Adiciona a logo e o título ao topo da página-->
         <?php include('./components/contribuicao_brand.php'); ?>
 
-        <p id="instrucao" class="text-center">Campos obrigatórios <span class="obrigatorio">*</span></p>
+        <div class="contribution-feedback-region" aria-live="polite" aria-atomic="true"></div>
+        <header class="contribution-page-heading">
+            <h1 class="h2"><i class="fa fa-qrcode" aria-hidden="true"></i> Contribua com PIX</h1>
+            <p>Preencha seus dados em etapas e gere o QR Code ou código copia e cola.</p>
+        </header>
+        <p id="instrucao" class="contribution-required-note"><i class="fa fa-info-circle" aria-hidden="true"></i> Campos obrigatórios marcados com <span class="obrigatorio">*</span>.</p>
 
-        <form id="formulario" autocomplete="off">
+        <form id="formulario" class="contribution-form" autocomplete="off">
             <?= Csrf::inputField() ?>
 
             <input type="hidden" name="forma-contribuicao" id="forma-contribuicao" value="boleto">
@@ -57,16 +65,14 @@ $tipoContribuicao = 'QRCode';
 
         </form>
 
-        <div class="wrap-input100 mt-5 hidden text-center" id="qrcode-div">
-            <h4>Escaneie seu QRCode, <br> ou então clique no nosso copia e cola!</h4>
+        <div class="wrap-input100 contribution-result mt-5 hidden text-center" id="qrcode-div" aria-live="polite">
+            <h2 class="h4"><i class="fa fa-mobile" aria-hidden="true"></i> Escaneie o QR Code ou copie o código PIX</h2>
         </div>
     </div>
 
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
-
-<script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 
 <script src="../vendor/select2/select2.min.js"></script>
 <script src="../public/js/util.js"></script>

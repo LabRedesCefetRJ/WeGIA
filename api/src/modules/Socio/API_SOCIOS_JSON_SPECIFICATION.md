@@ -1303,6 +1303,128 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 
 ---
 
+## 18. GET `/socios/configuration`
+
+Lista as configurações do módulo de sócios. Requer autenticação JWT e permissão de acesso ao recurso de sócios.
+
+### Resposta - 200 OK
+```json
+{
+  "configurations": [
+    {
+      "id": 1,
+      "type": "video_demonstration",
+      "value": "https://www.youtube.com/embed/VIDEO_ID"
+    }
+  ]
+}
+```
+
+Quando não houver configurações, `configurations` será um array vazio.
+
+### Resposta - 401 Unauthorized / 403 Forbidden
+As respostas seguem os formatos definidos pelos middlewares de autenticação e permissão.
+
+## 19. POST `/socios/configuration`
+
+Cria uma configuração do módulo de sócios. Requer autenticação JWT e permissão de acesso ao recurso de sócios.
+
+### Requisição
+```json
+{
+  "type": "video_demonstration",
+  "value": "https://www.youtube.com/embed/VIDEO_ID"
+}
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `type` | string | Sim | Tipo de configuração. Atualmente, somente `video_demonstration` é aceito |
+| `value` | string | Sim | URL HTTP ou HTTPS de incorporação, com até 512 caracteres |
+
+### Resposta - 201 Created
+```json
+{
+  "configuration": {
+    "id": 1,
+    "type": "video_demonstration",
+    "value": "https://www.youtube.com/embed/VIDEO_ID"
+  }
+}
+```
+
+### Resposta - 400 Bad Request
+Retornada quando os campos obrigatórios estiverem ausentes ou quando o tipo ou URL forem inválidos.
+
+### Resposta - 409 Conflict
+```json
+{
+  "error": "Já existe uma configuração para esse tipo."
+}
+```
+
+## 20. PUT `/socios/configuration`
+
+Atualiza uma configuração existente. Requer autenticação JWT e permissão de acesso ao recurso de sócios. O corpo usa os mesmos campos do POST; `type` identifica a configuração.
+
+### Resposta - 200 OK
+```json
+{
+  "configuration": {
+    "id": 1,
+    "type": "video_demonstration",
+    "value": "https://www.youtube.com/embed/NEW_VIDEO_ID"
+  }
+}
+```
+
+### Resposta - 400 Bad Request / 404 Not Found
+Retornada para campos ou URLs inválidos, ou quando não existir configuração com o tipo informado.
+
+## 21. DELETE `/socios/configuration`
+
+Remove uma configuração existente. Requer autenticação JWT e permissão de acesso ao recurso de sócios.
+
+### Requisição
+```json
+{
+  "type": "video_demonstration"
+}
+```
+
+### Resposta - 200 OK
+```json
+{
+  "message": "Configuração removida com sucesso."
+}
+```
+
+### Resposta - 400 Bad Request / 404 Not Found
+Retornada quando `type` estiver ausente ou inválido, ou quando a configuração não existir.
+
+## 22. GET `/socios/video_demonstration`
+
+Obtém publicamente a URL do vídeo de demonstração usada na página de formas de contribuição. Não requer autenticação.
+
+### Resposta - 200 OK
+```json
+{
+  "type": "video_demonstration",
+  "value": "https://www.youtube.com/embed/VIDEO_ID"
+}
+```
+
+Se o vídeo ainda não tiver sido configurado, `value` será `null`.
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "error": "Erro ao processar a configuração do sócio."
+}
+```
+
+---
+
 **Data de Geração**: 21 de maio de 2026  
 **Versão API**: 1.1  
 **Status**: Desenvolvimento

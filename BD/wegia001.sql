@@ -1239,6 +1239,19 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `wegia`.`socio_configuration`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`socio_configuration` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `type` ENUM('video_demonstration') NOT NULL,
+  `value` VARCHAR(512) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_socio_configuration_type` (`type`)
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4;
+
+-- -----------------------------------------------------
 -- Table `wegia`.`socio_has_tag`
 -- -----------------------------------------------------
 
