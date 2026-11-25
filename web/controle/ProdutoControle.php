@@ -45,15 +45,7 @@ class ProdutoControle
             $msg .= "Código do produto nÃ£o informado. Por favor, informe o código!";
             header('Location: ' . WWW . 'html/produto.html?msg=' . $msg);
         }*/
-        if ((!isset($preco)) || empty($preco)) {
-            $msg .= "Preço do produto nÃ£o informado. Por favor, informe um preço!";
-            header('Location: ' . WWW . 'html/produto.html?msg=' . $msg);
-            exit;
-        } else {
-            $produto = new Produto($descricao, $codigo, $preco);
-
-            return $produto;
-        }
+        return new Produto($descricao, $codigo, $preco ?? null);
     }
 
     public function listarTodos()
@@ -247,10 +239,9 @@ class ProdutoControle
             $id_grupo_produto = null;
         }
 
-        $produto = new Produto($descricao, $codigo, $preco);
-        $produtoDAO = new ProdutoDAO();
-
         try {
+            $produto = new Produto($descricao, $codigo, $preco ?? null);
+            $produtoDAO = new ProdutoDAO();
             $produto->setId_produto($id_produto);
             $produto->set_categoria_produto($id_categoria);
             $produto->set_unidade($id_unidade);

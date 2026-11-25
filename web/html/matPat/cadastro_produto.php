@@ -179,8 +179,8 @@ $dadosForm = $_SESSION['form_produto'] ?? [];
 				alert("Selecione um grupo ou a opção Sem grupo");
 				document.getElementById("id_grupo_produto").focus();
 				return false;
-			} else if (valor <= 0) {
-				alert("O valor deve ser maior que zero");
+			} else if (valor < 0) {
+				alert("O valor deve ser maior ou igual a zero");
 				document.getElementById("valor-form").focus();
 				return false;
 			}
@@ -296,9 +296,9 @@ $dadosForm = $_SESSION['form_produto'] ?? [];
 											</div>
 
 											<div class="form-group">
-												<label class="col-md-3 control-label" for="profileCompany">Valor</label>
+												<label class="col-md-3 control-label" for="valor-form">Valor</label>
 												<div class="col-md-8">
-													<input type="number" name="preco" class="form-control" id="valor-form" step="any" placeholder="Ex: 22.00" onchange="addSessionStorage(this)" required>
+													<input type="number" name="preco" class="form-control" id="valor-form" step="any" placeholder="Ex: 22.00" onchange="addSessionStorage(this)">
 
 													<input type="hidden" name="nomeClasse" value="ProdutoControle">
 

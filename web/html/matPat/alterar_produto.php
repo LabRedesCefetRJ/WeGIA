@@ -387,9 +387,9 @@ if (isset($_SESSION['produto'], $_SESSION['categoria'], $_SESSION['unidade'], $_
 										</div>
 
 										<div class="form-group">
-											<label class="col-md-3 control-label" for="profileCompany">Valor</label>
+											<label class="col-md-3 control-label" for="valor">Valor</label>
 											<div class="col-md-8">
-												<input type="text" name="preco" class="form-control" id="valor" id="profileCompany" maxlength="13" placeholder="Ex: 22.00" onkeypress="return Onlynumbers(event)">
+												<input type="text" name="preco" class="form-control" id="valor" maxlength="13" placeholder="Ex: 22.00" onkeypress="return Onlynumbers(event)">
 
 											</div>
 										</div>

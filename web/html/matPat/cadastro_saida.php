@@ -245,7 +245,8 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset
 
 				const quantidade = Number($("#quantidade").val());
 
-				const preco = Number($("#valor_unitario").val());
+				const campoValor = document.getElementById("valor_unitario");
+				const preco = Number(campoValor.value);
 
 				if (!Number.isFinite(quantidade) || quantidade <= 0) {
 					alert("A quantidade deve ser maior que zero.");
@@ -265,9 +266,9 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset
 					return;
 				}
 
-				if (!Number.isFinite(preco) || preco <= 0) {
-					alert("Informe um valor unitário maior que zero.");
-					$("#valor_unitario").focus();
+				if (campoValor.validity.badInput || !Number.isFinite(preco) || preco < 0) {
+					alert("Informe um valor unitário maior ou igual a zero.");
+					campoValor.focus();
 					return;
 				}
 
