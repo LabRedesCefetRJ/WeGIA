@@ -112,10 +112,11 @@ class PagarMeCarneService implements ApiCarneServiceInterface
 
                 // Verifica por erros no cURL
                 if (curl_errno($ch)) {
+                    $curlError = curl_error($ch);
                     curl_close($ch);
                     throw new PaymentServiceException(
                         'Não foi possível gerar o carnê no momento. Tente novamente mais tarde.',
-                        'Erro cURL ao gerar carnê na API Pagar.me: ' . curl_error($ch),
+                        'Erro cURL ao gerar carnê na API Pagar.me: ' . $curlError,
                         502
                     );
                 }
@@ -129,12 +130,47 @@ class PagarMeCarneService implements ApiCarneServiceInterface
                 // Verifica o código de status HTTP
                 if ($httpCode === 200 || $httpCode === 201) {
                     $responseData = json_decode($response, true);
-                    $pdf_links[] = $responseData['charges'][0]['last_transaction']['pdf'];
-                    $codigosAPI[] = $responseData['id'];
+                    if (!is_array($responseData)) {
+                        throw new PaymentServiceException(
+                            'Não foi possível gerar o carnê no momento. Tente novamente mais tarde.',
+                            "A API Pagar.me retornou JSON inválido (HTTP {$httpCode}).",
+                            502
+                        );
+                    }
+
+                    $orderId = $responseData['id'] ?? null;
+                    $pdfUrl = $responseData['charges'][0]['last_transaction']['pdf'] ?? null;
+                    if (!is_string($orderId) || $orderId === '' || !is_string($pdfUrl) || !filter_var($pdfUrl, FILTER_VALIDATE_URL)) {
+                        $apiMessage = $responseData['message'] ?? ($responseData['errors'][0]['message'] ?? null);
+                        $details = "A API Pagar.me não retornou os dados esperados do carnê (HTTP {$httpCode}).";
+                        if (is_string($orderId) && $orderId !== '') {
+                            $details .= " Pedido: {$orderId}.";
+                        }
+                        if (is_string($apiMessage) && $apiMessage !== '') {
+                            $details .= ' Resposta da API: ' . $apiMessage;
+                        }
+
+                        throw new PaymentServiceException(
+                            'Não foi possível gerar o carnê no momento. Tente novamente mais tarde.',
+                            $details,
+                            502
+                        );
+                    }
+
+                    $pdf_links[] = $pdfUrl;
+                    $codigosAPI[] = $orderId;
                 } else {
+                    $responseData = json_decode($response, true);
+                    $apiMessage = is_array($responseData)
+                        ? ($responseData['message'] ?? ($responseData['errors'][0]['message'] ?? null))
+                        : null;
+                    $details = "A API Pagar.me retornou o código de status HTTP {$httpCode}.";
+                    if (is_string($apiMessage) && $apiMessage !== '') {
+                        $details .= ' Resposta da API: ' . $apiMessage;
+                    }
                     throw new PaymentServiceException(
                         'Não foi possível gerar o carnê no momento. Tente novamente mais tarde.',
-                        "A API Pagar.me retornou o código de status HTTP $httpCode",
+                        $details,
                         $httpCode
                     );
                 }
@@ -188,15 +224,36 @@ class PagarMeCarneService implements ApiCarneServiceInterface
             mkdir($saveDirTemp, 0755, true);
         }
 
+        $arquivos = [];
         foreach ($pdf_links as $indice => $url) {
-            // Extrai o nome do arquivo a partir da URL
-            $pathParts = explode('/', $url);
-            $fileName = $indice . '_' . $pathParts[count($pathParts) - 2] . '.pdf';
+            if (!is_string($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
+                throw new PaymentServiceException(
+                    'Não foi possível concluir a geração do carnê no momento.',
+                    'A API Pagar.me não retornou uma URL válida para o PDF do carnê.',
+                    502
+                );
+            }
+
+            $path = parse_url($url, PHP_URL_PATH) ?: '';
+            $fileBase = basename($path);
+            if (strtolower($fileBase) === 'pdf') {
+                $fileBase = basename(dirname($path));
+            }
+            $fileBase = preg_replace('/[^a-zA-Z0-9._-]/', '_', $fileBase);
+            if ($fileBase === '' || $fileBase === '.' || $fileBase === '..') {
+                $fileBase = 'carne_' . $indice;
+            }
 
             // Caminho completo para salvar o arquivo
-            $savePath = $saveDirTemp . $fileName;
+            $savePath = $saveDirTemp . $indice . '_' . $fileBase . '.pdf';
             $fileContent = PdfDownloadService::baixarConteudo($url, 'carnê');
-            file_put_contents($savePath, $fileContent);
+            if (file_put_contents($savePath, $fileContent) === false) {
+                throw new PaymentServiceException(
+                    'Não foi possível concluir a geração do carnê no momento.',
+                    'Não foi possível salvar um PDF temporário do carnê.',
+                    500
+                );
+            }
             $arquivos[] = $savePath;
         }
 

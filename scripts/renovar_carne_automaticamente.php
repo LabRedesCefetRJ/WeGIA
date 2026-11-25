@@ -33,10 +33,11 @@ if (!$medium) {
 }
 $mediumId = (int) $medium['id'];
 
-$stmtMembers = $pdo->prepare("SELECT s.id_socio, p.email, c.final_due,
+$stmtMembers = $pdo->prepare("SELECT s.id_socio, p.email, st.tipo AS socio_tipo, c.final_due,
         (SELECT c2.valor FROM contribuicao_log c2 WHERE c2.id_socio=s.id_socio AND c2.id_meio_pagamento=:medium AND c2.data_vencimento <= c.final_due ORDER BY c2.data_vencimento DESC, c2.id DESC LIMIT 1) AS amount,
         (SELECT c3.id_gateway FROM contribuicao_log c3 WHERE c3.id_socio=s.id_socio AND c3.id_meio_pagamento=:medium2 AND c3.data_vencimento <= c.final_due ORDER BY c3.data_vencimento DESC, c3.id DESC LIMIT 1) AS gateway_id
     FROM socio s JOIN pessoa p ON p.id_pessoa=s.id_pessoa
+    JOIN socio_tipo st ON st.id_sociotipo=s.id_sociotipo
     JOIN (SELECT id_socio, MAX(data_vencimento) AS final_due FROM contribuicao_log WHERE id_meio_pagamento=:medium3 GROUP BY id_socio) c ON c.id_socio=s.id_socio
     JOIN socio_status ss ON ss.id_sociostatus=s.id_sociostatus AND LOWER(TRIM(ss.status))='ativo'
     WHERE s.deletado=0 AND s.auto_renovation=1
@@ -47,6 +48,21 @@ $members = $stmtMembers->fetchAll(PDO::FETCH_ASSOC);
 foreach ($members as $member) {
     $socioId = (int) $member['id_socio'];
     $endedDate = $member['final_due'];
+    $socioType = mb_strtolower((string) $member['socio_tipo'], 'UTF-8');
+    if (str_contains($socioType, 'casual')) {
+        continue;
+    }
+    $intervalMonths = match (true) {
+        str_contains($socioType, 'mensal') => 1,
+        str_contains($socioType, 'bimestral') => 2,
+        str_contains($socioType, 'trimestral') => 3,
+        str_contains($socioType, 'semestral') => 6,
+        default => 0,
+    };
+    if ($intervalMonths === 0) {
+        $log("Periodicidade não reconhecida para socio {$socioId}: {$member['socio_tipo']}");
+        continue;
+    }
     try {
         // Unique key makes concurrent or repeated daily runs safe per ended carnet.
         $claim = $pdo->prepare("INSERT IGNORE INTO socio_carnet_renewal (id_socio, carnet_final_due_date, status) VALUES (?, ?, 'processing')");
@@ -77,7 +93,7 @@ foreach ($members as $member) {
         $day = (int) (new DateTimeImmutable($endedDate))->format('d');
         $generationDate = (new DateTimeImmutable('today'))->format('Y-m-d');
         $dao = new ContribuicaoLogDAO($pdo);
-        for ($i = 0; $i < 12; $i++) {
+        for ($i = 0; $i < 12; $i += $intervalMonths) {
             $date = $firstDue->modify('+' . $i . ' months');
             $date = $date->setDate((int)$date->format('Y'), (int)$date->format('m'), min($day, (int)$date->format('t')));
             $contribution = (new ContribuicaoLog())
@@ -113,7 +129,8 @@ foreach ($members as $member) {
         $email = new EmailControle($pdo);
         $name = htmlspecialchars($socio->getNome(), ENT_QUOTES, 'UTF-8');
         $safeLink = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
-        $body = "<p>Olá, {$name}.</p><p>Agradecemos por sua contribuição e por apoiar nossa instituição. Seu novo carnê de 12 parcelas está disponível no link abaixo.</p><p><a href=\"{$safeLink}\">Acessar meu carnê</a></p><p>Esperamos contar com você nesta nova etapa. Muito obrigado!</p>";
+        $installments = (int) ceil(12 / $intervalMonths);
+        $body = "<p>Olá, {$name}.</p><p>Agradecemos por sua contribuição e por apoiar nossa instituição. Seu novo carnê de {$installments} parcelas está disponível no link abaixo.</p><p><a href=\"{$safeLink}\">Acessar meu carnê</a></p><p>Esperamos contar com você nesta nova etapa. Muito obrigado!</p>";
         $sent = $email->enviarEmail($member['email'], 'Seu novo carnê de contribuições', $body, $socio->getNome());
         $status = !empty($sent['success']) ? 'sent' : 'generated';
         $pdo->prepare('UPDATE socio_carnet_renewal SET status=? WHERE id_socio=? AND carnet_final_due_date=?')->execute([$status, $socioId, $endedDate]);
