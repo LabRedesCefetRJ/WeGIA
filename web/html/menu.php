@@ -414,6 +414,11 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 									<span>Tags</span>
 								</a>
 							</li>
+							<li>
+								<a href="<?= WWW ?>html/socio/sistema/configuracao_video.php">
+									<span>Vídeo de demonstração</span>
+								</a>
+							</li>
 						</ul>
 					</li>
 					<li class="nav-parent nav-active" id="34">

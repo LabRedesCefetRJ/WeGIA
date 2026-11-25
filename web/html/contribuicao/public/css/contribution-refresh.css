@@ -1,0 +1,506 @@
+body.contribution-refresh {
+    min-height: 100vh;
+    color: #233344;
+    background:
+        radial-gradient(circle at 8% 8%, rgba(37, 119, 183, .13), transparent 28rem),
+        linear-gradient(135deg, #f2f7fc 0%, #eaf1f8 100%);
+    font-family: "Montserrat-Regular", "Segoe UI", sans-serif;
+}
+
+.contribution-refresh .container-contact100 {
+    min-height: 100vh;
+    padding: clamp(1rem, 4vw, 3rem);
+    background: transparent;
+}
+
+.contribution-refresh .wrap-contact100 {
+    width: min(100%, 900px);
+    padding: clamp(1.25rem, 5vw, 3.5rem);
+    overflow: visible;
+    border: 1px solid rgba(32, 64, 82, .08);
+    border-radius: 1.25rem;
+    background: #fff;
+    box-shadow: 0 1.25rem 3.5rem rgba(20, 45, 59, .12);
+}
+
+.contribution-refresh .contribution-brand {
+    display: block;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.contribution-refresh .contribution-brand img {
+    display: block;
+    max-width: min(100%, 13rem);
+    max-height: 6rem;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+.contribution-refresh .contribution-brand-title {
+    margin-top: .75rem;
+    padding: 0;
+    color: #29445a;
+    font-family: "Montserrat-SemiBold", "Segoe UI", sans-serif;
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    line-height: 1.35;
+}
+
+.contribution-refresh .contribution-page-heading {
+    margin: 0 auto 1.5rem;
+    text-align: center;
+}
+
+.contribution-refresh .contribution-page-heading h1 {
+    margin-bottom: .5rem;
+    color: #173c50;
+    font-family: "Montserrat-Bold", "Segoe UI", sans-serif;
+    font-weight: 700;
+}
+
+.contribution-refresh .contribution-page-heading h1 .fa {
+    margin-right: .4rem;
+    color: #2577b7;
+}
+
+.contribution-refresh .contribution-page-heading p,
+.contribution-refresh .contribution-required-note {
+    color: #5f6f7a;
+}
+
+.contribution-refresh .contribution-method-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .65rem;
+    margin: .35rem;
+    min-width: 13rem;
+    border-color: #b8c8cf;
+    color: #23465a;
+    text-decoration: none;
+}
+
+.contribution-refresh .contribution-method-link:hover,
+.contribution-refresh .contribution-method-link:focus-visible {
+    border-color: #1f67a5;
+    background: #eaf3fb;
+    color: #174f7a;
+}
+
+.contribution-refresh .contribution-method-link .fa {
+    color: #1f67a5;
+    font-size: 1.15em;
+}
+
+.contribution-refresh .contribution-method-options-single {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .75rem;
+}
+
+.contribution-refresh .contribution-method-options-single .contribution-method-link {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    padding-inline: clamp(.55rem, 2.5vw, 1.25rem);
+    white-space: nowrap;
+}
+
+@keyframes contribution-options-reveal {
+    from {
+        opacity: 0;
+        transform: translateY(.75rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.contribution-refresh .contribution-options-enter {
+    animation: contribution-options-reveal 320ms ease-out both;
+}
+
+.contribution-refresh .contribution-required-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    margin-bottom: 1.5rem;
+    font-size: .925rem;
+    text-align: center;
+}
+
+.contribution-refresh .obrigatorio {
+    color: #b42318;
+    font-weight: 700;
+}
+
+.contribution-refresh .wrap-input100 {
+    width: 100%;
+    margin-bottom: 1.25rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.contribution-refresh .contribution-field .form-label,
+.contribution-refresh .contribution-person-type .form-label {
+    display: block;
+    margin-bottom: .5rem;
+    color: #344b5c;
+    font-family: "Montserrat-SemiBold", "Segoe UI", sans-serif;
+    font-size: .95rem;
+    font-weight: 600;
+    text-transform: none;
+}
+
+.contribution-refresh .contribution-field .form-label .fa {
+    width: 1.25rem;
+    color: #2577b7;
+}
+
+.contribution-refresh .form-control,
+.contribution-refresh .form-select {
+    min-height: 3rem;
+    border-color: #cbd6dc;
+    border-radius: .65rem;
+    background-color: #fff;
+    color: #233344;
+    font-family: "Montserrat-Regular", "Segoe UI", sans-serif;
+    font-size: 1rem;
+    box-shadow: none;
+}
+
+.contribution-refresh .form-control:focus,
+.contribution-refresh .form-select:focus {
+    border-color: #2577b7 !important;
+    box-shadow: 0 0 0 .2rem rgba(37, 119, 183, .2);
+}
+
+.contribution-refresh .form-control:focus::placeholder {
+    color: #81909a;
+    opacity: 1;
+}
+
+.contribution-refresh .form-control:focus::-webkit-input-placeholder {
+    color: #81909a;
+}
+
+.contribution-refresh .form-control::placeholder {
+    color: #81909a;
+    opacity: 1;
+}
+
+.contribution-refresh .input-group-text {
+    border-color: #cbd6dc;
+    border-radius: .65rem 0 0 .65rem;
+    background: #edf5fc;
+    color: #1c5d8a;
+    font-weight: 600;
+}
+
+.contribution-refresh .form-text {
+    display: block;
+    margin-top: .45rem;
+}
+
+.contribution-refresh .contribution-field-feedback {
+    margin: .4rem 0 0;
+    color: #b42318 !important;
+    font-family: inherit !important;
+    font-size: .875rem !important;
+}
+
+.contribution-refresh #avisa_cpf,
+.contribution-refresh #avisa_cnpj,
+.contribution-refresh #avisa_valor,
+.contribution-refresh #avisa_valor_m,
+.contribution-refresh #avisa_parcelas,
+.contribution-refresh #avisa_valor2,
+.contribution-refresh #avisa_email,
+.contribution-refresh #aviso_data,
+.contribution-refresh #info_data {
+    color: #b42318 !important;
+    font-family: inherit !important;
+    font-size: .875rem !important;
+}
+
+.contribution-refresh .container-contact100-form-btn {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .75rem;
+    width: 100%;
+    padding-top: .75rem;
+}
+
+.contribution-refresh .container-contact100-form-btn .btn {
+    min-height: 2.85rem;
+    margin: 0;
+    border-radius: .65rem;
+    font-family: "Montserrat-SemiBold", "Segoe UI", sans-serif;
+    font-weight: 600;
+}
+
+.contribution-refresh .btn-primary {
+    border-color: #1f67a5;
+    background-color: #1f67a5;
+}
+
+.contribution-refresh .btn-primary:hover,
+.contribution-refresh .btn-primary:focus-visible {
+    border-color: #174f7a;
+    background-color: #174f7a;
+}
+
+.contribution-refresh .contribution-person-type {
+    margin: 0 0 1.5rem;
+    padding: 0;
+    border: 0;
+}
+
+.contribution-refresh .contribution-choice {
+    position: relative;
+    margin: 0;
+    padding: 0;
+}
+
+.contribution-refresh .contribution-choice .radio {
+    position: absolute;
+    inset: .6rem auto auto .6rem;
+    z-index: 1;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    opacity: 0;
+}
+
+.contribution-refresh .contribution-choice .form-check-label,
+.contribution-refresh .contribution-day-choice .form-check-label {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 2.75rem;
+    padding: .65rem 1rem;
+    border: 1px solid #cbd6dc;
+    border-radius: .65rem;
+    background: #fff;
+    color: #344b5c;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.contribution-refresh .contribution-choice .radio:checked + .form-check-label,
+.contribution-refresh .contribution-choice .radio:focus-visible + .form-check-label,
+.contribution-refresh .contribution-day-choice .form-check-input:checked + .form-check-label {
+    border-color: #1f67a5;
+    background: #eaf3fb;
+    color: #174f7a;
+}
+
+.contribution-refresh .contribution-choice .radio:focus-visible + .form-check-label,
+.contribution-refresh .contribution-day-choice .form-check-input:focus-visible + .form-check-label {
+    outline: 3px solid rgba(37, 119, 183, .25);
+    outline-offset: 2px;
+}
+
+.contribution-refresh .contribution-day-choice {
+    margin: 0;
+}
+
+.contribution-refresh .contribution-day-choice .form-check-input {
+    position: absolute;
+    opacity: 0;
+}
+
+.contribution-refresh .contribution-day-choice .form-check-label {
+    justify-content: center;
+    min-width: 3rem;
+}
+
+.contribution-refresh .contribution-recurring-note {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+    border: 0;
+    border-radius: .75rem;
+    background: #155b88;
+    color: #fff;
+}
+
+.contribution-refresh .contribution-recurring-note .fa {
+    color: #fff;
+}
+
+.contribution-refresh .alert-success {
+    border-color: #a9c8e0;
+    background: #eaf3fb;
+    color: #174f7a;
+}
+
+.contribution-refresh .alert-success .text-success {
+    color: #174f7a !important;
+}
+
+.contribution-refresh .text-success {
+    color: #1f67a5 !important;
+}
+
+.contribution-refresh #contact-container .alert-info {
+    border-color: #12466a;
+    background: #155b88;
+    color: #fff;
+}
+
+.contribution-refresh #contact-container .alert-info strong,
+.contribution-refresh #contact-container .alert-info a {
+    color: #fff;
+    font-weight: 700;
+}
+
+.contribution-refresh #contact-container .alert-info a {
+    text-decoration: underline;
+    text-underline-offset: .15em;
+}
+
+.contribution-refresh #contact-container .alert-info a:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+}
+
+.contribution-refresh .contribution-feedback-region .alert {
+    position: relative;
+    padding-right: 3rem;
+}
+
+.contribution-refresh .contribution-feedback-close {
+    position: absolute;
+    top: .65rem;
+    right: .75rem;
+    padding: .15rem .4rem;
+    border: 0;
+    background: transparent;
+    color: currentColor;
+    font-size: 1.4rem;
+    line-height: 1;
+    opacity: .8;
+}
+
+.contribution-refresh .contribution-feedback-close:hover,
+.contribution-refresh .contribution-feedback-close:focus-visible {
+    opacity: 1;
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.contribution-refresh .contribution-confirmation {
+    padding: 1.25rem 0;
+}
+
+.contribution-refresh .contribution-confirmation > #div-agradecimento > .fa {
+    margin-bottom: .5rem;
+    font-size: 2rem;
+}
+
+.contribution-refresh .contribution-result {
+    padding: 1.5rem;
+    border: 1px solid #dce5e9;
+    border-radius: 1rem;
+    background: #f7fafd;
+}
+
+.contribution-refresh #qrcode-div img {
+    display: block;
+    max-width: min(100%, 20rem) !important;
+    height: auto;
+    margin: 1.25rem auto;
+    padding: .75rem;
+    border: 1px solid #dce5e9;
+    border-radius: .75rem;
+    background: #fff;
+}
+
+.contribution-refresh .contribution-feedback-region:empty {
+    display: none;
+}
+
+.contribution-refresh .contribution-feedback-region .alert {
+    align-items: flex-start;
+    gap: .75rem;
+    margin-bottom: 1.25rem;
+    border-radius: .75rem;
+}
+
+.contribution-refresh .contribution-video {
+    position: relative;
+    width: 100%;
+    max-width: 760px;
+    height: 0;
+    margin: 2rem auto;
+    padding-bottom: 56.25%;
+    overflow: hidden;
+    border-radius: .9rem;
+}
+
+.contribution-refresh .contribution-video iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0 !important;
+}
+
+.contribution-refresh .hidden {
+    display: none !important;
+}
+
+.contribution-refresh .alert {
+    text-align: left;
+}
+
+.contribution-refresh .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+@media (max-width: 575.98px) {
+    .contribution-refresh .wrap-contact100 {
+        padding: 1.25rem 1rem;
+        border-radius: 1rem;
+    }
+
+    .contribution-refresh .contribution-brand {
+        margin-bottom: 1.5rem;
+    }
+
+    .contribution-refresh .contribution-page-heading h1 {
+        font-size: 1.5rem;
+    }
+
+    .contribution-refresh .container-contact100-form-btn .btn {
+        flex: 1 1 100%;
+    }
+
+    .contribution-refresh .contribution-choice,
+    .contribution-refresh .contribution-choice .form-check-label {
+        width: 100%;
+    }
+
+    .contribution-refresh .contribution-choice .form-check-label {
+        justify-content: center;
+    }
+
+    .contribution-refresh .contribution-video {
+        margin-top: 1.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .contribution-refresh .contribution-options-enter {
+        animation-duration: .01ms;
+    }
+}

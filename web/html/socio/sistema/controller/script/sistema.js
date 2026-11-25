@@ -698,11 +698,47 @@ function modalSimples(titulo, msg, tipo) {
     });
     // Tabela aniversariantes
     $(document).ready(function () {
-        $('#tb_aniversario').DataTable({
+        var filtroAniversariantes = {
+            valido: true,
+            modo: 'mes',
+            mes: ''
+        };
+
+        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            if (settings.nTable.id !== 'tb_aniversario') {
+                return true;
+            }
+            if (!filtroAniversariantes.valido) {
+                return false;
+            }
+
+            var aniversario = settings.aoData[dataIndex].nTr.getAttribute('data-aniversario');
+            if (!aniversario) {
+                return false;
+            }
+            if (filtroAniversariantes.modo === 'mes') {
+                return parseInt(aniversario.substring(0, 2), 10) === filtroAniversariantes.mes;
+            }
+
+            var inicioDiaMes = parseInt(filtroAniversariantes.inicio.substring(5, 7) + filtroAniversariantes.inicio.substring(8, 10), 10);
+            var fimDiaMes = parseInt(filtroAniversariantes.fim.substring(5, 7) + filtroAniversariantes.fim.substring(8, 10), 10);
+            var aniversarioDiaMes = parseInt(aniversario.replace('-', ''), 10);
+            var diferencaAnos = parseInt(filtroAniversariantes.fim.substring(0, 4), 10) -
+                parseInt(filtroAniversariantes.inicio.substring(0, 4), 10);
+
+            if (diferencaAnos === 0) {
+                return aniversarioDiaMes >= inicioDiaMes && aniversarioDiaMes <= fimDiaMes;
+            }
+            if (diferencaAnos > 1) {
+                return true;
+            }
+            return aniversarioDiaMes >= inicioDiaMes || aniversarioDiaMes <= fimDiaMes;
+        });
+
+        var tabelaAniversariantes = $('#tb_aniversario').DataTable({
             "processing": true,
-            "searching": false,
             "language": {
-                "sEmptyTable": "Nenhum sócio faz aniversário no mês atual.",
+                "sEmptyTable": "Nenhum aniversariante encontrado.",
                 "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
                 "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
                 "sInfoFiltered": "(Filtrados de _MAX_ registros)",
@@ -711,7 +747,7 @@ function modalSimples(titulo, msg, tipo) {
                 "sLengthMenu": "_MENU_ sócios por página",
                 "sLoadingRecords": "Carregando...",
                 "sProcessing": "Processando...",
-                "sZeroRecords": "Nenhum sócio faz aniversário no mês atual.",
+                "sZeroRecords": "Nenhum aniversariante encontrado para o filtro selecionado.",
                 "sSearch": "Pesquisar",
                 "oPaginate": {
                     "sNext": "Próximo",
@@ -725,6 +761,65 @@ function modalSimples(titulo, msg, tipo) {
                 }
             }
         });
+
+        function atualizarMediaIdade() {
+            var linhas = tabelaAniversariantes.rows({ search: 'applied' }).nodes().toArray();
+            var somaIdades = 0;
+            var quantidadeIdades = 0;
+
+            $.each(linhas, function (_, linha) {
+                var idade = parseInt(linha.getAttribute('data-idade'), 10);
+                if (!isNaN(idade)) {
+                    somaIdades += idade;
+                    quantidadeIdades++;
+                }
+            });
+
+            var textoMedia = quantidadeIdades
+                ? (somaIdades / quantidadeIdades).toFixed(1).replace('.', ',') + ' anos'
+                : 'indisponível';
+            $('#media_idade_aniversariantes').text('Média de idade dos aniversariantes exibidos: ' + textoMedia);
+        }
+
+        function atualizarFiltroAniversariantes() {
+            var modo = $('#modo_filtro_aniversariantes').val();
+            var mensagemErro = '';
+            filtroAniversariantes = { valido: true, modo: modo };
+
+            $('#filtro_mes_aniversariantes').toggle(modo === 'mes');
+            $('#filtro_intervalo_aniversariantes').toggle(modo === 'intervalo');
+
+            if (modo === 'mes') {
+                var mesSelecionado = $('#mes_aniversariantes').val();
+                if (!mesSelecionado) {
+                    filtroAniversariantes.valido = false;
+                    mensagemErro = 'Selecione um mês para filtrar os aniversariantes.';
+                } else {
+                    filtroAniversariantes.mes = parseInt(mesSelecionado, 10);
+                }
+            } else {
+                var inicio = $('#inicio_aniversariantes').val();
+                var fim = $('#fim_aniversariantes').val();
+                if (!inicio || !fim) {
+                    filtroAniversariantes.valido = false;
+                    mensagemErro = 'Informe as datas inicial e final para aplicar o intervalo.';
+                } else if (inicio > fim) {
+                    filtroAniversariantes.valido = false;
+                    mensagemErro = 'A data inicial deve ser anterior ou igual à data final.';
+                } else {
+                    filtroAniversariantes.inicio = inicio;
+                    filtroAniversariantes.fim = fim;
+                }
+            }
+
+            $('#erro_filtro_aniversariantes').text(mensagemErro).toggle(!!mensagemErro);
+            tabelaAniversariantes.draw();
+        }
+
+        tabelaAniversariantes.on('draw.dt', atualizarMediaIdade);
+        $('#modo_filtro_aniversariantes, #mes_aniversariantes, #inicio_aniversariantes, #fim_aniversariantes')
+            .on('change input', atualizarFiltroAniversariantes);
+        atualizarFiltroAniversariantes();
     });
     // Tabela doações
     $(document).ready(function () {
@@ -741,7 +836,7 @@ function modalSimples(titulo, msg, tipo) {
                 "sLengthMenu": "_MENU_ doações por página",
                 "sLoadingRecords": "Carregando...",
                 "sProcessing": "Processando...",
-                "sZeroRecords": "Nenhum sócio faz aniversário no mês atual.",
+                "sZeroRecords": "Nenhuma doação encontrada no sistema.",
                 "sSearch": "Pesquisar",
                 "oPaginate": {
                     "sNext": "Próximo",

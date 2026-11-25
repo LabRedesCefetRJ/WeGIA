@@ -1,13 +1,13 @@
 <?php
 
 use api\Container\AppContainer;
-use api\modules\Auth\AuthMiddleware;
+use api\Infrastructure\ApiErrorHandler;
+use api\Infrastructure\ApiErrorResponder;
+use api\Infrastructure\FileLogger;
 use api\Infrastructure\ModuleRouteLoader;
 use api\Infrastructure\RepositoryConnection;
-use api\Infrastructure\FileLogger;
-use api\Infrastructure\ApiErrorResponder;
-use api\Infrastructure\ApiErrorHandler;
 use api\middleware\CorsMiddleware;
+use api\modules\Auth\AuthMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
@@ -61,7 +61,7 @@ $displayErrorDetails = ENV_APP === 'development' ? true : false;
  * @param bool                  $displayErrorDetails -> Should be set to false in production
  * @param bool                  $logErrors -> Parameter is passed to the default ErrorHandler
  * @param bool                  $logErrorDetails -> Display error details in error log
- * @param LoggerInterface|null  $logger -> Optional PSR-3 Logger  
+ * @param LoggerInterface|null  $logger -> Optional PSR-3 Logger
  *
  * Note: This middleware should be added last. It will not handle any exceptions/errors
  * for middleware added after it.

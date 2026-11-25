@@ -776,6 +776,12 @@ require_once ROOT . "/html/geral/msg.php";
 								<h4>Tags (grupos)</h4>
 							</div>
 						</a>
+						<a href="<?= WWW ?>html/socio/sistema/configuracao_video.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa fa-video-camera"></i>
+								<h4>Vídeo de demonstração</h4>
+							</div>
+						</a>
 					</div>
 				</div>
 				<div class="row category-row-third">

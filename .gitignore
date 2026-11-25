@@ -4,6 +4,7 @@ BD/.idea/
 web/html/contribuicao/pdfs/
 web/html/socio/sistema/tabelas/
 web/html/seguranca/ips_bloqueados.json
+web/node_modules/
 api/vendor/
 api/logs/*.log
 
