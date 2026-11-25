@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
 
@@ -49,6 +50,18 @@ class Atendido_ocorrenciaControle
 		try {
 			if (!$idOcorrencia || $idOcorrencia < 1)
 				throw new InvalidArgumentException('O id da ocorrência informado é inválido.', 412);
+
+			// Este método é usado por um endpoint de download de anexo que só
+			// checava se havia sessão ativa, sem checar permissão nenhuma no
+			// módulo de atendido -- qualquer usuário autenticado conseguia
+			// baixar documentos de ocorrência de qualquer atendido.
+			$idPessoa = filter_var($_SESSION['id_pessoa'] ?? null, FILTER_VALIDATE_INT);
+			if (!$idPessoa || $idPessoa < 1) {
+				throw new InvalidArgumentException('Usuario nao autenticado.', 401);
+			}
+
+			require_once ROOT . '/html/permissao/permissao.php';
+			permissao($idPessoa, 12, 7);
 
 			$Atendido_ocorrenciaDAO = new Atendido_ocorrenciaDAO();
 			$anexos = $Atendido_ocorrenciaDAO->listarAnexo($idOcorrencia);
@@ -158,6 +171,7 @@ class Atendido_ocorrenciaControle
 			}
 				
 			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-sucesso");
+			exit;
 		} catch (PDOException $e) {
 			Util::tratarException($e);
 			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-falha");

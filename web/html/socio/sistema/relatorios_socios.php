@@ -4,7 +4,7 @@ require("../conexao.php");
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 session_start();
-if (!isset($_SESSION['usuario'])) header("Location: ../erros/login_erro/");
+if (!isset($_SESSION['usuario'])) { header("Location: ../erros/login_erro/"); exit; }
 $id = $_SESSION['usuario'];
 $id_pessoa = $_SESSION['id_pessoa'];
 $resultado = mysqli_query($conexao, "SELECT `imagem`, `nome` FROM `pessoa` WHERE id_pessoa=$id_pessoa");
@@ -24,6 +24,7 @@ if (file_exists($config_path)) {
 
 if (!isset($_SESSION['usuario'])) {
     header("Location: " . WWW . "index.php");
+    exit;
 }
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $id_pessoa = $_SESSION['id_pessoa'];
@@ -39,17 +40,20 @@ if (!is_null($resultado)) {
         if ($permissao['id_acao'] < 7) {
             $msg = "Você não tem as permissões necessárias para essa página.";
             header("Location: " . WWW . "/html/home.php?msg_c=$msg");
+            exit;
         }
         $permissao = $permissao['id_acao'];
     } else {
         $permissao = 1;
         $msg = "Você não tem as permissões necessárias para essa página.";
         header("Location: " . WWW . "/html/home.php?msg_c=$msg");
+        exit;
     }
 } else {
     $permissao = 1;
     $msg = "Você não tem as permissões necessárias para essa página.";
     header("Location: " . WWW . "/html/home.php?msg_c=$msg");
+    exit;
 }
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
@@ -148,7 +152,6 @@ require_once ROOT . "/html/personalizacao_display.php";
     <script src="<?php echo WWW; ?>Functions/onlyNumbers.js"></script>
     <script src="<?php echo WWW; ?>Functions/onlyChars.js"></script>
     <script src="<?php echo WWW; ?>Functions/mascara.js"></script>
-    <script src="<?php echo WWW; ?>html/contribuicao/js/geraboleto.js"></script>
     <script src="<?php echo WWW; ?>html/socio/sistema/controller/script/relatorios_socios.js"></script>
     <script type="text/javascript">
         $(function() {
@@ -158,19 +161,88 @@ require_once ROOT . "/html/personalizacao_display.php";
     </script>
     <style>
         @media print {
+            html, body {
+                background: #fff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
 
-            .menuu,
-            .page-header,
-            .box-geracaounica,
-            .header,
-            .print-button {
-                display: none;
+            body > * {
+                display: none !important;
+            }
+
+            body > .body {
+                display: block !important;
+            }
+
+            .body > * {
+                display: none !important;
+            }
+
+            .body > .inner-wrapper {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .inner-wrapper > * {
+                display: none !important;
+            }
+
+            .inner-wrapper > .content-body {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .content-body > * {
+                display: none !important;
+            }
+
+            .content-body .row {
+                display: block !important;
+            }
+
+            .content-body .row > * {
+                display: none !important;
+            }
+
+            .content-body .row > .relatorio-result,
+            .content-body .row > .relatorio-result > * {
+                display: block !important;
             }
 
             .resultado {
-                display: block;
-                margin-top: -100px;
-                width: 100%;
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                position: static !important;
+                overflow: visible !important;
+            }
+
+            .resultado > * {
+                display: block !important;
+            }
+
+            .relatorio-panel {
+                border: none !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .relatorio-panel .panel-body {
+                padding: 0 !important;
+            }
+
+            .relatorio-meta-print {
+                margin-top: 16px;
+                padding-top: 12px;
+                border-top: 1px solid #dfe7ff;
+                font-size: 10px;
+                color: #374151;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
             }
 
             .resultado table {

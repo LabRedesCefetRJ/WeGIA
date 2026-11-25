@@ -1,3 +1,14 @@
+<?php
+// Fragmento incluído por páginas de socio/sistema que exigem permissao(4, 7),
+// mas também acessível direto pela URL (o .htaccess desta pasta está
+// desativado): exige o mesmo acesso aqui, como em import_conteudo_graficos.php.
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['usuario'])) die("Você não está logado(a).");
+
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 4, 7);
+?>
 <section class="body">
 
 		<!-- start: header -->
@@ -108,13 +119,13 @@
 
         $dados_contrib = json_encode($registro);
 
-        echo("<input type='hidden' name='dados_contrib' value='$dados_contrib'>");
-        echo("<input type='hidden' name='socio' value='$id_socio'>");
+        echo("<input type='hidden' name='dados_contrib' value='".htmlspecialchars($dados_contrib, ENT_QUOTES, 'UTF-8')."'>");
+        echo("<input type='hidden' name='socio' value='".htmlspecialchars($id_socio, ENT_QUOTES, 'UTF-8')."'>");
     ?>
-        
+
         <div class="box box-info">
             <div class="box-header with-border">
-              <h3 class="box-title">Opções de geração -  Sócio: <?php echo($nome_socio." ($tipo_socio)"); ?></h3>
+              <h3 class="box-title">Opções de geração -  Sócio: <?php echo(htmlspecialchars($nome_socio." ($tipo_socio)", ENT_QUOTES, 'UTF-8')); ?></h3>
             </div>
             <div class="box-body">
             <div class="row">

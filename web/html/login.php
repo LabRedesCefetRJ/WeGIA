@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -25,10 +26,11 @@ try {
 
     $pdo = Conexao::connect();
 
+    //pegar apenas pessoas que também sejam funcionários, para evitar que clientes acessem o sistema
     $stmt = $pdo->prepare("
-        SELECT id_pessoa, cpf, senha, nome, adm_configurado, nivel_acesso 
-        FROM pessoa 
-        WHERE cpf = :cpf
+        SELECT p.id_pessoa, p.cpf, p.senha, p.nome, p.adm_configurado, p.nivel_acesso 
+        FROM pessoa p JOIN funcionario f ON p.id_pessoa = f.id_pessoa
+        WHERE p.cpf = :cpf
         LIMIT 1
     ");
 

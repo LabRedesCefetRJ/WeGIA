@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if(session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -18,34 +19,32 @@ if(!$id_pessoa) {
 	exit();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 permissao($id_pessoa, 22, 5);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+include_once ROOT . '/dao/Conexao.php';
+include_once ROOT . '/dao/CategoriaDAO.php';
+
+if (!isset($_SESSION['categoria'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/listar_categoria.php');
+	exit;
+}
+if (isset($_SESSION['msg'])) {
+	$msg = $_SESSION['msg'];
+}
+if (isset($_SESSION['categoria'])) {
+	$categoria = $_SESSION['categoria'];
+	unset($_SESSION['categoria']);
+}
 ?>
 
 <!doctype html>
 <html class="fixed">
 
 <head>
-	<?php
-	include_once ROOT . '/dao/Conexao.php';
-	include_once ROOT . '/dao/CategoriaDAO.php';
-
-	if (!isset($_SESSION['categoria'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/listar_categoria.php');
-	}
-	if (isset($_SESSION['msg'])) {
-		$msg = $_SESSION['msg'];
-	}
-	if (isset($_SESSION['categoria'])) {
-		$categoria = $_SESSION['categoria'];
-		unset($_SESSION['categoria']);
-	}
-	?>
 	<!-- Basic -->
 	<meta charset="UTF-8">
 

@@ -1,4 +1,13 @@
 <?php
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
+     if (session_status() === PHP_SESSION_NONE)
+         session_start();
+
+     if (!isset($_SESSION['usuario'])) {
+         http_response_code(401);
+         exit('Não autenticado.');
+     }
+
      function delTree($dir) {
       
         $dir = realpath($dir);

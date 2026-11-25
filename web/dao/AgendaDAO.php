@@ -529,7 +529,7 @@ class AgendaDAO
 
     public function listarAlocacaoPorId(int $id): array
     {
-        $sql = "SELECT al.id, DATE(al.inicio) AS start, DATE(al.fim) AS end, DATE(al.fim) AS fim_display,
+        $sql = "SELECT al.id, DATE(al.inicio) AS inicio, DATE(al.fim) AS fim, DATE(al.fim) AS fim_display,
                     al.lembrete, al.id_agenda, al.id_equipe, al.intervalo, al.rodizio_divisao,
                     e.inicio_turno, e.fim_turno,
                     a.descricao AS agenda, e.nome AS equipe, e.nome AS title

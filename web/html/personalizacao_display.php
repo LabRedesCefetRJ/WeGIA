@@ -1,16 +1,7 @@
 <?php
-$config_path = realpath("../config.php");
-if($config_path){
-    require_once($config_path);
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 
-if (file_exists("classes/Personalizacao_display.php")){
-     require_once "classes/Personalizacao_display.php";
-}elseif (file_exists("../classes/Personalizacao_display.php")) {
-     require_once "../classes/Personalizacao_display.php";
-}elseif (file_exists("../../classes/Personalizacao_display.php")){
-     require_once "../../classes/Personalizacao_display.php";
-}
+require_once ROOT . "/classes/Personalizacao_display.php";
 /*
 
     Esta função recebe como parametro:

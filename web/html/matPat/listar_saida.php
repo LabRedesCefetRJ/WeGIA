@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -11,7 +12,6 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 permissao($_SESSION['id_pessoa'], 24, 5);
@@ -127,7 +127,7 @@ $almoxarifados = $stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC);
 								.append($('<td />').text(item.nome_destino ?? ''))
 								.append($('<td />').text(item.descricao ?? ''))
 								.append($('<td />').text(item.nome ?? ''))
-								.append($('<td />').text(item.valor_total ?? ''))
+								.append($('<td />').attr('data-order', Number(item.valor_total ?? 0)).text(formatarMoeda(item.valor_total)))
 								.append($('<td />').text(item.data ?? ''))
 								.append($('<td />').text(item.hora ?? ''))
 						);

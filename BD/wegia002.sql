@@ -108,11 +108,13 @@ INSERT INTO `recurso` (`id_recurso`, `descricao`) VALUES
 ('13', 'Voluntário'),
 ('14', 'Processo de Aceitação'),
 ('2', 'Módulo Material e Patrimônio'),
+('20', 'Módulo Recepção'),
 ('21', 'Almoxarifado'),
 ('22', 'Produto'),
 ('23', 'Entrada'),
 ('24', 'Saída'),
 ('25', 'Relatórios'),
+('26', 'Processo de Compra'),
 ('3', 'Módulo Memorando'),
 ('4', 'Módulo Sócio'),
 ('5', 'Módulo Saúde'),
@@ -151,7 +153,8 @@ INSERT INTO `modulos_visiveis` (`id_recurso`, `visivel`) VALUES
 (6, 1),
 (7, 1),
 (8, 1),
-(10, 1);
+(10, 1),
+(20, 1);
 
 INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
 (1, 7, 1),
@@ -167,11 +170,13 @@ INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
 (1, 7, 12),
 (1, 7, 13),
 (1, 7, 14),
+(1, 7, 20),
 (1, 7, 21),
 (1, 7, 22),
 (1, 7, 23),
 (1, 7, 24),
 (1, 7, 25),
+(1, 7, 26),
 (1, 7, 51),
 (1, 7, 52),
 (1, 7, 53),
@@ -288,9 +293,10 @@ INSERT INTO `saude_tabelacid` (`CID`, `descricao`) VALUES ('B34.2', 'Infecção 
 
 INSERT INTO `contribuicao_regras` (`regra`) VALUES ('MIN_VALUE'), ('MAX_VALUE');
 
-INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/orders","coloque o token aqui",0);
-INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/subscriptions","coloque o token aqui",0);
-INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("MercadoPago","https://api.mercadopago.com/v1/payments","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,private_token,public_token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/orders","coloque o token aqui","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,private_token,public_token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/subscriptions","coloque o token aqui","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,private_token,public_token,status) VALUES ("MercadoPago","https://api.mercadopago.com/v1/payments","coloque o token aqui","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,private_token,public_token,status) VALUES ("MercadoPago","https://api.mercadopago.com/preapproval","coloque o token aqui","coloque o token aqui",0);
 
 INSERT INTO `contribuicao_meioPagamento` (meio,id_plataforma,status) VALUES ("Boleto",1,0), ("Pix",1,0), ("Carne",1,0), ("CartaoCredito",1,0), ("Recorrencia",2,0);
 
@@ -336,21 +342,6 @@ INSERT IGNORE INTO `wegia`.`projeto_status` (`descricao`) VALUES
 INSERT IGNORE INTO `wegia`.`projeto_atendido_status` (`descricao`) VALUES
 ('Ativo'),
 ('Inativo');
--- -----------------------------------------------------
--- Adiciona coluna descricao em projeto_turma
--- (instalações já existentes podem não ter a coluna criada pelo CREATE TABLE)
--- -----------------------------------------------------
-SET @s = (SELECT IF(
-    (SELECT COUNT(*) FROM information_schema.COLUMNS
-     WHERE TABLE_SCHEMA = DATABASE()
-       AND TABLE_NAME = 'projeto_turma'
-       AND COLUMN_NAME = 'descricao') = 0,
-    'ALTER TABLE `projeto_turma` ADD COLUMN `descricao` VARCHAR(255) NULL AFTER `nome`',
-    'SELECT 1'
-));
-PREPARE stmt FROM @s;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
 
 INSERT IGNORE INTO `wegia`.`agenda_status` (`descricao`) VALUES
 ('Ativo'),

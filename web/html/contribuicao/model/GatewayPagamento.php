@@ -3,19 +3,24 @@ class GatewayPagamento
 {
 
     //atributos
-    private $id;
-    private $nome;
-    private $endpoint;
-    private $token;
+    private int $id;
+    private string $nome;
+    private string $endpoint;
+    private string $privateToken;
+    private string $publicToken;
     private $status;
 
-    public function __construct($nome, $endpoint, $token, $status = null)
+    public function __construct(string $nome, string $endpoint, string $privateToken, string $publicToken, $status = null, ?int $id = null)
     {
-        $this->setNome($nome)->setEndpoint($endpoint)->setToken($token);
+        $this->setNome($nome)->setEndpoint($endpoint)->setPrivateToken($privateToken)->setPublicToken($publicToken);
         if (!$status) {
             $this->setStatus(0);
         } else {
             $this->setStatus($status);
+        }
+
+        if ($id) {
+            $this->setId($id);
         }
     }
 
@@ -25,9 +30,15 @@ class GatewayPagamento
      */
     public function cadastrar()
     {
+        // Ao contrário de editar(), aqui o token vazio nunca é válido —
+        // não existe "manter o atual" pra um gateway que ainda não existe
+        if (trim((string) $this->privateToken) === '') {
+            throw new InvalidArgumentException('O token de um gateway de pagamento não pode ser vazio.');
+        }
+
         require_once '../dao/GatewayPagamentoDAO.php';
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
-        $gatewayPagamentoDao->cadastrar($this->nome, $this->endpoint, $this->token, $this->status);
+        $gatewayPagamentoDao->cadastrar($this->nome, $this->endpoint, $this->privateToken, $this->publicToken, $this->status);
     }
 
     /**
@@ -38,9 +49,18 @@ class GatewayPagamento
         require_once '../dao/GatewayPagamentoDAO.php';
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
 
-        // Verifica se o token informado está ofuscado (possui apenas asteriscos ou é parcialmente ofuscado)
-        if (strpos($this->token, '*') !== false) {
-            // Token não foi reinformado (veio ofuscado da tela). Se o endpoint
+        // Verifica se o token não foi reinformado: veio vazio (campo agora só
+        // mostra o valor mascarado como placeholder, não como texto — ver
+        // gatewayPagamento.js) ou é exatamente a versão mascarada do token
+        // já salvo (defesa contra reenvio do valor mostrado na tabela, ex:
+        // uma chamada direta à API em vez de pelo formulário). Comparar
+        // contra a máscara real do token atual — em vez de só checar se tem
+        // "*" — evita falso positivo num token de verdade que contenha "*".
+        $tokenAtual = $gatewayPagamentoDao->buscarTokenPorId($this->id);
+        $tokenAtualMascarado = $tokenAtual !== null && $tokenAtual !== '' ? self::ofuscarToken($tokenAtual) : null;
+
+        if (trim((string) $this->privateToken) === '' || ($tokenAtualMascarado !== null && $this->privateToken === $tokenAtualMascarado)) {
+            // Token não foi reinformado. Se o endpoint
             // estiver mudando mesmo assim, recusa: sem essa checagem, dava pra
             // redirecionar as cobranças pra um servidor de terceiros mantendo
             // a credencial real intacta no banco — o token real seguiria
@@ -54,11 +74,25 @@ class GatewayPagamento
             }
 
             // Não atualiza o token se ele estiver ofuscado
-            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, null);
+            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, null, $this->publicToken);
         } else {
             // Token foi alterado, então atualiza normalmente
-            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, $this->token);
+            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, $this->privateToken, $this->publicToken);
         }
+    }
+
+    /**
+     * Retorna os dados públicos do gateway de pagamento
+     */
+    public function getPublicData()
+    {
+        return [
+            'id' => $this->id,
+            'description' => $this->nome,
+            'endpoint' => $this->endpoint,
+            'publicToken' => $this->publicToken,
+            'status' => $this->status
+        ];
     }
 
     /**
@@ -91,9 +125,9 @@ class GatewayPagamento
     /**
      * Get the value of token
      */
-    public function getToken()
+    public function getPrivateToken()
     {
-        return $this->token;
+        return $this->privateToken;
     }
 
     /**
@@ -101,7 +135,30 @@ class GatewayPagamento
      *
      * @return  self
      */
-    public function setToken($token)
+    public function setPrivateToken($token)
+    {
+        // Vazio é um valor válido aqui: editar() usa isso pra decidir "não
+        // reinformou o token, manter o atual". Quem precisa exigir um token
+        // privado não vazio (cadastrar()) valida isso na hora certa.
+        $this->privateToken = $token;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of token
+     */
+    public function getPublicToken()
+    {
+        return $this->publicToken;
+    }
+
+    /**
+     * Set the value of token
+     *
+     * @return  self
+     */
+    public function setPublicToken($token)
     {
         $tokenLimpo = trim($token);
 
@@ -109,7 +166,7 @@ class GatewayPagamento
             throw new InvalidArgumentException('O token de um gateway de pagamento não pode ser vazio.');
         }
 
-        $this->token = $token;
+        $this->publicToken = $token;
 
         return $this;
     }
@@ -195,5 +252,37 @@ class GatewayPagamento
         $this->id = $id;
 
         return $this;
+    }
+
+    /**
+     * Oculta o meio do token, deixando só as pontas visíveis — usado pra
+     * exibição (view/gateway_pagamento.php) e por editar() pra comparar
+     * contra o token atual e detectar se ele foi de fato reinformado.
+     */
+    public static function ofuscarToken(string $token, int $visivelInicio = 3, int $visivelFim = 3, float $percentualMaxVisivel = 0.3): string
+    {
+        $tamanho = strlen($token);
+
+        // Número máximo total de caracteres visíveis com base na porcentagem
+        $maxVisiveis = floor($tamanho * $percentualMaxVisivel);
+
+        // Garante que o total de visíveis não ultrapasse o permitido
+        $totalVisiveis = $visivelInicio + $visivelFim;
+        if ($totalVisiveis > $maxVisiveis) {
+            // Divide o número máximo permitido entre início e fim
+            $visivelInicio = floor($maxVisiveis / 2);
+            $visivelFim = $maxVisiveis - $visivelInicio;
+        }
+
+        // Se ainda assim for muito curto, oculta completamente
+        if ($visivelInicio + $visivelFim >= $tamanho) {
+            return str_repeat('*', $tamanho);
+        }
+
+        $inicio = substr($token, 0, $visivelInicio);
+        $fim = substr($token, -$visivelFim);
+        $meio = str_repeat('*', $tamanho - $visivelInicio - $visivelFim);
+
+        return $inicio . $meio . $fim;
     }
 }

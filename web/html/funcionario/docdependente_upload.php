@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 //Refatorar para estrutura MVC
 if (session_status() === PHP_SESSION_NONE)
     session_start();
@@ -19,24 +20,37 @@ if ($_POST) {
     require_once "../../dao/Conexao.php";
 
     // $id_dependente, $id_docdependente e $arquivo
-    extract($_POST);
-
-    // A tabela funcioanrio_docs requer id_dependente, id_docdependente, extensao_arquivo, nome_arquivo e arquivo
-    $id_dependente = filter_var($id_dependente, FILTER_VALIDATE_INT);
-    $id_docdependente = filter_var($id_docdependente, FILTER_VALIDATE_INT);
+    $id_dependente = filter_input(INPUT_POST, 'id_dependente', FILTER_VALIDATE_INT);
+    $id_docdependente = filter_input(INPUT_POST, 'id_docdependente', FILTER_VALIDATE_INT);
     $arquivo = $_FILES["arquivo"];
-    $nome_arquivo = $arquivo["name"];
-    $mime_type = $arquivo["type"];
-    $extensao_arquivo = explode(".", $arquivo["name"])[1];
+
+    // Sanitiza o nome do arquivo enviado: remove diretórios, caracteres de
+    // controle e caracteres inseguros antes de gravar no banco de dados.
+    $nome_arquivo = basename(trim((string) $arquivo["name"]));
+    $nome_arquivo = preg_replace('/[[:cntrl:]]+/', '', $nome_arquivo);
+    $nome_arquivo = str_replace(['\\', '/', ':', '*', '?', '"', '<', '>', '|'], '_', $nome_arquivo);
+
+    $extensao_arquivo = strtolower(pathinfo($nome_arquivo, PATHINFO_EXTENSION));
+
+    // O tipo MIME informado pelo cliente não é confiável; valida o conteúdo real do arquivo.
+    $mime_type = false;
+    if (isset($arquivo['tmp_name']) && is_uploaded_file($arquivo['tmp_name'])) {
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime_type = $finfo->file($arquivo['tmp_name']);
+    }
     $arquivo_b64 = base64_encode(file_get_contents($arquivo['tmp_name']));
 
     $data = date('Y-m-d H:i:s', time());
     try {
-        if ($id_dependente <= 0) {
+        if (!$id_dependente || $id_dependente <= 0) {
             throw new Exception("ID do dependente inválido.", 400);
         }
-        if ($id_docdependente <= 0) {
+        if (!$id_docdependente || $id_docdependente <= 0) {
             throw new Exception("ID do documento do dependente inválido.", 400);
+        }
+
+        if ($nome_arquivo === '' || $nome_arquivo === '.' || $nome_arquivo === '..') {
+            throw new Exception("Nome de arquivo inválido.", 400);
         }
 
         if (!in_array($extensao_arquivo, ['pdf', 'jpg', 'jpeg', 'png'])) {
@@ -58,9 +72,11 @@ if ($_POST) {
         $prep->execute();
 
         header("Location: ./profile_dependente.php?id_dependente=$id_dependente");
+        exit;
     } catch (Exception $e) {
         Util::tratarException($e);
     }
 } else {
     header("Location: ../informacao_funcionario.php");
+    exit;
 }

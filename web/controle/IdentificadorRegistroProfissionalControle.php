@@ -34,7 +34,7 @@ class IdentificadorRegistroProfissionalControle
     {
         try {
             $idFuncionario = filter_input(INPUT_POST, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
-            $idTipo = filter_input(INPUT_POST, 'id_tipo', FILTER_SANITIZE_NUMBER_INT);
+            $idTipo = filter_input(INPUT_POST, 'id_tipo_registro', FILTER_SANITIZE_NUMBER_INT);
             $numeroRegistro = trim((string) filter_input(INPUT_POST, 'numero_registro', FILTER_SANITIZE_SPECIAL_CHARS));
             $uf = filter_input(INPUT_POST, 'uf', FILTER_SANITIZE_SPECIAL_CHARS);
             $uf = ($uf === '' || $uf === null) ? null : $uf;

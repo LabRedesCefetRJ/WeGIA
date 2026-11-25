@@ -1,5 +1,5 @@
 <?php
-require_once '../model/ContribuicaoLog.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
 
 class ContribuicaoLogCollection implements IteratorAggregate
 {

@@ -13,6 +13,7 @@ $statusInativoId = 1; // Ajuste para o ID correto do status "Inativo" no seu ban
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
+	exit;
 }
 
 $config_path = "config.php";
@@ -29,6 +30,7 @@ if (file_exists($config_path)) {
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: " . WWW . "index.php");
+	exit;
 }
 
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
@@ -51,17 +53,20 @@ if (!is_null($resultado)) {
 		if ($permissao['id_acao'] < 7) {
 			$msg = "Você não tem as permissões necessárias para essa página.";
 			header("Location: " . WWW . "html/home.php?msg_c=$msg");
+			exit;
 		}
 		$permissao = $permissao['id_acao'];
 	} else {
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
 		header("Location: " . WWW . "html/home.php?msg_c=$msg");
+		exit;
 	}
 } else {
 	$permissao = 1;
 	$msg = "Você não tem as permissões necessárias para essa página.";
 	header("Location: " . WWW . "html/home.php?msg_c=$msg");
+	exit;
 }
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
@@ -495,104 +500,7 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 				reader.readAsDataURL(input.files[0]);
 			}
 		}
-		function funcao1() {
-			var send = $("#enviar");
-			var cpfs = [{
-				"cpf": "admin",
-				"id": "1"
-			}, {
-				"cpf": "12487216166",
-				"id": "2"
-			}];
-			var cpf_atendido = $("#cpf").val();
-			var cpf_atendido_correto = cpf_atendido.replace(".", "");
-			var cpf_atendido_correto1 = cpf_atendido_correto.replace(".", "");
-			var cpf_atendido_correto2 = cpf_atendido_correto1.replace(".", "");
-			var cpf_atendido_correto3 = cpf_atendido_correto2.replace("-", "");
-			var apoio = 0;
-			var cpfs1 = [{
-				"cpf": "06512358716"
-			}, {
-				"cpf": ""
-			}, {
-				"cpf": "01027049702"
-			}, {
-				"cpf": "18136521719"
-			}, {
-				"cpf": "57703212539"
-			}, {
-				"cpf": "48913397480"
-			}, {
-				"cpf": "19861411364"
-			}, {
-				"cpf": "26377548508"
-			}, {
-				"cpf": "Luiza1ni"
-			}, {
-				"cpf": "Luiza2ni"
-			}, {
-				"cpf": "63422141154"
-			}, {
-				"cpf": "21130377008"
-			}, {
-				"cpf": "luiza3ni"
-			}, {
-				"cpf": "jiwdfhni"
-			}, {
-				"cpf": "Joaoni"
-			}, {
-				"cpf": "luiza4ni"
-			}, {
-				"cpf": "luiza5ni"
-			}, {
-				"cpf": "luiza6ni"
-			}, {
-				"cpf": "teste1ni"
-			}, {
-				"cpf": "luiza7ni"
-			}, {
-				"cpf": "luiza8ni"
-			}, {
-				"cpf": "luiza9ni"
-			}];
-			$.each(cpfs, function(i, item) {
-				if (item.cpf == cpf_atendido_correto3) {
-					alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
-					apoio = 1;
-					send.attr('disabled', 'disabled');
-				}
-			});
-			$.each(cpfs1, function(i, item) {
-				if (item.cpf == cpf_atendido_correto3) {
-					alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
-					apoio = 1;
-					$("#formulario").submit();
-				}
-			});
-			if (apoio == 0) {
-				alert("Cadastrado com sucesso!");
-			}
-		}
-
 		function validarInterno() {
-			var btn = $("#enviar");
-			var cpf_cadastrado = ([{
-				"cpf": "admin",
-				"id": "1"
-			}]);
-			var cpf = (($("#cpf").val()).replaceAll(".", "")).replaceAll("-", "");
-			console.log(this);
-			$.each(cpf_cadastrado, function(i, item) {
-				if (item.cpf == cpf) {
-					alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
-					btn.attr('disabled', 'disabled');
-					return false;
-				}
-			})
-			if ($("#telefone") == null) {
-				$("#telefone") = "";
-			};
-
 		}
 
 		function gerarTipo() {

@@ -1,16 +1,11 @@
 <?php
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
 }
 
-session_start();
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 ?>
 <style>
 	ul.nav-main>li:not(.visivel) {
@@ -233,6 +228,26 @@ session_start();
 					<ul class="nav nav-children">
 						<li class="nav-parent nav-active">
 							<a>
+								<i class="fa-solid fa-receipt" aria-hidden="true"></i>
+								<span>Processo de compra</span>
+							</a>
+
+							<ul class="nav nav-children">
+								<li>
+									<a href="<?= WWW ?>html/matPat/listar_origem.php">
+										<span>Listar fornecedores</span>
+									</a>
+								</li>
+								<li>
+									<a href="<?= WWW ?>controle/control.php?nomeClasse=CotacaoControle&amp;metodo=listar">
+										<span>Cotações</span>
+									</a>
+								</li>
+							</ul>
+						</li>
+
+						<li class="nav-parent nav-active">
+							<a>
 								<i class="fas fa-circle-arrow-down" aria-hidden="true"></i>
 								<span>Entrada</span>
 							</a>
@@ -401,6 +416,24 @@ session_start();
 							</li>
 						</ul>
 					</li>
+					<li class="nav-parent nav-active" id="34">
+						<a>
+							<i class="fa-solid fa-gift"></i>
+							<span>Programa de benefícios</span>
+						</a>
+						<ul class="nav nav-children">
+							<li>
+								<a href="<?= WWW ?>html/socio/sistema/beneficios.php">
+									<span>Regras de benefícios</span>
+								</a>
+							</li>
+							<li>
+								<a href="<?= WWW ?>html/socio/sistema/parceiros.php">
+									<span>Parceiros institucionais</span>
+								</a>
+							</li>
+						</ul>
+					</li>
 				</ul>
 			</li>
 
@@ -565,6 +598,28 @@ session_start();
 				</ul>
 			</li>
 			<!--fim agenda-->
+			<!--recepção-->
+			<li class="nav-parent nav-active" id="20">
+				<a>
+					<i class="fa-solid fa-concierge-bell" aria-hidden="true"></i>
+					<span>Recepção</span>
+				</a>
+				<ul class="nav nav-children">
+					<li>
+						<a href="<?= WWW ?>html/recepcao/pre_registro_entrada.php">
+							<i class="fa-solid fa-sign-in-alt"></i>
+							<span>Registro de Entrada</span>
+						</a>
+					</li>
+					<li>
+						<a href="<?= WWW ?>html/recepcao/registro_saida.php">
+							<i class="fa-solid fa-sign-out-alt"></i>
+							<span>Registro de Saída</span>
+						</a>
+					</li>
+				</ul>
+			</li>
+			<!--fim recepção-->
 			<li class="nav-parent nav-active visivel">
 				<a>
 					<i class="fa fa-cog" aria-hidden="true"></i>
@@ -616,11 +671,13 @@ session_start();
 							Documentos Funcionário
 						</a>
 					</li>
-					<li>
-						<a href="<?= WWW ?>html/configuracao/debug_info.php">
-							Informações de debug
-						</a>
-					</li>
+					<?php if (defined('DEV_MODE') && DEV_MODE === 'on'): ?>
+						<li>
+							<a href="<?= WWW ?>html/configuracao/debug_info.php">
+								Informações de debug
+							</a>
+						</li>
+					<?php endif; ?>
 				</ul>
 			</li>
 			</ul>
