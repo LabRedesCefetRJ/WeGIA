@@ -373,6 +373,19 @@ class SocioDAO
         return true;
     }
 
+    public function atualizarRenovacaoAutomatica(int $idSocio, int $autoRenovation): bool
+    {
+        if ($idSocio < 1 || !in_array($autoRenovation, [0, 1], true)) {
+            throw new InvalidArgumentException('Dados inválidos para atualizar a renovação automática.', 412);
+        }
+
+        $stmt = $this->pdo->prepare('UPDATE socio SET auto_renovation = :autoRenovation WHERE id_socio = :idSocio');
+        return $stmt->execute([
+            ':autoRenovation' => $autoRenovation,
+            ':idSocio' => $idSocio,
+        ]);
+    }
+
     //refatorar para receber parâmetros via objeto
     public function registrarLog(Socio $socio, string $mensagem, ?string $ip = null, ?string $userAgent = null)
     {

@@ -430,11 +430,25 @@ class ContribuicaoLogController
                     ? WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($uuidPrimeiraContribuicao)
                     : WWW . 'html/contribuicao/' . $resultado['link'];
 
+                $respostaGeracao = $porEmail
+                    ? Util::responderLinkGerado($linkPdf, $socio, 'carnê', $this->pdo)
+                    : ['link' => $linkPdf];
+
+                if (array_key_exists('auto_renovation', $_POST) && ($porEmail || in_array((string) ($_POST['tipoGeracao'] ?? ''), ['1', '2', '3', '6'], true))) {
+                    try {
+                        $autoRenovation = filter_var($_POST['auto_renovation'], FILTER_VALIDATE_INT);
+                        if (!in_array($autoRenovation, [0, 1], true) || !$socioDao->atualizarRenovacaoAutomatica((int) $socio->getId(), $autoRenovation)) {
+                            throw new RuntimeException('Não foi possível persistir a preferência de renovação automática.');
+                        }
+                    } catch (Throwable $e) {
+                        error_log('Falha ao persistir auto_renovation do sócio ' . $socio->getId() . ': ' . $e->getMessage());
+                        $respostaGeracao['aviso'] = 'O carnê foi gerado, mas não foi possível salvar a preferência de renovação automática.';
+                    }
+                }
+
                 //$porEmail vem de qual rota chamou (pública vs interna da
                 //equipe), não de sessão
-                echo json_encode($porEmail
-                    ? Util::responderLinkGerado($linkPdf, $socio, 'carnê', $this->pdo)
-                    : ['link' => $linkPdf]);
+                echo json_encode($respostaGeracao);
             }
         } catch (Exception $e) {
             Util::tratarException($e);

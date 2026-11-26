@@ -53,6 +53,7 @@ function gerarMensalidade() {
     formData.append('nomeClasse', 'ContribuicaoLogController');
     formData.append('metodo', 'criarCarne');
     formData.append('documento_socio', documento);
+    formData.set('auto_renovation', document.getElementById('auto_renovation').checked ? '1' : '0');
 
     fetch("../controller/control.php", {
         method: "POST",
@@ -75,6 +76,10 @@ function gerarMensalidade() {
             } else {
                 alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
                 voltarParaConfirmarCpf();
+            }
+
+            if (resposta.aviso) {
+                alert(resposta.aviso);
             }
 
         })

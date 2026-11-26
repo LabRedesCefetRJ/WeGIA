@@ -33,6 +33,13 @@ $tipoContribuicao = 'MENSALIDADE';
                 <?php include('./components/contribuicao_parcelas.php'); ?>
                 <?php include('./components/contribuicao_dia_vencimento.php'); ?>
 
+                <div class="wrap-input100">
+                    <label for="auto_renovation">
+                        <input type="checkbox" id="auto_renovation" value="1" checked>
+                        Renovar carnê automaticamente ao término
+                    </label>
+                </div>
+
                 <?php $tipoAvanca = 'valor';
                 include('./components/btn_avanca.php'); ?>
             </div>

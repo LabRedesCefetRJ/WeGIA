@@ -135,16 +135,21 @@ $(document).ready(function () {
 
                     $("#tipo_geracao").change(function () {
                         if ($(this).val() == 0) {
+                            $("#auto-renovation-container").hide();
+                            $("#auto_renovation").prop('disabled', true);
                             $("#num_parcelas").val(1);
                             $("#num_parcelas").prop('disabled', true);
                             $("#escolha-modo").css("display", "none");
                         }
                         else {
+                            $("#auto-renovation-container").show();
+                            $("#auto_renovation").prop('disabled', false);
                             $("#num_parcelas").val();
                             $("#num_parcelas").prop('disabled', false);
                             $("#escolha-modo").css("display", "block");
                         }
                     })
+                    $("#tipo_geracao").trigger('change');
 
                     $("#btn_confirma").click(function () {
 
@@ -198,7 +203,7 @@ $(document).ready(function () {
                             if (modo === 'fim-ano') parcela = calcularParcelasAteFinalAno(dia, Number(tipoGeracao));
                             const cpfCnpj = socio.split('|')[1];
 
-                            $.post(url, {
+                            const dadosGeracao = {
                                 "documento_socio": cpfCnpj,
                                 "valor": valor,
                                 "dia": dia,
@@ -206,7 +211,12 @@ $(document).ready(function () {
                                 "tipoGeracao": tipoGeracao,
                                 "atualizarTipoSocio": atualizarTipoSocio,
                                 "csrf_token": csrfToken
-                            }).done(function (r) {
+                            };
+                            if (tipoGeracao !== '0') {
+                                dadosGeracao.auto_renovation = $("#auto_renovation").prop('checked') ? '1' : '0';
+                            }
+
+                            $.post(url, dadosGeracao).done(function (r) {
                                 const resposta = typeof r === 'string' ? JSON.parse(r) : r;
                                 if (resposta.link) {
                                     window.open(resposta.link, '_blank');
@@ -214,6 +224,9 @@ $(document).ready(function () {
                                     alert('Erro: ' + resposta.erro);
                                 } else {
                                     alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
+                                }
+                                if (resposta.aviso) {
+                                    alert(resposta.aviso);
                                 }
                             }).fail(function (xhr, status, errorThrown) {
                                 console.error("Erro AJAX:", status, errorThrown);

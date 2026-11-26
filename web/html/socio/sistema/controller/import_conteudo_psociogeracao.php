@@ -130,6 +130,12 @@ permissao($_SESSION['id_pessoa'], 4, 7);
 										<input type="number" class="form-control" id="num_parcelas" name="num_parcelas" placeholder="num. parcelas" required>
 									</div>
 								</div>
+								<div class="form-group mb-2 col-xs-12" id="auto-renovation-container" style="display: none;">
+									<label>
+										<input type="checkbox" id="auto_renovation" checked disabled>
+										Renovar carnê automaticamente ao término
+									</label>
+								</div>
 
 								<div style="display: none" class="col-xs-12 div_btn_gerar">
 									<button type="button" id="btn_confirma" class="btn btn-primary">Gerar Boleto</button>
