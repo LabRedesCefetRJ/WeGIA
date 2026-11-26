@@ -157,6 +157,12 @@ require_once ROOT . "/html/personalizacao_display.php";
 				</header>
 
 				<!-- start: page -->
+				<?php if (isset($_SESSION['sucesso_almoxarifado'])): ?>
+					<div class="alert alert-success" role="alert">
+						<?= htmlspecialchars($_SESSION['sucesso_almoxarifado'], ENT_QUOTES, 'UTF-8') ?>
+					</div>
+					<?php unset($_SESSION['sucesso_almoxarifado']); ?>
+				<?php endif; ?>
 
 				<section class="panel">
 					<header class="panel-heading">

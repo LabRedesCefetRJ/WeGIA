@@ -82,6 +82,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 
 	<!-- Theme Custom CSS -->
 	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/matpat-movimentacao.css">
 
 	<!-- Head Libs -->
 	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
@@ -184,10 +185,10 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 											</div>
 
 											<div class="panel-body">
-												<div class="table-responsive">
-													<table class="table table-bordered mb-none">
+												<div class="table-responsive movimentacao-tabela-container">
+													<table class="table table-bordered movimentacao-tabela movimentacao-inclusao">
 														<thead>
-															<tr style="width: 768px;">
+															<tr>
 																<th>Produto
 																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" id="btn-novo-produto" class="fas fa-plus w3-xlarge" style="float:right;">
 																	</a>
@@ -202,24 +203,24 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 																	<!-- <datalist id="produtos_autocomplete">
 															</datalist> -->
 																</td>
-																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
-																<td><input id="valor_unitario" type="number" name="valor_unitario" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
+																<td><input type="number" name="quantidade" value="1" min="1" id="quantidade" class="form-control"></td>
+																<td><input id="valor_unitario" type="number" name="valor_unitario" step="any" value="0" min="0" class="form-control"></td>
 																<td>
 																	<button id="incluir" type="button" class="add-row">Incluir</button>
 																</td>
 															</tr>
 														</thead>
-													</table><br>
+													</table>
 												</div>
 
-												<div class="table-responsive">
-													<table class="table table-bordered mb-none table">
+												<div class="table-responsive movimentacao-tabela-container">
+													<table class="table table-bordered mb-none movimentacao-tabela movimentacao-produtos">
 														<thead>
 															<tr>
 
-																<th style="width: 160px;">Produto</th>
-																<th style="width: 85px;">Quantidade</th>
-																<th>Preço</th>
+																<th>Produto</th>
+																<th>Quantidade</th>
+																<th>Valor unitário</th>
 																<th>Total</th>
 																<th>Ação</th>
 															</tr>
@@ -228,8 +229,8 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 														</tbody>
 														<tfoot>
 															<tr>
-																<td>Valor total:</td>
-																<td id="valor-total">
+																<td colspan="3" class="movimentacao-total-label">Valor total:</td>
+																<td id="valor-total" colspan="2">
 																	<input type="hidden" id="total_total" name="total_total">
 																	<input type="text" id="total_total_formatado" class="form-control" value="R$ 0,00" readonly>
 																	<input type="hidden" id="conta" name="conta" readonly="readonly">
@@ -553,7 +554,8 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 				}
 
 				const quantidade = Number($("#quantidade").val());
-				const preco = Number($("#valor_unitario").val());
+				const campoValor = document.getElementById("valor_unitario");
+				const preco = Number(campoValor.value);
 
 				if (!Number.isFinite(quantidade) || quantidade <= 0) {
 					alert("A quantidade deve ser maior que zero.");
@@ -561,9 +563,9 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 					return;
 				}
 
-				if (!Number.isFinite(preco) || preco <= 0) {
-					alert("Informe um valor unitário maior que zero.");
-					$("#valor_unitario").focus();
+				if (campoValor.validity.badInput || !Number.isFinite(preco) || preco < 0) {
+					alert("Informe um valor unitário maior ou igual a zero.");
+					campoValor.focus();
 					return;
 				}
 
@@ -571,8 +573,9 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 
 				const markup =
 					"<tr class='produtoRow'>" +
-					"<td class='prod' style='width: 160px;'>" +
-						"<input type='text' " +
+					"<td class='prod'>" +
+						$('<span>').text(produto.descricao).prop('outerHTML') +
+						"<input type='hidden' " +
 						"value='" + valorSelecionado + "' " +
 						"name='id" + conta + "' " +
 						"readonly='readonly'>" +
@@ -822,6 +825,13 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 				contador++;
 
 				const inputProduto = $(this).find("td.prod input");
+				const celulaProduto = $(this).find('td.prod');
+				const descricaoProduto = String(inputProduto.val() || '').split('|')[1] || '';
+				inputProduto.attr('type', 'hidden');
+				celulaProduto.find('input').not(inputProduto).remove();
+				celulaProduto.children('span').remove();
+				$('<span>').text(descricaoProduto).prependTo(celulaProduto);
+
 				const inputQtd = $(this).find("td.quant input");
 				const inputPreco = $(this).find("input.preco");
 				const inputTotal = $(this).find("input.total");

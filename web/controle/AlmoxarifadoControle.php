@@ -71,9 +71,7 @@ class AlmoxarifadoControle
             $almoxarifadoDAO = new AlmoxarifadoDAO();
             $almoxarifadoDAO->incluir($almoxarifado);
 
-            $_SESSION['msg'] = "Almoxarifado cadastrado com sucesso";
-            $_SESSION['proxima'] = "Cadastrar outro almoxarifado";
-            $_SESSION['link'] = WWW . "html/matPat/adicionar_almoxarifado.php";
+            $_SESSION['sucesso_cadastro_almoxarifado'] = "Almoxarifado cadastrado com sucesso";
 
             header("Location: " . WWW . "html/matPat/adicionar_almoxarifado.php");
             exit;
@@ -138,7 +136,7 @@ class AlmoxarifadoControle
             $dao = new AlmoxarifadoDAO();
             $dao->alterarAlmoxarifado($almoxarifado);
 
-            $_SESSION['msg'] = "Almoxarifado alterado com sucesso";
+            $_SESSION['sucesso_almoxarifado'] = "Almoxarifado alterado com sucesso";
 
             header('Location: ' . WWW . 'html/matPat/listar_almox.php');
             exit;
@@ -170,7 +168,7 @@ class AlmoxarifadoControle
         $dao = new AlmoxarifadoDAO();
         $dao->arquivar($id);
 
-        $_SESSION['msg'] = "Almoxarifado arquivado com sucesso.";
+        $_SESSION['sucesso_almoxarifado'] = "Almoxarifado arquivado com sucesso.";
 
         header('Location: ' . WWW . 'html/matPat/listar_almox.php');
         exit;
@@ -190,7 +188,7 @@ class AlmoxarifadoControle
         $dao = new AlmoxarifadoDAO();
         $dao->desarquivar($id);
 
-        $_SESSION['msg'] = "Almoxarifado restaurado com sucesso.";
+        $_SESSION['sucesso_almoxarifado'] = "Almoxarifado restaurado com sucesso.";
 
         header('Location: ' . WWW . 'html/matPat/listar_almox.php?tipo=arquivado');
         exit;

@@ -443,6 +443,27 @@ class SocioDAO
     {
         $sql = "
             UPDATE socio s
+            -- Tipos não listados preservam os limites atuais de dois e três meses.
+            LEFT JOIN (
+                SELECT 6 AS id_sociotipo, 2 AS intervalo_meses
+                UNION ALL SELECT 7, 2
+                UNION ALL SELECT 24, 2
+                UNION ALL SELECT 25, 2
+                UNION ALL SELECT 44, 2
+                UNION ALL SELECT 45, 2
+                UNION ALL SELECT 8, 3
+                UNION ALL SELECT 9, 3
+                UNION ALL SELECT 26, 3
+                UNION ALL SELECT 27, 3
+                UNION ALL SELECT 46, 3
+                UNION ALL SELECT 47, 3
+                UNION ALL SELECT 10, 6
+                UNION ALL SELECT 11, 6
+                UNION ALL SELECT 28, 6
+                UNION ALL SELECT 29, 6
+                UNION ALL SELECT 48, 6
+                UNION ALL SELECT 49, 6
+            ) periodicidade ON periodicidade.id_sociotipo = s.id_sociotipo
             LEFT JOIN (
                 SELECT 
                     cl.id_socio,
@@ -450,13 +471,7 @@ class SocioDAO
                     MAX(CASE 
                         WHEN cl.status_pagamento = 1 
                         THEN cl.data_pagamento 
-                    END) AS ultimo_pagamento,
-
-                    MAX(CASE 
-                        WHEN cl.status_pagamento = 0
-                            AND cl.data_vencimento < DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-                        THEN 1 ELSE 0
-                    END) AS tem_pendencia_antiga
+                    END) AS ultimo_pagamento
 
                 FROM contribuicao_log cl
                 GROUP BY cl.id_socio
@@ -472,7 +487,7 @@ class SocioDAO
                     WHERE cl.id_socio = s.id_socio
                     AND cl.status_pagamento = 0
                     AND cl.data_vencimento < CURDATE()
-                    AND cl.data_vencimento >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+                    AND cl.data_vencimento >= DATE_SUB(CURDATE(), INTERVAL (2 + COALESCE(periodicidade.intervalo_meses, 0)) MONTH)
                     AND NOT EXISTS (
                         SELECT 1
                         FROM contribuicao_log cl2
@@ -485,17 +500,23 @@ class SocioDAO
 
                 -- ATIVO
                 WHEN r.ultimo_pagamento IS NOT NULL
-                    AND r.ultimo_pagamento >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+                    AND r.ultimo_pagamento >= DATE_SUB(CURDATE(), INTERVAL (2 + COALESCE(periodicidade.intervalo_meses, 0)) MONTH)
                 THEN 0
 
                 -- INATIVO
                 WHEN r.ultimo_pagamento IS NULL
-                    OR r.ultimo_pagamento < DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-                    OR r.tem_pendencia_antiga = 1
+                    OR r.ultimo_pagamento < DATE_SUB(CURDATE(), INTERVAL (3 + COALESCE(periodicidade.intervalo_meses, 0)) MONTH)
+                    OR EXISTS (
+                        SELECT 1
+                        FROM contribuicao_log cl
+                        WHERE cl.id_socio = s.id_socio
+                            AND cl.status_pagamento = 0
+                            AND cl.data_vencimento < DATE_SUB(CURDATE(), INTERVAL (3 + COALESCE(periodicidade.intervalo_meses, 0)) MONTH)
+                    )
                 THEN 1
 
                 -- INATIVO TEMPORÁRIO
-                WHEN r.ultimo_pagamento < DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+                WHEN r.ultimo_pagamento < DATE_SUB(CURDATE(), INTERVAL (2 + COALESCE(periodicidade.intervalo_meses, 0)) MONTH)
                 THEN 3
 
                 ELSE s.id_sociostatus

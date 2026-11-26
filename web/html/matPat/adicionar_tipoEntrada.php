@@ -85,6 +85,12 @@ require_once ROOT . "/html/personalizacao_display.php";
 					</div>
 				</header>
 				<!-- start: page -->
+				<?php if (isset($_SESSION['sucesso_tipo_entrada'])): ?>
+					<div class="alert alert-success" role="alert">
+						<?= htmlspecialchars($_SESSION['sucesso_tipo_entrada'], ENT_QUOTES, 'UTF-8') ?>
+					</div>
+					<?php unset($_SESSION['sucesso_tipo_entrada']); ?>
+				<?php endif; ?>
 				<div class="row">
 					<div class="col-md-4 col-lg-2" style="visibility: hidden;"></div>
 					<div class="col-md-8 col-lg-8">
