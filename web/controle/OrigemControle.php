@@ -192,7 +192,9 @@ class OrigemControle
             preg_match($regex, $nextPage) ? header('Location: ' . htmlspecialchars($nextPage, ENT_QUOTES, 'UTF-8')) : header('Location: ' . WWW . 'html/home.php');
             exit;
         } catch (PDOException $e) {
-            error_log("Erro ao listar origens: " . $e->getMessage());
+            error_log("Erro ao listar origens: " . $e->getMessage()
+                    . " Arquivo: " . $e->getFile()
+                    . " Linha: " . $e->getLine());
             echo "Erro ao listar origens. Tente novamente mais tarde.";
         }
     }
@@ -213,7 +215,9 @@ class OrigemControle
             preg_match($regex, $nextPage) ? header('Location: ' . htmlspecialchars($nextPage, ENT_QUOTES, 'UTF-8')) : header('Location: ' . WWW . 'html/home.php');
             exit;
         } catch (PDOException $e) {
-            error_log("Erro ao listar ID/Nome: " . $e->getMessage());
+            error_log("Erro ao listar ID/Nome: " . $e->getMessage()
+                    . " Arquivo: " . $e->getFile()
+                    . " Linha: " . $e->getLine());
             echo "Erro ao listar origens. Tente novamente mais tarde.";
         }
     }
@@ -248,7 +252,9 @@ class OrigemControle
             header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
             exit;
         } catch (PDOException $e) {
-            error_log("Erro ao incluir origem: " . $e->getMessage());
+            error_log("Erro ao incluir origem: " . $e->getMessage()
+                    . " Arquivo: " . $e->getFile()
+                    . " Linha: " . $e->getLine());
             echo "Erro ao realizar o cadastro. Tente novamente mais tarde.";
         } catch (InvalidArgumentException $e) {
             // Guarda apenas os campos do formulário para restaurá-los após o redirecionamento.
@@ -262,7 +268,9 @@ class OrigemControle
             exit;
 
         } catch (Exception $e) {
-            error_log("Erro geral: " . $e->getMessage() . 'Line ' . $e->getLine() . 'File ' . $e->getFile());
+            error_log("Erro geral: " . $e->getMessage()
+                    . " Arquivo: " . $e->getFile()
+                    . " Linha: " . $e->getLine());
             echo "Erro inesperado. Contate o administrador do sistema.";
         }
     }
@@ -296,7 +304,9 @@ class OrigemControle
             $_SESSION['msg'] = $e->getMessage();
             $_SESSION['flag'] = 'error';
         } catch (PDOException $e) {
-            error_log("Erro ao excluir origem: " . $e->getMessage());
+            error_log("Erro ao excluir origem: " . $e->getMessage()
+                    . " Arquivo: " . $e->getFile()
+                    . " Linha: " . $e->getLine());
             $_SESSION['msg'] = 'Não foi possível excluir esta origem. Verifique se existem outros registros vinculados a ela e tente novamente.';
             $_SESSION['flag'] = 'error';
         }
@@ -324,7 +334,9 @@ class OrigemControle
             $origemDAO = new OrigemDAO();
             echo $origemDAO->listarPorAlmoxarifado($id_almoxarifado);
         } catch (PDOException $e) {
-            error_log('Erro ao listar origens por almoxarifado: ' . $e->getMessage());
+            error_log("Erro ao listar origens por almoxarifado: " . $e->getMessage()
+                    . " Arquivo: " . $e->getFile()
+                    . " Linha: " . $e->getLine());
             $this->responderJson(['mensagem' => 'Não foi possível carregar as origens. Tente novamente mais tarde.'], 500);
         }
         exit;
@@ -366,7 +378,9 @@ class OrigemControle
             header('Location: ' . WWW . 'html/matPat/listar_origem.php');
             exit;
         } catch (PDOException $e) {
-            error_log("Erro ao alterar origem: " . $e->getMessage());
+            error_log("Erro ao alterar origem: " . $e->getMessage()
+                    . " Arquivo: " . $e->getFile()
+                    . " Linha: " . $e->getLine());
             if (($_POST['resposta'] ?? '') === 'json') {
                 $this->responderJson(['mensagem' => 'Erro ao alterar origem. Tente novamente mais tarde.'], 500);
             }
@@ -384,7 +398,9 @@ class OrigemControle
             http_response_code($status);
             echo "Erro ao alterar origem.";
         } catch (Exception $e) {
-            error_log("Erro ao alterar origem: " . $e->getMessage());
+            error_log("Erro ao alterar origem: " . $e->getMessage()
+                    . " Arquivo: " . $e->getFile()
+                    . " Linha: " . $e->getLine());
             if (($_POST['resposta'] ?? '') === 'json') {
                 $this->responderJson(['mensagem' => 'Erro inesperado ao alterar origem.'], 500);
             }
