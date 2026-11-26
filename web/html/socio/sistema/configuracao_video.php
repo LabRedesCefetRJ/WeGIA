@@ -91,7 +91,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                         <label for="video-url">URL para incorporação do vídeo</label>
                                         <input id="video-url" class="form-control" type="url" maxlength="512" required>
                                         <p class="help-block video-configuration-help">
-                                            Informe uma URL de incorporação, como https://www.youtube.com/embed/ID. O vídeo será iniciado automaticamente sem som.
+                                            Informe uma URL de incorporação, como https://www.youtube.com/embed/ID, ou cole o iframe completo do vídeo. O vídeo será iniciado automaticamente sem som.
                                         </p>
                                     </div>
                                     <div class="video-configuration-actions">
@@ -116,6 +116,19 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
         const removeConfigurationButton = document.getElementById('remove-video-configuration');
         const messageContainer = document.getElementById('video-configuration-message');
         let configurationExists = false;
+
+        videoUrlInput.addEventListener('paste', (event) => {
+            const pastedText = event.clipboardData.getData('text');
+            const sourceMatch = pastedText.match(/\bsrc\s*=\s*(["'])(https?:\/\/[^"']+)\1/i);
+
+            if (!sourceMatch) {
+                return;
+            }
+
+            event.preventDefault();
+            videoUrlInput.value = sourceMatch[2];
+            videoUrlInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
 
         function showConfigurationMessage(message, isError = false) {
             messageContainer.textContent = message;
