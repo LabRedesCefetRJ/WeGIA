@@ -158,11 +158,12 @@ foreach ($descricao_medica as $key => $value) {
 
 $descricao_medica = json_encode($descricao_medica);
 
-require_once "../../dao/SaudeDAO.php";
-$saudeDAO = new SaudeDAO();
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'AtendimentoPacienteControle.php';
 
-$medtiposmedicacoes = $saudeDAO->listarTipoMedicacao();
-$medtiposuso = $saudeDAO->listarTipoUsoMedicacao();
+$atendimentoPacienteControle = new AtendimentoPacienteControle();
+
+$medtiposmedicacoes = $atendimentoPacienteControle->listarTipoMedicacao();
+$medtiposuso = $atendimentoPacienteControle->listarTipoUsoMedicacao();
 
 $stmtMedicacoes = $pdo->prepare("
     SELECT sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem,

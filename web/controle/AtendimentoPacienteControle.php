@@ -2,6 +2,7 @@
 
 require_once dirname(__DIR__) . '/dao/AtendimentoPacienteDAO.php';
 require_once dirname(__DIR__) . '/dao/AtendidoDAO.php';
+require_once dirname(__DIR__) . '/dao/SaudeDAO.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -212,5 +213,17 @@ class AtendimentoPacienteControle
                 }
             }
         }
+    }
+
+    public function listarTipoMedicacao()
+    {
+        $saudeDAO = new SaudeDAO();
+        return $saudeDAO->listarTipoMedicacao();
+    }
+
+    public function listarTipoUsoMedicacao()
+    {
+        $saudeDAO = new SaudeDAO();
+        return $saudeDAO->listarTipoUsoMedicacao();
     }
 }

@@ -173,7 +173,8 @@
                 'id_pessoa_paciente' => $id_pessoa_paciente,
                 'id_pessoa_funcionario' => $id_pessoa_funcionario,
                 'tipo_medicacao' => $tipo_medicacao,
-                'medicamento' => $medicamento
+                'medicamento' => $medicamento,
+                'dosagem' => $dosagem
             ];
 
             foreach ($campos_obrigatorios as $campo => $valor) {
