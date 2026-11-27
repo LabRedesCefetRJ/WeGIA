@@ -18,7 +18,7 @@ class DestinoControle
         $cnpj     = isset($_REQUEST['cnpj']) ? trim($_REQUEST['cnpj']) : '';
 
         if (empty($nome)) {
-            $_SESSION['msg'] = "Nome do destino não informado. Por favor, informe um nome!";
+            $_SESSION['erro_destino'] = "Nome do destino não informado. Por favor, informe um nome!";
             header('Location: ' . WWW . 'html/matPat/cadastro_destino.php');
             exit;
         }
@@ -58,9 +58,7 @@ class DestinoControle
             $destinoDAO = new DestinoDAO();
             $destinoDAO->incluir($destino);
 
-            $_SESSION['msg'] = "Destino cadastrado com sucesso";
-            $_SESSION['proxima'] = "Cadastrar outro Destino";
-            $_SESSION['link'] = WWW . "html/matPat/cadastro_destino.php";
+            $_SESSION['sucesso_destino'] = "Destino cadastrado com sucesso";
 
             header("Location: " . WWW . "html/matPat/cadastro_destino.php");
             exit;

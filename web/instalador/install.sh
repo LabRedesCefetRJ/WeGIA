@@ -31,7 +31,7 @@ install_localdeps(){
     apt install sudo git curl -y
     apt install openssl -y
     apt install mariadb-server -y
-    apt install apache2 composer php8.4 php8.4-cli php8.4-common php8.4-curl php8.4-gd php8.4-intl php8.4-mbstring php8.4-mysql php8.4-opcache php8.4-readline php8.4-soap php8.4-xml php8.4-zip libapache2-mod-php8.4 -y
+    apt install apache2 composer npm php8.4 php8.4-cli php8.4-common php8.4-curl php8.4-gd php8.4-intl php8.4-mbstring php8.4-mysql php8.4-opcache php8.4-readline php8.4-soap php8.4-xml php8.4-zip libapache2-mod-php8.4 -y
 }
 
 install_internetdeps(){
@@ -50,6 +50,7 @@ download_wegia(){
     mv /tmp/WeGIA /var/www/
     cd /var/www/WeGIA/api
     sudo -u www-data composer install
+    sudo -u www-data npm ci --prefix /var/www/WeGIA/web
 
     mkdir -p /var/www/bkpWeGIA
     chown www-data:www-data /var/www/bkpWeGIA -R

@@ -332,6 +332,23 @@ $origemLista = CotacaoSuporte::origemLista();
                                                     <i class="fa fa-pencil" aria-hidden="true"></i>
                                                     Editar
                                                 </button>
+                                                <?php if (count($orcamentos) > 1): ?>
+                                                    <form method="post" action="<?= WWW ?>controle/control.php"
+                                                        style="display: inline-block;"
+                                                        onsubmit="return confirm('Deseja excluir este orçamento? Esta ação não pode ser desfeita.');">
+                                                        <input type="hidden" name="nomeClasse" value="OrcamentoControle">
+                                                        <input type="hidden" name="metodo" value="excluir">
+                                                        <input type="hidden" name="id_orcamento" value="<?= $idOrcamento ?>">
+                                                        <input type="hidden" name="origem" value="<?= htmlspecialchars($origemLista, ENT_QUOTES, 'UTF-8') ?>">
+                                                        <?= Csrf::inputField() ?>
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            <i class="fa fa-trash" aria-hidden="true"></i>
+                                                            Excluir orçamento
+                                                        </button>
+                                                    </form>
+                                                <?php else: ?>
+                                                    <p class="help-block">A cotação deve possuir pelo menos um orçamento.</p>
+                                                <?php endif; ?>
                                             <?php endif; ?>
                                         </div>
                                     </section>

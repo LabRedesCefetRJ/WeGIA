@@ -28,9 +28,11 @@ function changeType(tipo) {
         document.getElementById(id).style.display = visivel ? 'block' : 'none';
     });
 
-    // Apenas o seletor visível deve enviar o parâmetro "tipo".
-    document.getElementById('tipoEntradaSelect').name = entrada ? 'tipo' : '';
-    document.getElementById('tipoSaidaSelect').name = saida ? 'tipo' : '';
+    // Apenas os seletores do relatório ativo devem enviar seus tipos.
+    document.getElementById('tipoEntradaSelect').disabled = !entrada;
+    document.getElementById('tiposEntradaValores').disabled = !entrada;
+    document.getElementById('tipoSaidaSelect').disabled = !saida;
+    document.getElementById('tiposSaidaValores').disabled = !saida;
 
     document.getElementById('produtoSelect').required = produto;
     document.getElementById('grupoSelect').required = grupo;

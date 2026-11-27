@@ -27,8 +27,19 @@ $modoRequisicao = $_POST['modo_requisicao'] ?? 'movimentados';
 
 $mostrarZerados = isset($_POST['mostrarZerados']) && $_POST['mostrarZerados'] === 'on';
 
-$tiposEntrada = $_POST['tiposEntrada'] ?? [];
-$tiposSaida = $_POST['tiposSaida'] ?? [];
+try {
+    $tiposEntrada = $_POST['tipo_relatorio'] === 'entrada'
+        ? Item::normalizarTipos($_POST['tiposEntrada'] ?? []) : [];
+    $tiposSaida = $_POST['tipo_relatorio'] === 'saida'
+        ? Item::normalizarTipos($_POST['tiposSaida'] ?? []) : [];
+} catch (InvalidArgumentException $erro) {
+    http_response_code(400);
+    exit('Seleção de tipos inválida. Volte ao formulário e selecione os tipos novamente.');
+}
+
+// Nas movimentações, a lista de tipos é o único filtro de tipo.
+$tipoFiltro = in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque', 'itens_compra'], true)
+    ? ($_POST['categoria_produto'] ?? null) : null;
 
 $o_d = null;
 if ($_POST['tipo_relatorio'] == 'entrada') {
@@ -39,9 +50,7 @@ if ($_POST['tipo_relatorio'] == 'entrada') {
 $post = [
 	$_POST['tipo_relatorio'] != '' ? $_POST['tipo_relatorio'] : null,
 	$o_d != '' ? $o_d : null,
-	in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque', 'itens_compra'])
-	? (!empty($_POST['categoria_produto']) ? $_POST['categoria_produto'] : null)
-	: (!empty($_POST['tipo']) ? $_POST['tipo'] : null),
+	$tipoFiltro ?: null,
 	$_POST['responsavel'] != '' ? $_POST['responsavel'] : null,
 	[
 		'inicio' => $_POST['data_inicio'] != '' ? $_POST['data_inicio'] : null,
@@ -59,9 +68,7 @@ if(($_POST['tipo_relatorio'] ?? null) === 'itens_compra' && empty($_POST['almoxa
 $item = new Item(
 	$_POST['tipo_relatorio'],
 	$o_d,
-	in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque', 'itens_compra'])
-	? ($_POST['categoria_produto'] ?? null)
-	: ($_POST['tipo'] ?? null),
+	$tipoFiltro,
 	$tiposEntrada,
     $tiposSaida,
 	$_POST['responsavel'],
@@ -75,6 +82,8 @@ $item = new Item(
 	$modoRequisicao
 );
 
+require_once ROOT . '/html/relatorios/RelatorioMatPat.php';
+
 function quickQuery($query, $parametro, $column)
 {
 	$pdo = Conexao::connect();
@@ -84,7 +93,7 @@ function quickQuery($query, $parametro, $column)
 	$stmt->bindValue($chave, $valor);
 	$stmt->execute();
 	$res = $stmt->fetchAll(PDO::FETCH_ASSOC);
-	return $res[0][$column];
+	return $res[0][$column] ?? null;
 }
 
 ?>
@@ -167,159 +176,14 @@ function quickQuery($query, $parametro, $column)
 		});
 	</script>
 
-	<script>
-		var homeIcon;
-		// Antes do navegador imprimir a página
-		window.onbeforeprint = function(event) {
-			homeIcon = $('#home-icon').children();
-			$('#home-icon').empty();
-			$('#home-icon').append($('<span />').text("<?php display_campo("Titulo", "str"); ?>"));
-		}
-
-		// Depois do navegador imprimir ou cancelar a impressão da página
-		window.onafterprint = function(event) {
-			$('#home-icon').empty();
-			$('#home-icon').append(homeIcon);
-		};
-	</script>
 
 	<!-- javascript tab management script -->
 
-	<style>
-		.folha-requisicao {
-    		width: 100%;
-    		max-width: 28.2cm;
-    		margin: 0 auto 20px auto;
-    		page-break-after: always;
-    		font-family: Arial, sans-serif;
-		}
-
-		.cabecalho-requisicao {
-    		text-align: center;
-    		font-size: 20px;
-    		font-weight: bold;
-    		margin-bottom: 2px;
-		}
-
-		.instrucao-requisicao {
-    		text-align: center;
-    		font-size: 9px;
-    		margin-bottom: 8px;
-		}
-
-		.tabela-requisicao {
-    		width: 100%;
-    		border-collapse: collapse;
-    		table-layout: fixed;
-		}
-
-		.tabela-requisicao td {
-    		border: 1px solid #999;
-    		padding: 2px;
-    		vertical-align: top;
-		}
-
-		.produto-requisicao {
-    		width: 9%;
-    		font-size: 10px;
-    		font-weight: bold;
-    		vertical-align: middle !important;
-    		overflow-wrap: break-word;
-    		word-break: normal;
-		}
-
-		.produto-requisicao-manual {
-    		padding: 4px !important;
-    		vertical-align: middle !important;
-		}
-
-		.texto-produto-manual {
-    		font-size: 9px;
-    		font-weight: bold;
-    		line-height: 1.1;
-    		margin-bottom: 8px;
-		}
-
-		.linha-produto-manual {
-    		width: 100%;
-    		height: 10px;
-    		border-bottom: 1px solid #555;
-		}
-
-		.dia-requisicao {
-    		width: 5.6875%;
-    		height: 0.78cm;
-    		font-size: 8px;
-    		font-weight: bold;
-    		text-align: left;
-    		vertical-align: top;
-		}
-
-		.dia-azul {
-    		background-color: #eaf5ff;
-		}
-
-		.total-requisicao {
-    		background-color: #f2f2f2;
-		}
-
-		.rodape-requisicao {
-    		text-align: right;
-    		font-size: 8px;
-    		color: #999;
-    		margin-top: 4px;
-		}
-
-		@media print {
-   			@page {
-        		size: A4 landscape;
-        		margin: 0.35cm;
-    		}
-
-    		.print-hide,
-    		.descricao,
-    		h4,
-    		.print-button {
-        		display: none !important;
-    		}
-
-    		body {
-        		margin: 0;
-        		padding: 0;
-    		}
-
-    		.content-body,
-    		.inner-wrapper,
-    		.tab-content {
-        		margin: 0 !important;
-        		padding: 0 !important;
-        		width: 100% !important;
-    		}
-
-    		.folha-requisicao {
-        		width: 28.2cm;
-        		max-width: 28.2cm;
-        		margin: 0 auto;
-        		page-break-after: always;
-    		}
-
-    		.tabela-requisicao {
-        		width: 28.2cm;
-    		}
-
-    		.produto-requisicao {
-        		width: 2.43cm;
-    		}
-
-    		.dia-requisicao {
-        		width: 1.61cm;
-    		}
-		}
-</style>
-
+	<link rel="stylesheet" href="<?= WWW ?>css/relatorio-matpat.css">
+<script src="<?= WWW ?>assets/javascripts/relatorio-matpat.js" defer></script>
 </head>
 
-<body>
+<body class="relatorio-matpat relatorio-pagina-paisagem">
 	<section class="body">
 		<div id="header" class="print-hide"></div>
 		<!-- end: header -->
@@ -345,131 +209,51 @@ function quickQuery($query, $parametro, $column)
 				</header>
 				<!--start: page-->
 				<div class="tab-content">
-					<div class="descricao">
-						<p>
-							<li>
-								<?php
-								if (isset($post[0])) {
 
-									if (DEBUG) {
-										echo "<pre>";
-										var_dump("GET", $_GET);
-										var_dump("POST", $_POST, $post);
-										var_dump("INSTANCIAS", $item, $item->hasValue());
-										echo "</pre>";
-									}
-
-									$tipoRelatorio = htmlspecialchars($post[0]) == 'itens_compra' ? 'itens de compra' : htmlspecialchars($post[0]);
-									echo ("<h3>Relatório de " . $tipoRelatorio . "</h3>");
-
-									if ($post[0] == 'entrada') {
-										if (isset($post[1])) {
-											$origem = quickQuery("select nome_origem from origem where id_origem =  :id_origem;", [':id_origem' => $post[1]], "nome_origem");
-											echo ("<ul>Origem: " . htmlspecialchars($origem) . "</ul>");
-										} else {
-											echo ("<ul>Origem: Todas</ul>");
-										}
-										if (isset($post[2])) {
-											$tipo = quickQuery("select descricao from tipo_entrada where id_tipo = :id_tipo;", [':id_tipo' => $post[2]], "descricao",);
-											echo ("<ul>Tipo: " . htmlspecialchars($tipo) . "</ul>");
-										} else {
-											echo ("<ul>Tipo: Todos</ul>");
-										}
-										if (isset($post[3])) {
-											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_pessoa;",  [':id_pessoa' => $post[3]], "nome");
-											echo ("<ul>Responsável: " . htmlspecialchars($responsavel) . "</ul>");
-										} else {
-											echo ("<ul>Responsável: Todos</ul>");
-										}
-									}
-
-									if ($post[0] == 'saida') {
-										if (isset($post[1])) {
-											$destino = quickQuery("select nome_destino from destino where id_destino =  :id_destino;", [':id_destino' => $post[1]], "nome_destino");
-											echo ("<ul>Destino: " . htmlspecialchars($destino) . "</ul>");
-										} else {
-											echo ("<ul>Destino: Todos</ul>");
-										}
-										if (isset($post[2])) {
-											$tipo = quickQuery("select descricao from tipo_saida where id_tipo = :id_tipo;", [':id_tipo' => $post[2]], "descricao");
-											echo ("<ul>Tipo: " . htmlspecialchars($tipo) . "</ul>");
-										} else {
-											echo ("<ul>Tipo: Todos</ul>");
-										}
-										if (isset($post[3])) {
-											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_pessoa;", [':id_pessoa' => $post[3]], "nome");
-											echo ("<ul>Responsável: " . htmlspecialchars($responsavel) . "</ul>");
-										} else {
-											echo ("<ul>Responsável: Todos</ul>");
-										}
-									}
-
-									$modeloBrasileiro = 'd/m/Y';
-
-									if (isset($post[4]['inicio'])) {
-										$dataInicio = $post[4]['inicio'];
-										$dataInicioFormatada = date_format(date_create($dataInicio), $modeloBrasileiro);
-										echo ("<ul>A partir de: " . htmlspecialchars($dataInicioFormatada) . "</ul>");
-									}
-
-									if (isset($post[4]['fim'])) {
-										$dataFim = $post[4]['fim'];
-										$dataFimFormatada = date_format(date_create($dataFim), $modeloBrasileiro);
-										echo ("<ul>Até: " . htmlspecialchars($dataFimFormatada) . "</ul>");
-									}
-
-									if (!empty($_POST['data_inicio']) && !empty($_POST['data_fim']) && $_POST['data_inicio'] > $_POST['data_fim']) {
-										echo ("<ul style='color: red;'>Aviso: A data de início é maior que a data de fim.</ul>");
-										exit();
-									}
-
-									if (isset($post[5])) {
-										$almoxarifado = quickQuery("select descricao_almoxarifado from almoxarifado where id_almoxarifado = :id_almoxarifado;", [':id_almoxarifado' => $post[5]], "descricao_almoxarifado");
-										echo ("<ul>Almoxarifado: " . htmlspecialchars($almoxarifado) . "</ul>"); 
-									} else {
-										echo ("<ul>Almoxarifado: Todos</ul>");
-									}
-
-									if ($post[0] === 'requisicao') {
-										$modelosRequisicao = [
-											'movimentados' => 'Produtos mais movimentados',
-											'completo' => 'Todos os produtos em estoque'
-										];
-
-										echo (
-											"<ul>Modelo da requisição: " .
-											htmlspecialchars($modelosRequisicao[$modoRequisicao] ?? 'Produtos mais movimentados') .
-											"</ul>"
-										);
-
-										if ($modoRequisicao === 'movimentados') {
-											echo ("<ul>Critério: produtos com saída total igual ou superior a 10 no período selecionado.</ul>");
-										}
-									} else {
-										if ($post[0] === 'estoque') {
-											if ($post[6]) {
-												echo ("<ul>Mostrando produtos fora de estoque</ul>");
-											} else {
-												echo ("<ul>Ocultando produtos fora de estoque</ul>");
-											}
-										}
-									}
-
-									if($post[0] == 'estoque' || $post[0] == 'requisicao' || $post[0] == 'itens_compra') {
-										if (isset($post[2])) {
-											$categoriaProduto = quickQuery("select descricao_categoria from categoria_produto where id_categoria_produto = :id_categoria_produto;", [':id_categoria_produto' => $post[2]], "descricao_categoria");
-											echo ("<ul>Categoria de Produto: " . htmlspecialchars($categoriaProduto) . "</ul>");
-										} else {
-											echo ("<ul>Categoria de Produto: Todos</ul>");
-										}
-									}
-								}
-								?>
-							</li>
-						</p>
-						<button style="float: right;" class="mb-xs mt-xs mr-xs btn btn-default print-button" onclick="window.print();">Imprimir</button>
-					</div>
-					<?php if ($_POST['tipo_relatorio'] == 'requisicao') { ?>
+					<?php
+                    $filtros = [];
+                    if (in_array($post[0], ['entrada', 'saida'], true)) {
+                        $entrada = $post[0] === 'entrada';
+                        $filtros[$entrada ? 'Origem' : 'Destino'] = $post[1]
+                            ? ($entrada
+                                ? quickQuery('SELECT nome_origem FROM origem WHERE id_origem = :id', [':id' => $post[1]], 'nome_origem')
+                                : quickQuery('SELECT nome_destino FROM destino WHERE id_destino = :id', [':id' => $post[1]], 'nome_destino'))
+                            : ($entrada ? 'Todas' : 'Todos');
+                        $nomesTipos = [];
+                        foreach ($entrada ? $tiposEntrada : $tiposSaida as $idTipo) {
+                            $nomesTipos[] = quickQuery('SELECT descricao FROM ' . ($entrada ? 'tipo_entrada' : 'tipo_saida') . ' WHERE id_tipo = :id', [':id' => $idTipo], 'descricao') ?? ('Tipo #' . $idTipo);
+                        }
+                        $filtros[$entrada ? 'Tipos de entrada' : 'Tipos de saída'] = $nomesTipos ? implode(', ', $nomesTipos) : 'Todos';
+                        $filtros['Responsável'] = $post[3]
+                            ? quickQuery('SELECT nome FROM pessoa WHERE id_pessoa = :id', [':id' => $post[3]], 'nome') : 'Todos';
+                    }
+                    if ($post[0] !== 'estoque') {
+                        if (!empty($post[4]['inicio']) && !empty($post[4]['fim']) && $post[4]['inicio'] > $post[4]['fim']) {
+                            exit('Aviso: A data de início é maior que a data de fim.');
+                        }
+                        $filtros['Período'] = RelatorioMatPat::periodo($post[4]['inicio'], $post[4]['fim']);
+                    }
+                    $filtros['Almoxarifado'] = $post[5]
+                        ? quickQuery('SELECT descricao_almoxarifado FROM almoxarifado WHERE id_almoxarifado = :id', [':id' => $post[5]], 'descricao_almoxarifado') : 'Todos';
+                    if (in_array($post[0], ['estoque', 'requisicao', 'itens_compra'], true)) {
+                        $filtros['Categoria de produto'] = $post[2]
+                            ? quickQuery('SELECT descricao_categoria FROM categoria_produto WHERE id_categoria_produto = :id', [':id' => $post[2]], 'descricao_categoria') : 'Todas';
+                    }
+                    if ($post[0] === 'estoque') {
+                        $filtros['Produtos fora de estoque'] = $post[6] ? 'Mostrar' : 'Ocultar';
+                    }
+                    if (in_array($post[0], ['saida', 'itens_compra'], true)) {
+                        $filtros['Média de saída'] = ['dia' => 'Por dia', 'mes' => 'Por mês', 'ano' => 'Por ano'][$tipoMedia] ?? 'Por dia';
+                    }
+                    if ($post[0] === 'requisicao') {
+                        $filtros['Modelo da requisição'] = $modoRequisicao === 'completo' ? 'Todos os produtos em estoque' : 'Produtos mais movimentados';
+                        if ($modoRequisicao !== 'completo') {
+                            $filtros['Critério'] = 'Saída total igual ou superior a 10 no período selecionado';
+                        }
+                    }
+                    ob_start();
+                    ?>
+                    <?php if ($_POST['tipo_relatorio'] == 'requisicao') { ?>
 
     					<?php $item->displayRequisicao(); ?>
 
@@ -481,7 +265,7 @@ function quickQuery($query, $parametro, $column)
 						<thead class="thead-dark">
 							<tr>
 								<th scope="col" width="11%">Quantidade</th>
-								<?php 
+								<?php
 								if($_POST['tipo_relatorio'] == 'itens_compra'){
 									echo ('<th scope="col" width="14%">Quantidade mínima</th>');
 								}
@@ -495,14 +279,14 @@ function quickQuery($query, $parametro, $column)
 									echo ('<th scope="col" width="14%">' . htmlspecialchars($labelMedia[$tipoMedia] ?? 'Média por dia') . '</th>');
 								}?>
 								<th scope="col">Descrição</th>
-								<?php 
+								<?php
 								if ($_POST['tipo_relatorio'] != 'estoque' && $_POST['tipo_relatorio'] != 'requisicao' && $_POST['tipo_relatorio'] != 'itens_compra') {
 									echo ('<th scope="col" width="12%">Tipo</th>');
 									echo ('<th scope="col" width="12%">Data de Registro</th>');
 									echo ('<th scope="col" width="12%">Valor Unitário</th>');
 								} else {
 									echo ('<th scope="col" width="14%">Preço Médio</th>');
-								} 	
+								}
 								?>
 								<th scope="col" width="14%" class="tot">Tipo de Unidade</th>
 								<th scope="col" width="14%" class="tot">Total</th>
@@ -515,12 +299,22 @@ function quickQuery($query, $parametro, $column)
 						</tbody>
 					</table>
 					<?php } ?>
+                    <?php
+                    $corpoRelatorio = ob_get_clean();
+                    $titulos = [
+                        'entrada' => 'Relatório de Entradas', 'saida' => 'Relatório de Saídas',
+                        'estoque' => 'Relatório de Estoque', 'itens_compra' => 'Relatório de Itens de Compra',
+                        'requisicao' => 'Ficha de Requisição',
+                    ];
+                    $relatorio = new RelatorioMatPat($filtros, $corpoRelatorio, $titulos[$post[0]] ?? 'Relatório', $post[0], trim(($_SESSION['nome'] ?? '') . ' ' . ($_SESSION['sobrenome'] ?? '')));
+                    echo $relatorio->getHtml();
+                    ?>
 				</div>
 				<!--end: page-->
 			</section>
 		</div>
 	</section>
-	<div align="right">
+	<div align="right" class="print-hide">
 		<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
 	</div>
 </body>

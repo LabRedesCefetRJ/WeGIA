@@ -96,6 +96,11 @@ $processoAceitacao = $idPessoaAtendido > 0 ? $processoAceitacaoDAO->buscarProces
 $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEtapasPorProcesso((int)$processoAceitacao['id']) : [];
 
 require_once "../../controle/AtendidoControle.php";
+require_once "../../controle/ProcessoAceitacaoControle.php";
+
+$processoAceitacaoControle = new ProcessoAceitacaoControle($pdo);
+$descricao = $processoAceitacaoControle->getDescricaoProcesso((int)$processoAceitacao['id']);
+$descricaoFormatada = str_replace(['&#13;&#10;', '&#10;', '&#13;'], "\n", $descricao);
 ?>
 
 <!doctype html>
@@ -373,7 +378,6 @@ require_once "../../controle/AtendidoControle.php";
 
   <script type="text/javascript">
     function editar_informacoes_pessoais() {
-      console.log("Edição liberada");
       $("#nome").prop('disabled', false);
       $("#sobrenome").prop('disabled', false);
       $("#radioM").prop('disabled', false);
@@ -637,7 +641,6 @@ require_once "../../controle/AtendidoControle.php";
 
     $(function() {
       var docfuncional = <?= $docfuncional ?>;
-      //console.log(docfuncional);
       $.each(docfuncional, function(i, item) {
         $("#doc-tab")
           .append($("<tr>")
@@ -1407,6 +1410,22 @@ require_once "../../controle/AtendidoControle.php";
                             <table class="table table-bordered table-striped mb-none">
                               <thead>
                                 <tr>
+                                  <th class="panel-title">Descrição</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr>
+                                  <td style="white-space: pre-wrap;"><?= htmlspecialchars($descricaoFormatada ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                          <br>
+
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-none">
+                              <thead>
+                                <tr>
                                   <th>Título</th>                                 
                                   <th>Status</th>
                                   <th>Data de Início</th>
@@ -1666,7 +1685,6 @@ require_once "../../controle/AtendidoControle.php";
     </script>
     <script>
       function verificaSucesso(response) {
-        //console.log(response);
         if (response.errorInfo) {
           if (response.errorInfo[1] == 1451) {
             window.alert("O dependente possui documentos cadastrados em seu nome. Retire-os do bando de dados antes de remover o dependente.");

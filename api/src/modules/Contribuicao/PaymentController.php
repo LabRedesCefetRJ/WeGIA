@@ -2,16 +2,19 @@
 
 namespace api\modules\Contribuicao;
 
+use api\Infrastructure\ApiErrorResponder;
 use Slim\Psr7\Request;
 use Slim\Psr7\Response;
 
 class PaymentController
 {
     private PaymentRepository $paymentMethodRepository;
+    private ApiErrorResponder $errorResponder;
 
-    public function __construct(PaymentRepository $paymentMethodRepository)
+    public function __construct(PaymentRepository $paymentMethodRepository, ApiErrorResponder $errorResponder)
     {
         $this->paymentMethodRepository = $paymentMethodRepository;
+        $this->errorResponder = $errorResponder;
     }
 
     /**
@@ -54,14 +57,9 @@ class PaymentController
                 ->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao buscar regras de pagamento: ' . $e->getMessage()
-            ]));
-
-            return $response
-                ->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->errorResponder->respond($response, $e, 500, [
+                'error' => 'Erro ao buscar regras de pagamento: ' . $e->getMessage(),
+            ]);
         }
     }
 
@@ -73,10 +71,9 @@ class PaymentController
             ]));
             return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao buscar meios de pagamento: ' . $e->getMessage()
-            ]));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+            return $this->errorResponder->respond($response, $e, 500, [
+                'error' => 'Erro ao buscar meios de pagamento: ' . $e->getMessage(),
+            ]);
         }
     }
 
@@ -103,14 +100,9 @@ class PaymentController
                 ->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-
-            $response->getBody()->write(json_encode([
-                'error' => 'Erro ao buscar token público: ' . $e->getMessage()
-            ]));
-
-            return $response
-                ->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->errorResponder->respond($response, $e, 500, [
+                'error' => 'Erro ao buscar token público: ' . $e->getMessage(),
+            ]);
         }
     }
 

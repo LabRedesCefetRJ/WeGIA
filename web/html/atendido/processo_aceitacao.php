@@ -67,6 +67,9 @@ try {
 	$fieldErrors = getSessionFormErrors(false);
 	$openModal = getSessionOpenModal(false);
 
+	$modalAtendido = $_SESSION['modal_cadastrar_atendido'] ?? null;
+	unset($_SESSION['modal_cadastrar_atendido']);
+
 	function formatCpfForDisplay(?string $cpf): string {
 		$digits = preg_replace('/\D+/', '', $cpf ?? '');
 		if (strlen($digits) !== 11) {
@@ -295,12 +298,14 @@ try {
 															style="display: inline;"
 															onsubmit="return confirm('Deseja realmente concluir este processo?');">
 															<input type="hidden" name="nomeClasse" value="ProcessoAceitacaoControle">
+															<input type="hidden" name="id_status" value="2">
+															<input type="hidden" name="abrir_modal_atendido" value="1">
 															<input type="hidden" name="metodo" value="atualizarStatus">
 															<input type="hidden" name="id_processo" value="<?= (int) $processo['id'] ?>">
 															<input type="hidden" name="id_status" value="2">
 															<button type="submit" class="btn btn-xs btn-success"><i class="fa fa-check" aria-hidden="true"></i> Concluir Processo </button>
 														</form>
-
+														
 													<?php else: ?>
 														<button type="button"
 															class="btn btn-xs btn-success"
@@ -420,7 +425,6 @@ try {
                                         maxlength="14"
                                         placeholder="000.000.000-00"
                                         onkeypress="return Onlynumbers(event)"
-                                        oninput="mascara('###.###.###-##',this,event)"
                                         onkeyup="mascara('###.###.###-##',this,event)"
                                         onblur="formatCpfField(this); validarCPFEditar(this.value)"
                                         class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'modalEditarPerfil' ? ' is-invalid' : '' ?>" />
@@ -540,14 +544,14 @@ try {
                                         maxlength="14"
                                         placeholder="000.000.000-00"
                                         onkeypress="return Onlynumbers(event)"
-                                        oninput="mascara('###.###.###-##',this,event)"
-                                        onkeyup="mascara('###.###.###-##',this,event); if (this.value.replace(/\D/g,'').length === 11) buscarPessoaPorCpf(this.value);"
+                                        onkeyup="mascara('###.###.###-##',this,event)"
+                                        ; if (this.value.replace(/\D/g,'').length === 11) buscarPessoaPorCpf(this.value);"
                                         onblur="formatCpfField(this); validarCPF(this.value); buscarPessoaPorCpf(this.value)"
                                         class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>"
                                         value="<?= htmlspecialchars(preg_replace('/^(\d{3})(\d{3})(\d{3})(\d{2})$/', '$1.$2.$3-$4', $oldInput['cpf'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" />
                                     <p id="cpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? 'block' : 'none' ?>; color: #b30000; font-size: 12px;"><?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
                                 </div>
-
+								
                                 <div class="form-group">
                                     <label>E-mail</label>
                                     <input type="email" name="email" id="email" placeholder="usuario@email.com" class="form-control<?= !empty($fieldErrors['email']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" value="<?= htmlspecialchars($oldInput['email'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
@@ -700,6 +704,48 @@ try {
 						</div>
 					</div>
 				</div>
+				<?php if (!empty($modalAtendido)): ?>
+					<div class="modal fade" id="modalConfirmarAtendido" tabindex="-1" role="dialog" aria-hidden="true">
+						<div class="modal-dialog" role="document">
+							<div class="modal-content">
+								<div class="modal-header">
+									<button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+										<span aria-hidden="true">&times;</span>
+									</button>
+									<h3 class="modal-title">Processo concluído com sucesso!</h3>
+								</div>
+								<div class="modal-body">
+									<p>Deseja cadastrar um atendido para o processo de
+										<strong><?= htmlspecialchars($modalAtendido['nome'], ENT_QUOTES, 'UTF-8') ?></strong>?
+									</p>
+								</div>
+								<div class="modal-footer">
+									<button type="button" class="btn btn-default" data-dismiss="modal">Não</button>
+									<a href="../../controle/control.php?nomeClasse=ProcessoAceitacaoControle&metodo=criarAtendidoProcesso&id_processo=<?= (int)$modalAtendido['id_processo'] ?>"
+									class="btn btn-success">Sim</a>
+								</div>
+							</div>
+						</div>
+					</div>
+					<style>
+						#modalConfirmarAtendido.in {
+							display: flex !important;
+							align-items: center; 
+							justify-content: center; 
+						}
+
+						#modalConfirmarAtendido .modal-dialog {
+							margin: 0 10px;
+							width: 100%;
+							max-width: 500px;
+						}
+					</style>
+					<script>
+						$(function () {
+							$('#modalConfirmarAtendido').modal('show');
+						});
+					</script>
+					<?php endif; ?>
 
 			</section>
 		</div>

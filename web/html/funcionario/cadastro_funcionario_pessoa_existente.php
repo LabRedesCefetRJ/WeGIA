@@ -237,30 +237,32 @@ try {
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="rg">Número do RG<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="rg" id="label_rg">Número do RG</label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control<?= isset($fieldErrors['rg']) ? ' is-invalid' : '' ?>" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required value="<?= htmlspecialchars($oldInput['rg'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="text" class="form-control<?= isset($fieldErrors['rg']) ? ' is-invalid' : '' ?>" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" value="<?= htmlspecialchars($oldInput['rg'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                     <p id="error_rg" class="help-block text-danger" style="display: <?= isset($fieldErrors['rg']) ? 'block' : 'none' ?>;">
                       <?= isset($fieldErrors['rg']) ? htmlspecialchars($fieldErrors['rg'], ENT_QUOTES, 'UTF-8') : '' ?>
                     </p>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="orgao_emissor">Órgão Emissor<sup class="obrig">*</sup></label>
-                  <div class="col-md-6">
-                    <input type="text" class="form-control<?= isset($fieldErrors['orgao_emissor']) ? ' is-invalid' : '' ?>" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['orgao_emissor'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                    <p id="error_orgao_emissor" class="help-block text-danger" style="display: <?= isset($fieldErrors['orgao_emissor']) ? 'block' : 'none' ?>;">
-                      <?= isset($fieldErrors['orgao_emissor']) ? htmlspecialchars($fieldErrors['orgao_emissor'], ENT_QUOTES, 'UTF-8') : '' ?>
-                    </p>
+                <div id="campos_rg" class="hidden">
+                  <div class="form-group">
+                    <label class="col-md-3 control-label" for="orgao_emissor" id="label_orgao_emissor">Órgão Emissor</label>
+                    <div class="col-md-6">
+                      <input type="text" class="form-control<?= isset($fieldErrors['orgao_emissor']) ? ' is-invalid' : '' ?>" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" value="<?= htmlspecialchars($oldInput['orgao_emissor'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                      <p id="error_orgao_emissor" class="help-block text-danger" style="display: <?= isset($fieldErrors['orgao_emissor']) ? 'block' : 'none' ?>;">
+                        <?= isset($fieldErrors['orgao_emissor']) ? htmlspecialchars($fieldErrors['orgao_emissor'], ENT_QUOTES, 'UTF-8') : '' ?>
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="data_expedicao">Data de expedição<sup class="obrig">*</sup></label>
-                  <div class="col-md-6">
-                    <input type="date" class="form-control<?= isset($fieldErrors['data_expedicao']) ? ' is-invalid' : '' ?>" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required value="<?= htmlspecialchars($oldInput['data_expedicao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                    <p id="error_data_expedicao" class="help-block text-danger" style="display: <?= isset($fieldErrors['data_expedicao']) ? 'block' : 'none' ?>;">
-                      <?= isset($fieldErrors['data_expedicao']) ? htmlspecialchars($fieldErrors['data_expedicao'], ENT_QUOTES, 'UTF-8') : '' ?>
-                    </p>
+                  <div class="form-group">
+                    <label class="col-md-3 control-label" for="data_expedicao" id="label_data_expedicao">Data de expedição</label>
+                    <div class="col-md-6">
+                      <input type="date" class="form-control<?= isset($fieldErrors['data_expedicao']) ? ' is-invalid' : '' ?>" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> value="<?= htmlspecialchars($oldInput['data_expedicao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                      <p id="error_data_expedicao" class="help-block text-danger" style="display: <?= isset($fieldErrors['data_expedicao']) ? 'block' : 'none' ?>;">
+                        <?= isset($fieldErrors['data_expedicao']) ? htmlspecialchars($fieldErrors['data_expedicao'], ENT_QUOTES, 'UTF-8') : '' ?>
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div class="form-group">
@@ -678,6 +680,7 @@ try {
   <script src="../../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
   <script src="../../assets/vendor/magnific-popup/magnific-popup.js"></script>
   <script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+  <script src="../../Functions/campos_rg.js"></script>
 
   <div align="right">
     <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;" title="Rodapé"></iframe>

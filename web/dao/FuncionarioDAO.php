@@ -243,7 +243,6 @@ class FuncionarioDAO
         $sql2 = "INSERT INTO funcionario(id_pessoa,id_cargo,id_situacao,data_admissao,certificado_reservista_numero,certificado_reservista_serie, ctps)
             values(:id_pessoa,:id_cargo,:id_situacao,:data_admissao,:certificado_reservista_numero,:certificado_reservista_serie, 'NULL')";
 
-        $this->pdo->beginTransaction();
         $stmt = $this->pdo->prepare($sql);
         $stmt2 = $this->pdo->prepare($sql2);
 
@@ -272,8 +271,8 @@ class FuncionarioDAO
 
         $stmt->bindParam(':id_pessoa', $idPessoa);
         $stmt->bindParam(':registro_geral', $rg);
-        $stmt->bindParam(':orgao_emissor', $orgao_emissor);
-        $stmt->bindParam(':data_expedicao', $data_expedicao);
+        $stmt->bindParam(':orgao_emissor', $orgaoEmissor);
+        $stmt->bindParam(':data_expedicao', $dataExpedicao);
         $stmt->bindParam(':sobrenome', $sobrenome);
         $stmt->bindParam(':sexo', $sexo);
 
@@ -286,11 +285,10 @@ class FuncionarioDAO
 
         $stmt->execute();
         if ($stmt2->execute()) {
-            $this->pdo->commit();
+            return $this->pdo->lastInsertId();
         } else {
-            $this->pdo->rollBack();
             throw new LogicException('Erro, não foi possível concluir a operação de cadastro.', 500);
-        }
+        } 
     }
 
     // excluir

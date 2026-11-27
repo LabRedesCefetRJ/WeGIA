@@ -50,10 +50,7 @@ class TipoEntradaControle
         $tipoentradaDAO = new TipoEntradaDAO();
         try {
             $tipoentradaDAO->incluir($tipoentrada);
-            session_start();
-            $_SESSION['msg'] = "Tipo de Entrada cadastrado com sucesso";
-            $_SESSION['proxima'] = "Cadastrar outro TipoEntrada";
-            $_SESSION['link'] = WWW . "html/matPat/adicionar_tipoEntrada.php";
+            $_SESSION['sucesso_tipo_entrada'] = "Tipo de Entrada cadastrado com sucesso";
             header("Location: " . WWW . "html/matPat/adicionar_tipoEntrada.php");
             exit;
         } catch (PDOException $e) {

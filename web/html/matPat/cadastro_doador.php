@@ -265,7 +265,7 @@ $almoxarifadosSelecionados = array_map('intval', (array) ($dadosFormulario['almo
                                                         <div class="col-sm-4">
                                                             <div class="form-group" style="margin-left: 0; margin-right: 0;">
                                                                 <label for="telefone">Telefone</label>
-                                                                <input type="text" class="form-control" minlength="12" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" value="<?= $valorFormulario('telefone') ?>">
+                                                                <input maxlength="16" type="text" class="form-control" minlength="12" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" value="<?= $valorFormulario('telefone') ?>">
                                                             </div>
                                                         </div>
                                                     </div>
@@ -311,7 +311,7 @@ $almoxarifadosSelecionados = array_map('intval', (array) ($dadosFormulario['almo
                                                         <div class="col-sm-3">
                                                             <div class="form-group" style="margin-left: 0; margin-right: 0;">
                                                                 <label for="numero">Número</label>
-                                                                <input type="text" class="form-control" name="numero" id="numero" maxlength="20" value="<?= $valorFormulario('numero') ?>">
+                                                                <input type="text" class="form-control" name="numero" inputmode="numeric" pattern="[0-9]+" title="Informe apenas números." oninput="this.value = this.value.replace(/[^0-9]/g, '')" id="numero" maxlength="20" value="<?= $valorFormulario('numero') ?>">
                                                             </div>
                                                         </div>
                                                     </div>

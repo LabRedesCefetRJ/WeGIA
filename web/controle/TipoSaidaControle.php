@@ -52,11 +52,9 @@ class TipoSaidaControle
             $tiposaidaDAO = new TipoSaidaDAO();
             $tiposaidaDAO->incluir($tiposaida);
 
-            $_SESSION['msg'] = "Tipo de Saida cadastrado com sucesso";
-            $_SESSION['proxima'] = "Cadastrar outro TipoSaida";
-            $_SESSION['link'] = WWW . "html/matPat/adicionar_tipoSaida.php";
+            $_SESSION['sucesso_tipo_saida'] = "Tipo de Saida cadastrado com sucesso";
 
-            header("Location: " . WWW . "html/matPat/cadastro_saida.php");
+            header("Location: " . WWW . "html/matPat/adicionar_tipoSaida.php");
             exit;
         } catch (Exception $e) {
             Util::tratarException($e);

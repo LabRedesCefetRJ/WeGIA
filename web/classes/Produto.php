@@ -95,12 +95,17 @@ class Produto
 
     public function setPreco($preco)
     {
-        $preco = str_replace(',', '.', $preco);
-
-        if (!$preco || !is_numeric($preco) || (float) $preco < 0) {
-            throw new InvalidArgumentException('O preço de um produto deve ser um número positivo.', 400);
+        if (is_string($preco)) {
+            $preco = str_replace(',', '.', trim($preco));
         }
-        $this->preco = $preco;
+        if ($preco === null || $preco === '') {
+            $preco = '0';
+        }
+
+        if (!is_numeric($preco) || !is_finite((float) $preco) || (float) $preco < 0) {
+            throw new InvalidArgumentException('O preço de um produto deve ser um número maior ou igual a zero.', 400);
+        }
+        $this->preco = (string) $preco;
     }
 
     public function setDescricao($descricao)

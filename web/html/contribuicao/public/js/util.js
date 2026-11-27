@@ -1,3 +1,104 @@
+function mostrarFeedbackContribuicao(mensagem, tipo = 'danger') {
+    const texto = mensagem instanceof Error ? mensagem.message : String(mensagem);
+    let regiao = document.querySelector('.contribution-feedback-region');
+
+    const icones = {
+        danger: 'fa-exclamation-circle',
+        info: 'fa-info-circle',
+        success: 'fa-check-circle',
+        warning: 'fa-exclamation-triangle'
+    };
+    const feedback = document.createElement('div');
+    feedback.className = `alert alert-${tipo} d-flex align-items-start gap-2`;
+    feedback.setAttribute('role', tipo === 'danger' ? 'alert' : 'status');
+    feedback.tabIndex = -1;
+
+    const icone = document.createElement('i');
+    icone.className = `fa ${icones[tipo] || icones.info} mt-1`;
+    icone.setAttribute('aria-hidden', 'true');
+
+    const conteudo = document.createElement('span');
+    conteudo.className = 'flex-grow-1';
+    conteudo.textContent = texto;
+
+    const fechar = document.createElement('button');
+    fechar.type = 'button';
+    fechar.className = 'contribution-feedback-close';
+    fechar.setAttribute('aria-label', 'Fechar aviso');
+    fechar.innerHTML = '<span aria-hidden="true">&times;</span>';
+    fechar.addEventListener('click', () => feedback.remove());
+
+    feedback.append(icone, conteudo, fechar);
+    if (!regiao) {
+        regiao = document.createElement('div');
+        regiao.className = 'contribution-feedback-region';
+        regiao.setAttribute('aria-atomic', 'true');
+        document.body.prepend(regiao);
+    }
+    regiao.setAttribute('aria-live', tipo === 'danger' ? 'assertive' : 'polite');
+    regiao.replaceChildren(feedback);
+    feedback.focus();
+}
+
+function atualizarBotaoEnvioContribuicao(estado, idBotao = 'avanca-terminar', mensagem = '') {
+    const botao = document.getElementById(idBotao);
+    if (!botao) {
+        return;
+    }
+
+    botao.dataset.estadoEnvio = estado;
+    botao.disabled = true;
+    botao.classList.add('disabled');
+
+    if (!botao.dataset.conteudoOriginal) {
+        botao.dataset.conteudoOriginal = botao.innerHTML;
+    }
+
+    if (estado === 'processando') {
+        botao.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Processando...';
+        botao.setAttribute('aria-busy', 'true');
+        return;
+    }
+
+    botao.removeAttribute('aria-busy');
+    const textoFinal = idBotao === 'btn-finalizar'
+        ? (estado === 'sucesso' ? 'Resultado disponível' : 'Pagamento não aprovado')
+        : (estado === 'sucesso' ? 'Concluído' : 'Não foi possível concluir');
+    botao.innerHTML = estado === 'sucesso'
+        ? `<i class="fa fa-check-circle me-2" aria-hidden="true"></i>${textoFinal}`
+        : `<i class="fa fa-exclamation-circle me-2" aria-hidden="true"></i>${textoFinal}`;
+
+    if (mensagem) {
+        mostrarFeedbackContribuicao(mensagem, estado === 'sucesso' ? 'success' : 'danger');
+    }
+}
+
+function resetarBotaoEnvioContribuicao(idBotao) {
+    const botao = document.getElementById(idBotao);
+    if (!botao || !botao.dataset.conteudoOriginal) {
+        return;
+    }
+
+    botao.innerHTML = botao.dataset.conteudoOriginal;
+    botao.disabled = false;
+    botao.classList.remove('disabled');
+    botao.removeAttribute('aria-busy');
+    delete botao.dataset.estadoEnvio;
+}
+
+function iniciarEnvioContribuicao(idBotao = 'avanca-terminar') {
+    const botao = document.getElementById(idBotao);
+    if (!botao || botao.disabled) {
+        return false;
+    }
+
+    if (!botao.dataset.conteudoOriginal) {
+        botao.dataset.conteudoOriginal = botao.innerHTML;
+    }
+    atualizarBotaoEnvioContribuicao('processando', idBotao);
+    return true;
+}
+
 function disableAutocomplete() {
     document.querySelectorAll('input').forEach(input => {
         input.value = '';
@@ -121,6 +222,11 @@ function alternarPaginas(idProxima, idAtual) {
     const atual = document.getElementById(idAtual);
     const proxima = document.getElementById(idProxima);
 
+    document.querySelector('.contribution-feedback-region')?.replaceChildren();
+    if (idProxima === 'pag5') {
+        resetarBotaoEnvioContribuicao('avanca-terminar');
+        resetarBotaoEnvioContribuicao('btn-finalizar');
+    }
     proxima.classList.remove('hidden');
     atual.classList.add('hidden');
 }
@@ -209,7 +315,7 @@ function configurarConsulta(funcao) {
 function verificarValor(valor) {
 
     if (!valor || isNaN(valor) || valor <= 0) {
-        alert("Por favor, preencha um valor numérico válido.");
+        mostrarFeedbackContribuicao("Por favor, preencha um valor numérico válido.", 'warning');
         return false;
     }
 
@@ -218,10 +324,10 @@ function verificarValor(valor) {
 
         for (const regra of regras) {
             if (regra.id_regra == 1 && parseFloat(valor) < regra.valor) {
-                alert(`O valor está abaixo do mínimo de R$${regra.valor}`);
+                mostrarFeedbackContribuicao(`O valor está abaixo do mínimo de R$${regra.valor}`, 'warning');
                 return false;
             } else if (regra.id_regra == 2 && parseFloat(valor) > regra.valor) {
-                alert(`O valor está acima do máximo de R$${regra.valor}`);
+                mostrarFeedbackContribuicao(`O valor está acima do máximo de R$${regra.valor}`, 'warning');
                 return false;
             }
         }
@@ -341,10 +447,25 @@ function configurarAvancaTerminar(funcao) { //<-- Adicionar verificação de cap
         // validado no servidor pela sessão amarrada ao documento. Não dá pra
         // checar o widget aqui: ele fica escondido na pag2 e o token expira em
         // ~2 minutos, o que travava quem demorava pra chegar até aqui.
-        btnAvancaTerminar.disabled = true;
-        btnAvancaTerminar.classList.add('disabled');
-        setLoader(btnAvancaTerminar);
-        funcao();
+        if (!iniciarEnvioContribuicao()) {
+            return;
+        }
+
+        Promise.resolve()
+            .then(funcao)
+            .then(() => {
+                if (btnAvancaTerminar.dataset.estadoEnvio === 'processando') {
+                    atualizarBotaoEnvioContribuicao(
+                        'fracasso',
+                        'avanca-terminar',
+                        'Não foi possível confirmar a geração. Tente novamente ou contate o suporte.'
+                    );
+                }
+            })
+            .catch((error) => {
+                console.error(error);
+                atualizarBotaoEnvioContribuicao('fracasso', 'avanca-terminar', error);
+            });
     });
 }
 
@@ -687,32 +808,32 @@ function verificarEndereco() {
     const cidade = document.getElementById('cidade').value;
 
     if (!cep || cep.length != 9) {
-        alert('O CEP informado não está no formato válido');
+        mostrarFeedbackContribuicao('O CEP informado não está no formato válido', 'warning');
         return false;
     }
 
     if (!rua || rua.length < 1) {
-        alert('A rua não pode estar vazia.');
+        mostrarFeedbackContribuicao('A rua não pode estar vazia.', 'warning');
         return false;
     }
 
     if (!numeroEndereco || numeroEndereco.length < 1) {
-        alert('O número de endereço não pode estar vazio.');
+        mostrarFeedbackContribuicao('O número de endereço não pode estar vazio.', 'warning');
         return false;
     }
 
     if (!bairro || bairro.length < 1) {
-        alert('O bairro não pode estar vazio.');
+        mostrarFeedbackContribuicao('O bairro não pode estar vazio.', 'warning');
         return false;
     }
 
     if (!uf || uf.length < 1) {
-        alert('O estado não pode estar vazio.');
+        mostrarFeedbackContribuicao('O estado não pode estar vazio.', 'warning');
         return false;
     }
 
     if (!cidade || cidade.length < 1) {
-        alert('A cidade não pode estar vazia.');
+        mostrarFeedbackContribuicao('A cidade não pode estar vazia.', 'warning');
         return false;
     }
 
@@ -736,7 +857,7 @@ function verificarEnderecoParcial() {
         const cep = formatarCEP(cepObject.value);
 
         if (!cep || cep.length != 9) {
-            alert('O CEP informado não está no formato válido');
+            mostrarFeedbackContribuicao('O CEP informado não está no formato válido', 'warning');
             return false;
         }
     }
@@ -745,7 +866,7 @@ function verificarEnderecoParcial() {
         const rua = ruaObject.value;
 
         if (!rua || rua.length < 1) {
-            alert('A rua não pode estar vazia.');
+            mostrarFeedbackContribuicao('A rua não pode estar vazia.', 'warning');
             return false;
         }
     }
@@ -754,7 +875,7 @@ function verificarEnderecoParcial() {
         const numeroEndereco = numeroObject.value;
 
         if (!numeroEndereco || numeroEndereco.length < 1) {
-            alert('O número de endereço não pode estar vazio.');
+            mostrarFeedbackContribuicao('O número de endereço não pode estar vazio.', 'warning');
             return false;
         }
     }
@@ -763,7 +884,7 @@ function verificarEnderecoParcial() {
         const bairro = bairroObject.value;
 
         if (!bairro || bairro.length < 1) {
-            alert('O bairro não pode estar vazio.');
+            mostrarFeedbackContribuicao('O bairro não pode estar vazio.', 'warning');
             return false;
         }
     }
@@ -772,7 +893,7 @@ function verificarEnderecoParcial() {
         const uf = ufObject.value;
 
         if (!uf || uf.length < 1) {
-            alert('O estado não pode estar vazio.');
+            mostrarFeedbackContribuicao('O estado não pode estar vazio.', 'warning');
             return false;
         }
     }
@@ -781,7 +902,7 @@ function verificarEnderecoParcial() {
         const cidade = cidadeObject.value;
 
         if (!cidade || cidade.length < 1) {
-            alert('A cidade não pode estar vazia.');
+            mostrarFeedbackContribuicao('A cidade não pode estar vazia.', 'warning');
             return false;
         }
     }
@@ -858,7 +979,7 @@ function verificarContato() {
         const nome = nomeObject.value;
 
         if (!nome || nome.length < 3) {
-            alert('O nome não pode estar vazio.');
+            mostrarFeedbackContribuicao('O nome não pode estar vazio.', 'warning');
             return false;
         }
     }
@@ -867,12 +988,12 @@ function verificarContato() {
         const dataNascimento = dataNascimentoObject.value;
 
         if (!dataNascimento) {
-            alert('A data de nascimento não pode estar vazia');
+            mostrarFeedbackContribuicao('A data de nascimento não pode estar vazia', 'warning');
             return false;
         }
 
         if (!dataValidaBR(dataNascimento)) {
-            alert('Informe uma data válida antes de prosseguir.');
+            mostrarFeedbackContribuicao('Informe uma data válida antes de prosseguir.', 'warning');
             return false;
         }
     }
@@ -881,7 +1002,7 @@ function verificarContato() {
         const email = emailObject.value;
 
         if (!email) {
-            alert('O e-mail não pode estar vazio.');
+            mostrarFeedbackContribuicao('O e-mail não pode estar vazio.', 'warning');
             return false;
         }
     }
@@ -890,12 +1011,12 @@ function verificarContato() {
         const telefone = telefoneObject.value;
 
         if (!telefone) {
-            alert('O telefone não pode estar vazio.');
+            mostrarFeedbackContribuicao('O telefone não pode estar vazio.', 'warning');
             return false;
         }
 
         if (telefone.length != 14 && telefone.length != 15) {
-            alert('O telefone informado não está no formato correto.');
+            mostrarFeedbackContribuicao('O telefone informado não está no formato correto.', 'warning');
             return false;
         }
 
@@ -903,7 +1024,7 @@ function verificarContato() {
             const celularNumeros = telefone.replace(/\D/g, '');
 
             if (celularNumeros[2] != 9) {
-                alert('O número de celular informado não é válido.');
+                mostrarFeedbackContribuicao('O número de celular informado não é válido.', 'warning');
                 return false;
             }
         }
@@ -977,7 +1098,7 @@ async function buscarSocio() {
     const documento = pegarDocumento();
 
     if (!validarDocumento(documento)) {
-        alert("O documento informado não é válido");
+        mostrarFeedbackContribuicao("O documento informado não é válido", 'warning');
         return;
     }
 
@@ -1061,14 +1182,14 @@ async function buscarCadastroSocio() {
     const documento = pegarDocumento();
 
     if (!validarDocumento(documento)) {
-        alert("O documento informado não é válido");
+        mostrarFeedbackContribuicao("O documento informado não é válido", 'warning');
         return;
     }
 
     const captchaResponse = grecaptcha.getResponse();
 
     if (!captchaResponse) {
-        alert('Por favor, confirme que você não é um robô.');
+        mostrarFeedbackContribuicao('Por favor, confirme que você não é um robô.', 'warning');
         return;
     }
 
@@ -1177,9 +1298,9 @@ async function buscarCadastroSocio() {
         console.error(error);
         reiniciarCaptcha();
         // TypeError: falha de rede ou bug no script, sem mensagem útil pro usuário.
-        alert(error instanceof TypeError || !error.message
+        mostrarFeedbackContribuicao(error instanceof TypeError || !error.message
             ? 'Não foi possível verificar o documento. Tente novamente.'
-            : error.message);
+            : error.message, 'danger');
     } finally {
         if (btnConsulta) btnConsulta.disabled = false;
     }
@@ -1204,31 +1325,12 @@ async function buscarRegrasDePagamento(meioPagamento) {
         if (data.regras) {
             return data.regras; // Retorna o conjunto de regras
         } else if (data.erro) {
-            alert(data.erro);
+            mostrarFeedbackContribuicao(data.erro, 'danger');
             return false; // Retorna null em caso de erro específico
         }
     } catch (error) {
         console.error('Erro ao realizar a consulta:', error);
         return false; // Retorna null em caso de erro genérico
-    }
-}
-
-function setLoader(btn) {
-    // Esconde o primeiro elemento filho (ícone)
-    btn.firstElementChild.style.display = "none";
-
-    // Remove o texto do botão sem remover os elementos filhos
-    btn.childNodes.forEach(node => {
-        if (node.nodeType === Node.TEXT_NODE) {
-            node.textContent = '';
-        }
-    });
-
-    // Adiciona o loader se não houver outros elementos filhos além do ícone
-    if (btn.childElementCount == 1) {
-        var loader = document.createElement("DIV");
-        loader.className = "loader";
-        btn.appendChild(loader);
     }
 }
 
@@ -1279,6 +1381,7 @@ function exibirResultadoPagamento(resposta) {
     document.getElementById("payment-result").classList.remove("hidden");
 
     if (!resposta.sucesso) {
+        atualizarBotaoEnvioContribuicao('fracasso', 'btn-finalizar');
         document.getElementById("success-message").classList.add("hidden");
         document.getElementById("error-message").classList.remove("hidden");
         document.getElementById("error-text").textContent = resposta.erro || "Erro ao processar pagamento";
@@ -1287,6 +1390,7 @@ function exibirResultadoPagamento(resposta) {
 
     document.getElementById("error-message").classList.add("hidden");
     document.getElementById("success-message").classList.remove("hidden");
+    atualizarBotaoEnvioContribuicao('sucesso', 'btn-finalizar');
 
     if (resposta.status === 'em_analise') {
         const icone = document.getElementById("success-icon");
@@ -1294,10 +1398,10 @@ function exibirResultadoPagamento(resposta) {
         const texto = document.getElementById("success-text");
 
         if (icone) {
-            icone.className = 'fa fa-hourglass-half fa-4x text-warning';
+            icone.className = 'fa fa-hourglass-half fa-4x text-primary';
         }
         if (titulo) {
-            titulo.className = 'text-warning';
+            titulo.className = 'text-primary';
             titulo.textContent = 'Pagamento em análise';
         }
         if (texto) {

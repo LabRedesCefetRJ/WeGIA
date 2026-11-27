@@ -3,6 +3,7 @@
 namespace api\modules\Socio;
 
 use api\contracts\services\PessoaServiceInterface;
+use api\Infrastructure\ApiErrorResponder;
 use api\utils\Util;
 use api\modules\Socio\ParceiroInstitucional;
 use api\Infrastructure\RepositoryConnection;
@@ -16,13 +17,20 @@ class SocioController
     private PessoaServiceInterface $pessoaService;
     private EmailVerificationService $emailVerificationService;
     private SocioVerificationHelper $verificationHelper;
+    private ApiErrorResponder $errorResponder;
     private PDO $pdo;
 
-    public function __construct(SocioService $socioService, PessoaServiceInterface $pessoaService, EmailVerificationService $emailVerificationService, ?SocioVerificationHelper $verificationHelper = null)
-    {
+    public function __construct(
+        SocioService $socioService,
+        PessoaServiceInterface $pessoaService,
+        EmailVerificationService $emailVerificationService,
+        ApiErrorResponder $errorResponder,
+        ?SocioVerificationHelper $verificationHelper = null
+    ) {
         $this->socioService = $socioService;
         $this->pessoaService = $pessoaService;
         $this->emailVerificationService = $emailVerificationService;
+        $this->errorResponder = $errorResponder;
 
         // Initialize helper if not provided (backward compatibility)
         if ($verificationHelper === null) {
@@ -115,12 +123,9 @@ class SocioController
             if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
 
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage() . ' | ' . $e->getCode()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->errorResponder->respond($response, $e, 500, [
+                'error' => $e->getMessage() . ' | ' . $e->getCode(),
+            ]);
         }
     }
 
@@ -175,14 +180,11 @@ class SocioController
             return $response->withStatus($statusCode)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, 500, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => $e->getCode()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => $e->getCode(),
+            ]);
         }
     }
 
@@ -244,14 +246,11 @@ class SocioController
             return $response->withStatus($statusCode)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, 500, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => $e->getCode()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => $e->getCode(),
+            ]);
         }
     }
 
@@ -284,12 +283,9 @@ class SocioController
 
             return $response->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage() . ' | ' . $e->getCode()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->errorResponder->respond($response, $e, 500, [
+                'error' => $e->getMessage() . ' | ' . $e->getCode(),
+            ]);
         }
     }
 
@@ -331,12 +327,9 @@ class SocioController
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage() . ' | ' . $e->getCode()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->errorResponder->respond($response, $e, 500, [
+                'error' => $e->getMessage() . ' | ' . $e->getCode(),
+            ]);
         }
     }
 
@@ -359,12 +352,9 @@ class SocioController
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage() . ' | ' . $e->getCode()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->errorResponder->respond($response, $e, 500, [
+                'error' => $e->getMessage() . ' | ' . $e->getCode(),
+            ]);
         }
     }
 
@@ -424,19 +414,25 @@ class SocioController
 
             $statusCode = $verificationResult['success'] ? 200 : 500;
 
+            if ($statusCode >= 500) {
+                return $this->errorResponder->respond(
+                    $response,
+                    $verificationResult['message'] ?? 'Verification code delivery failed.',
+                    $statusCode,
+                    $verificationResult
+                );
+            }
+
             $response->getBody()->write(json_encode($verificationResult));
 
             return $response->withStatus($statusCode)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, 500, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => 500
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => 500,
+            ]);
         }
     }
 
@@ -478,12 +474,9 @@ class SocioController
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage() . ' | ' . $e->getCode()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->errorResponder->respond($response, $e, 500, [
+                'error' => $e->getMessage() . ' | ' . $e->getCode(),
+            ]);
         }
     }
 
@@ -524,12 +517,9 @@ class SocioController
             return $response->withStatus(400)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage() . ' | ' . $e->getCode()
-            ]));
-
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            return $this->errorResponder->respond($response, $e, 500, [
+                'error' => $e->getMessage() . ' | ' . $e->getCode(),
+            ]);
         }
     }
 
@@ -555,12 +545,10 @@ class SocioController
             $result = $this->socioService->insertSocioParceiroSetor($nome, $descricao);
 
             if (!$result) {
-                $response->getBody()->write(json_encode([
+                return $this->errorResponder->respond($response, 'Não foi possível adicionar o setor', 500, [
                     'success' => false,
-                    'message' => 'Não foi possível adicionar o setor'
-                ]));
-                return $response->withStatus(500)
-                    ->withHeader('Content-Type', 'application/json');
+                    'message' => 'Não foi possível adicionar o setor',
+                ]);
             }
 
             $response->getBody()->write(json_encode([
@@ -573,16 +561,13 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $statusCode = (int)($e->getCode() ?: 500);
-            $statusCode = ($statusCode >= 100 && $statusCode < 600) ? $statusCode : 500;
+            $statusCode = ($statusCode >= 400 && $statusCode < 600) ? $statusCode : 500;
 
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, $statusCode, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => $statusCode
-            ]));
-
-            return $response->withStatus($statusCode)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => $statusCode,
+            ]);
         }
     }
 
@@ -592,12 +577,10 @@ class SocioController
             $result = $this->socioService->getAllSocioParceiroSetor();
 
             if (!$result) {
-                $response->getBody()->write(json_encode([
+                return $this->errorResponder->respond($response, 'Não foi possível obter os setores', 500, [
                     'success' => false,
-                    'message' => 'Não foi possível obter os setores'
-                ]));
-                return $response->withStatus(500)
-                    ->withHeader('Content-Type', 'application/json');
+                    'message' => 'Não foi possível obter os setores',
+                ]);
             }
 
             $response->getBody()->write(json_encode([
@@ -609,16 +592,13 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $statusCode = (int)($e->getCode() ?: 500);
-            $statusCode = ($statusCode >= 100 && $statusCode < 600) ? $statusCode : 500;
+            $statusCode = ($statusCode >= 400 && $statusCode < 600) ? $statusCode : 500;
 
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, $statusCode, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => $statusCode
-            ]));
-
-            return $response->withStatus($statusCode)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => $statusCode,
+            ]);
         }
     }
 
@@ -700,12 +680,10 @@ class SocioController
 
             if(!$socioParceiro) {
                 $this->pdo->rollBack();
-                $response->getBody()->write(json_encode([
+                return $this->errorResponder->respond($response, 'Erro ao criar sócio parceiro', 500, [
                     'success' => false,
-                    'message' => 'Erro ao criar sócio parceiro'
-                ]));
-                return $response->withStatus(500)
-                    ->withHeader('Content-Type', 'application/json');
+                    'message' => 'Erro ao criar sócio parceiro',
+                ]);
             }
 
             $response->getBody()->write(json_encode([
@@ -721,16 +699,13 @@ class SocioController
                 $this->pdo->rollBack();
 
             $statusCode = (int)($e->getCode() ?: 500);
-            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+            $statusCode = $statusCode >= 400 && $statusCode < 600 ? $statusCode : 500;
 
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, $statusCode, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => $statusCode
-            ]));
-
-            return $response->withStatus($statusCode)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => $statusCode,
+            ]);
         }
     }
 
@@ -750,12 +725,10 @@ class SocioController
 
             $result = $this->socioService->deleteSocioParceiro($idSocioParceiro);
             if (!$result['success']) {
-                $response->getBody()->write(json_encode([
+                return $this->errorResponder->respond($response, $result['message'], 500, [
                     'success' => false,
-                    'message' => $result['message']
-                ]));
-                return $response->withStatus(500)
-                    ->withHeader('Content-Type', 'application/json');
+                    'message' => $result['message'],
+                ]);
             }
 
             $response->getBody()->write(json_encode([
@@ -767,16 +740,13 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $statusCode = (int)($e->getCode() ?: 500);
-            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+            $statusCode = $statusCode >= 400 && $statusCode < 600 ? $statusCode : 500;
 
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, $statusCode, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => $statusCode
-            ]));
-
-            return $response->withStatus($statusCode)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => $statusCode,
+            ]);
         }
     }
 
@@ -807,12 +777,10 @@ class SocioController
             }
 
             if (!$this->socioService->uploadLogoSocioParceiro($parceiroId, $uploadedFile)) {
-                $response->getBody()->write(json_encode([
+                return $this->errorResponder->respond($response, 'Erro ao salvar o arquivo de logo.', 500, [
                     'success' => false,
-                    'message' => 'Erro ao salvar o arquivo de logo.'
-                ]));
-                return $response->withStatus(500)
-                    ->withHeader('Content-Type', 'application/json');
+                    'message' => 'Erro ao salvar o arquivo de logo.',
+                ]);
             }
 
             // Return success response with the file path or URL
@@ -826,16 +794,13 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $statusCode = (int)($e->getCode() ?: 500);
-            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+            $statusCode = $statusCode >= 400 && $statusCode < 600 ? $statusCode : 500;
 
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, $statusCode, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => $statusCode
-            ]));
-
-            return $response->withStatus($statusCode)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => $statusCode,
+            ]);
         }
     }
 
@@ -877,17 +842,13 @@ class SocioController
                 ->withStatus(200);
         } catch (\Exception $e) {
             $statusCode = (int)($e->getCode() ?: 500);
-            $statusCode = ($statusCode >= 100 && $statusCode < 600) ? $statusCode : 500;
+            $statusCode = ($statusCode >= 400 && $statusCode < 600) ? $statusCode : 500;
 
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, $statusCode, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => $statusCode
-            ]));
-
-            return $response
-                ->withStatus($statusCode)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => $statusCode,
+            ]);
         }
     }
 
@@ -912,14 +873,16 @@ class SocioController
             $resultado = $this->socioService->getSocioParceiros($idSetor);
 
             if (!($resultado['success'] ?? false)) {
-                $response->getBody()->write(json_encode([
-                    'success' => false,
-                    'error' => $resultado['message'] ?? 'Erro ao buscar parceiros institucionais',
-                    'code' => 500
-                ]));
-
-                return $response->withStatus(500)
-                    ->withHeader('Content-Type', 'application/json');
+                return $this->errorResponder->respond(
+                    $response,
+                    $resultado['message'] ?? 'Erro ao buscar parceiros institucionais',
+                    500,
+                    [
+                        'success' => false,
+                        'error' => $resultado['message'] ?? 'Erro ao buscar parceiros institucionais',
+                        'code' => 500,
+                    ]
+                );
             }
 
             $response->getBody()->write(json_encode([
@@ -931,16 +894,13 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $statusCode = (int)($e->getCode() ?: 500);
-            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+            $statusCode = $statusCode >= 400 && $statusCode < 600 ? $statusCode : 500;
 
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, $statusCode, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => $statusCode
-            ]));
-
-            return $response->withStatus($statusCode)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => $statusCode,
+            ]);
         }
     }
 
@@ -965,14 +925,16 @@ class SocioController
             $resultado = $this->socioService->alterStatusSocioParceiro($idSocioParceiro, $novoStatus);
 
             if (!($resultado['success'] ?? false)) {
-                $response->getBody()->write(json_encode([
-                    'success' => false,
-                    'error' => $resultado['message'] ?? 'Erro ao alterar status do sócio parceiro',
-                    'code' => 500
-                ]));
-
-                return $response->withStatus(500)
-                    ->withHeader('Content-Type', 'application/json');
+                return $this->errorResponder->respond(
+                    $response,
+                    $resultado['message'] ?? 'Erro ao alterar status do sócio parceiro',
+                    500,
+                    [
+                        'success' => false,
+                        'error' => $resultado['message'] ?? 'Erro ao alterar status do sócio parceiro',
+                        'code' => 500,
+                    ]
+                );
             }
 
             $response->getBody()->write(json_encode([
@@ -988,16 +950,13 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $statusCode = (int)($e->getCode() ?: 500);
-            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+            $statusCode = $statusCode >= 400 && $statusCode < 600 ? $statusCode : 500;
 
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, $statusCode, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => $statusCode
-            ]));
-
-            return $response->withStatus($statusCode)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => $statusCode,
+            ]);
         }
     }
 
@@ -1046,16 +1005,18 @@ class SocioController
 
             if (!($resultado['success'] ?? false)) {
                 $statusCode = (int)($resultado['code'] ?? 500);
-                $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+                $statusCode = $statusCode >= 400 && $statusCode < 600 ? $statusCode : 500;
 
-                $response->getBody()->write(json_encode([
-                    'success' => false,
-                    'error' => $resultado['message'] ?? 'Erro ao atualizar parceiro institucional',
-                    'code' => $statusCode
-                ]));
-
-                return $response->withStatus($statusCode)
-                    ->withHeader('Content-Type', 'application/json');
+                return $this->errorResponder->respond(
+                    $response,
+                    $resultado['message'] ?? 'Erro ao atualizar parceiro institucional',
+                    $statusCode,
+                    [
+                        'success' => false,
+                        'error' => $resultado['message'] ?? 'Erro ao atualizar parceiro institucional',
+                        'code' => $statusCode,
+                    ]
+                );
             }
 
             $response->getBody()->write(json_encode([
@@ -1068,16 +1029,13 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $statusCode = (int)($e->getCode() ?: 500);
-            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+            $statusCode = $statusCode >= 400 && $statusCode < 600 ? $statusCode : 500;
 
-            $response->getBody()->write(json_encode([
+            return $this->errorResponder->respond($response, $e, $statusCode, [
                 'success' => false,
                 'error' => $e->getMessage(),
-                'code' => $statusCode
-            ]));
-
-            return $response->withStatus($statusCode)
-                ->withHeader('Content-Type', 'application/json');
+                'code' => $statusCode,
+            ]);
         }
     }
 }
