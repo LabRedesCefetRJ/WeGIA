@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 if (session_status() === PHP_SESSION_NONE)
    session_start();
 
@@ -10,7 +11,6 @@ if (!isset($_SESSION['usuario'])) {
    session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 permissao($_SESSION['id_pessoa'], 22, 5);
@@ -23,6 +23,7 @@ include_once ROOT . '/dao/UnidadeDAO.php';
 
 if (!isset($_SESSION['unidade'])) {
    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/listar_unidade.php');
+   exit;
 } else {
    $unidade = $_SESSION['unidade'];
    unset($_SESSION['unidade']);

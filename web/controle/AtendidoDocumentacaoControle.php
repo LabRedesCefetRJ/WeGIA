@@ -66,6 +66,7 @@ class AtendidoDocumentacaoControle
 
             //retornar para página
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido={$atendidoDocumentacao->getIdAtendido()}");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();

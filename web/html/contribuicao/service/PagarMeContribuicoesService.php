@@ -138,7 +138,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         $pedidosArray = [];
 
         $headers = [
-            'Authorization: Basic ' . base64_encode($gatewayPagamento->getToken() . ':'),
+            'Authorization: Basic ' . base64_encode($gatewayPagamento->getPrivateToken() . ':'),
             'Content-Type: application/json;charset=utf-8',
         ];
 

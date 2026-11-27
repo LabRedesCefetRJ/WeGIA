@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'AlmoxarifeDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
@@ -29,6 +30,7 @@ class AlmoxarifeControle
 
             $_SESSION['almoxarife'] = $almoxarifes;
             header('Location: ' . WWW . 'html/matPat/listar_almoxarife.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -50,6 +52,7 @@ class AlmoxarifeControle
             $almoxarifeDAO = new almoxarifeDAO($this->pdo);
             $almoxarifeDAO->excluir($id_almoxarife);
             header('Location: ' . WWW . 'html/matPat/listar_almoxarife.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }

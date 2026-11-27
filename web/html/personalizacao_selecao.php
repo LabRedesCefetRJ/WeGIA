@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
+	exit;
 }
 require_once "../dao/Conexao.php";
 require_once "../classes/Personalizacao_campo.php";

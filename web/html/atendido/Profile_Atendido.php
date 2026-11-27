@@ -1402,8 +1402,8 @@ $descricaoFormatada = str_replace(['&#13;&#10;', '&#10;', '&#13;'], "\n", $descr
                             Nenhum processo de aceitação foi encontrado para este atendido.
                           </div>
                           <div class="text-left" style="margin-top: 20px;">
-                            <a class="btn btn-primary" href="processo_aceitacao.php?modal=modalNovoProcesso&cpf=<?=
-                            urlencode($atendidoDados[0]['cpf'] ?? '')?>">
+                            <a class="btn btn-primary" href="processo_aceitacao.php?modal=modalNovoProcesso&idpessoa=<?=
+                            urlencode($atendidoDados[0]['id_pessoa'] ?? '')?>">
                               <i class="fa fa-external-link"></i> Cadastrar processo de aceitação
                             </a>
                           </div>

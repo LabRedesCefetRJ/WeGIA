@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -11,7 +12,6 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 permissao($_SESSION['id_pessoa'], 22, 5);
@@ -20,6 +20,7 @@ require_once ROOT . '/dao/EstoqueDAO.php';
 $_SESSION['estoque'] = (new EstoqueDAO)->ListarTodos();
 if (!isset($_SESSION['estoque'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listartodos&nomeClasse=EstoqueControle&nextPage=' . WWW . 'html/matPat/estoque.php');
+	exit;
 }
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
@@ -102,12 +103,17 @@ define('PERMISSAO', permissaoUsuario($_SESSION['id_pessoa'], 2));
 	<!-- jquery functions -->
 	<script>
 		$(function() {
-			let estoque = <?= $_SESSION["estoque"] ?>;
+			let estoque = <?= json_encode(
+				json_decode($_SESSION['estoque'], false, 512, JSON_THROW_ON_ERROR),
+				JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR
+			) ?>;
 			<?php unset($_SESSION['estoque']); ?>
 
 			$.each(estoque, function(i, item) {
 				$("#tabela")
-					.append($("<tr class='item " + item.descricao_almoxarifado + " " + item.categoria + " " + (item.qtd <= 0 ? 'itemSemEstoque' : '') + "'>")
+					.append($("<tr>")
+						.addClass('item')
+						.toggleClass('itemSemEstoque', item.qtd <= 0)
 						.append($("<td>")
 							.text(item.codigo))
 						.append($("<td>")
@@ -152,7 +158,14 @@ define('PERMISSAO', permissaoUsuario($_SESSION['id_pessoa'], 2));
 			$('#home-icon').empty();
 			$('#selecao').empty();
 			$('#home-icon').append($('<span />').text("<?php display_campo("Titulo", "str"); ?>"));
-			$('#selecao').html("<h2>Estoque</h2>Almoxarifado: " + almox + "</br>Categoria: " + categ + "</br>" + mZero + "</br>");
+			$('#selecao').empty()
+				.append($('<h2>').text('Estoque'))
+				.append(document.createTextNode('Almoxarifado: ' + almox))
+				.append($('<br>'))
+				.append(document.createTextNode('Categoria: ' + categ))
+				.append($('<br>'))
+				.append(document.createTextNode(mZero))
+				.append($('<br>'));
 			filterItem();
 			$('.datatables-header').children(0).hide()
 			$('#print-btn')
@@ -299,7 +312,7 @@ define('PERMISSAO', permissaoUsuario($_SESSION['id_pessoa'], 2));
 								$almoxarifado = JSON_decode(filtrarAlmoxarifado($_SESSION['id_pessoa'], JSON_encode($almoxarifado)));
 								foreach ($almoxarifado as $value) {
 									echo ('
-										<option value="' . $value->descricao_almoxarifado . '">' . $value->descricao_almoxarifado . '</option>
+										<option value="' . htmlspecialchars($value->descricao_almoxarifado) . '">' . htmlspecialchars($value->descricao_almoxarifado) . '</option>
 										');
 								}
 								?>
@@ -314,7 +327,7 @@ define('PERMISSAO', permissaoUsuario($_SESSION['id_pessoa'], 2));
 								$almoxarifado = $res->fetchAll(PDO::FETCH_ASSOC);
 								foreach ($almoxarifado as $value) {
 									echo ('
-										<option value="' . $value['descricao_categoria'] . '">' . $value['descricao_categoria'] . '</option>
+										<option value="' . htmlspecialchars($value['descricao_categoria']) . '">' . htmlspecialchars($value['descricao_categoria']) . '</option>
 										');
 								}
 								?>

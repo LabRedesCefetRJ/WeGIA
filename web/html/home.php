@@ -308,12 +308,19 @@ require_once ROOT . "/html/geral/msg.php";
 						</div>
 					</a>
 
+					<a id="home20" href="#">
+						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#recepcao">
+							<i class="fas fa-concierge-bell"></i>
+							<h4>Recepção</h4>
+						</div>
+					</a>
+
 					<a id="home10" href="<?= WWW ?>html/agenda/cadastrar_agenda.php">
 						<div class="col-lg-2 col-md-8 i category-item">
 							<i class="fa fa-calendar"></i>
 							<h4>Agenda</h4>
 						</div>
-					</a>
+					</a>	
 
 					<a class="visivel" href="#">
 						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#configuracao">
@@ -361,7 +368,7 @@ require_once ROOT . "/html/geral/msg.php";
 
 				<div class="row category-row-third">
 					<div id="voluntarios" class="removeIn collapse">
-						<a href="<?= WWW ?>html/voluntario/cadastro_voluntario.php">
+						<a href="<?= WWW ?>html/voluntario/pre_cadastro_voluntario.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa fa-address-book"></i>
 								<h4>Cadastrar Voluntário</h4>
@@ -545,6 +552,12 @@ require_once ROOT . "/html/geral/msg.php";
 				<div class="row category-row-second">
 					<div id="material" class="collapse">
 						<a href="#">
+							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#processoCompra">
+								<i class="fa-solid fa-receipt"></i>
+								<h4>Processo de compra</h4>
+							</div>
+						</a>
+						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#entrada">
 								<i class="fa-solid fa-circle-arrow-down"></i>
 								<h4>Entrada</h4>
@@ -565,6 +578,22 @@ require_once ROOT . "/html/geral/msg.php";
 					</div>
 				</div>
 
+				<div class="row category-row-third">
+					<div id="processoCompra" class="removeIn collapse">
+						<a href="<?= WWW ?>html/matPat/listar_origem.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-phone"></i>
+								<h4>Fornecedores</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>controle/control.php?nomeClasse=CotacaoControle&amp;metodo=listar">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-dollar-sign"></i>
+								<h4>Cotações</h4>
+							</div>
+						</a>
+					</div>
+				</div>
 
 				<div class="row category-row-third">
 					<div id="entrada" class="removeIn collapse">
@@ -714,6 +743,12 @@ require_once ROOT . "/html/geral/msg.php";
 								<h4>Extra</h4>
 							</div>
 						</a>
+						<a href="#">
+							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#beneficios">
+								<i class="fa-solid fa-gift"></i>
+								<h4>Programa de benefícios</h4>
+							</div>
+						</a>
 					</div>
 				</div>
 
@@ -739,6 +774,22 @@ require_once ROOT . "/html/geral/msg.php";
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa fa-tag"></i>
 								<h4>Tags (grupos)</h4>
+							</div>
+						</a>
+					</div>
+				</div>
+				<div class="row category-row-third">
+					<div id="beneficios" class="removeIn collapse">
+						<a href="<?= WWW ?>html/socio/sistema/beneficios.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-file-signature"></i>
+								<h4>Regras de benefícios</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/socio/sistema/parceiros.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa fa-handshake"></i>
+								<h4>Parceiros Institucionais</h4>
 							</div>
 						</a>
 					</div>
@@ -875,6 +926,24 @@ require_once ROOT . "/html/geral/msg.php";
 					</div>
 				</div>
 				<!--fim da parte interna de #contribuicao-->
+				<!--parte interna de #recepcao-->
+				<div class="row">
+					<div id="recepcao" class="collapse">
+						<a href="<?= WWW ?>html/recepcao/pre_registro_entrada.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fas fa-sign-in-alt"></i>
+								<h4>Registro de Entrada</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/recepcao/registro_saida.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fas fa-sign-out-alt"></i>
+								<h4>Registro de Saída</h4>
+							</div>
+						</a>
+					</div>
+				</div>
+				<!--fim da parte interna de #recepcao-->
 				<!--parte interna de #projetos-->
 				<div class="row category-row-second">
 					<div id="projetos" class="collapse">

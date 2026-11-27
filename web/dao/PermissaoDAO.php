@@ -16,15 +16,33 @@ require_once ROOT . "/Functions/funcoes.php";
 class PermissaoDAO
 {
     private PDO $pdo;
-    public function __construct(PDO $pdo = null)
-    {
-        if (!is_null($pdo)) {
-            $this->pdo = $pdo;
-        } else {
-            $this->pdo = Conexao::connect();
-        }
-    }
     
+    public function __construct(?PDO $pdo = null)
+    {
+        $this->pdo = $pdo ?? Conexao::connect();
+    }
+
+    public function listarAcoesPorPessoaERecursos(int $idPessoa, array $recursos): array
+    {
+        if (empty($recursos)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($recursos), '?'));
+        $stmt = $this->pdo->prepare(
+            'SELECT p.id_acao FROM permissao p
+             INNER JOIN funcionario f ON f.id_cargo = p.id_cargo
+             WHERE f.id_pessoa = ? AND p.id_recurso IN (' . $placeholders . ')'
+        );
+        $stmt->bindValue(1, $idPessoa, PDO::PARAM_INT);
+        foreach (array_values($recursos) as $indice => $recurso) {
+            $stmt->bindValue($indice + 2, (int) $recurso, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
     public function adicionarPermissao(int $cargo, int $acao, array $recursos): bool
     {
         if (empty($recursos)) {

@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 Util::definirFusoHorario();
 if (session_status() === PHP_SESSION_NONE) {
@@ -25,14 +27,13 @@ if (!$id_pet || $id_pet < 1) {
 
 if (!isset($_SESSION['pet'])) {
   header('Location: ../../controle/control.php?id_pet=' . htmlspecialchars($id_pet). '&modulo=pet&metodo=listarUm&nomeClasse=PetControle&nextPage=' . WWW . 'html/pet/profile_pet.php?id_pet=' . htmlspecialchars($id_pet));
+  exit;
 } else {
   $petDados = $_SESSION['pet'];
   unset($_SESSION['pet']);
   $pet = json_encode($petDados);
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 
 require_once "../personalizacao_display.php";

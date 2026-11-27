@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 //Requisições necessárias
@@ -16,6 +17,7 @@ require_once '../../../config.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'CaptchaGoogleService.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
 
 class ContribuicaoLogController
 {
@@ -31,7 +33,7 @@ class ContribuicaoLogController
      * Cria um objeto do tipo ContribuicaoLog, chama o serviço de boleto registrado no banco de dados
      * e insere a operação na tabela de contribuicao_log caso o serviço seja executado com sucesso.
      */
-    public function criarBoleto() //Talvez seja melhor separar em: criarBoleto, criarCarne e criarPix
+    public function criarBoleto(bool $porEmail = true) //Talvez seja melhor separar em: criarBoleto, criarCarne e criarPix
     {
         $valor = filter_input(INPUT_POST, 'valor');
         $documento = filter_input(INPUT_POST, 'documento_socio');
@@ -45,7 +47,7 @@ class ContribuicaoLogController
             //captcha
             if (!isset($_SESSION['usuario'])) {
                 $captchaGoogle = new CaptchaGoogleService();
-                if (!$captchaGoogle->validate())
+                if (!$captchaGoogle->validate($documento))
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
             }
 
@@ -56,6 +58,15 @@ class ContribuicaoLogController
                 echo json_encode(['erro' => 'Sócio não encontrado']);
                 exit();
             }
+
+            // Sem e-mail cadastrado: usa o do formulário só pra este pagamento.
+            $socio = Util::aplicarEmailEnvio($socio);
+
+            // Rota pública: o link só é entregue por e-mail. Confere antes de
+            // emitir a cobrança no gateway, pra não criar um pagamento que o
+            // sócio nunca vai receber.
+            if ($porEmail && ($motivo = Util::motivoImpedimentoEnvioLink($socio, $this->pdo)) !== null)
+                throw new LogicException($motivo, 422);
 
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamento = $meioPagamentoDao->buscarPorNome($formaPagamento);
@@ -80,7 +91,7 @@ class ContribuicaoLogController
                 exit();
             }
 
-            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['token'], $gatewayPagamentoArray['status']);
+            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['private_token'], $gatewayPagamentoArray['public_token'], $gatewayPagamentoArray['status']);
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
 
             //Requisição dinâmica e instanciação da classe com base no nome do gateway de pagamento
@@ -100,7 +111,7 @@ class ContribuicaoLogController
                 exit();
             }
 
-            $servicoPagamento = new $classeService;
+            $servicoPagamento = new $classeService($this->pdo);
 
             //Verificar qual fuso horário será utilizado posteriormente
 
@@ -139,7 +150,7 @@ class ContribuicaoLogController
             $mensagem = "Boleto gerado recentemente";
             $socioDao->registrarLog($contribuicaoLog->getSocio(), $mensagem, Util::getUserIp(), Util::getUserAgent());
 
-            $codigoApi = $servicoPagamento->gerarBoleto($contribuicaoLog);
+            $codigoApi = $servicoPagamento->gerarBoleto($contribuicaoLog, $porEmail);
 
             //Chamada do método de serviço de pagamento requisitado
             if (!$codigoApi) {
@@ -154,10 +165,21 @@ class ContribuicaoLogController
     }
 
     /**
+     * Ponto de entrada da rota privada: mesma geração de boleto de
+     * criarBoleto(), usada pela ferramenta de geração da equipe
+     * (socio/sistema/psocio_geracao.php) — mostra o link direto na
+     * resposta em vez de mandar por email.
+     */
+    public function criarBoletoInterno()
+    {
+        $this->criarBoleto(false);
+    }
+
+    /**
      * Cria um objeto do tipo ContribuicaoLog, chama o serviço de carne registrado no banco de dados
      * e insere a operação na tabela de contribuicao_log caso o serviço seja executado com sucesso.
      */
-    public function criarCarne()
+    public function criarCarne(bool $porEmail = true)
     {
         $valor = filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT);
         $documento = filter_input(INPUT_POST, 'documento_socio');
@@ -173,7 +195,7 @@ class ContribuicaoLogController
             //captcha
             if (!isset($_SESSION['usuario'])) {
                 $captchaGoogle = new CaptchaGoogleService();
-                if (!$captchaGoogle->validate())
+                if (!$captchaGoogle->validate($documento))
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
             }
 
@@ -184,6 +206,15 @@ class ContribuicaoLogController
                 echo json_encode(['erro' => 'Sócio não encontrado']);
                 exit();
             }
+
+            // Sem e-mail cadastrado: usa o do formulário só pra este pagamento.
+            $socio = Util::aplicarEmailEnvio($socio);
+
+            // Rota pública: o link só é entregue por e-mail. Confere antes de
+            // emitir a cobrança no gateway, pra não criar um pagamento que o
+            // sócio nunca vai receber.
+            if ($porEmail && ($motivo = Util::motivoImpedimentoEnvioLink($socio, $this->pdo)) !== null)
+                throw new LogicException($motivo, 422);
 
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamento = $meioPagamentoDao->buscarPorNome($formaPagamento);
@@ -208,7 +239,7 @@ class ContribuicaoLogController
                 exit();
             }
 
-            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['token'], $gatewayPagamentoArray['status']);
+            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['private_token'], $gatewayPagamentoArray['public_token'], $gatewayPagamentoArray['status']);
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
 
             //Requisição dinâmica e instanciação da classe com base no nome do gateway de pagamento
@@ -228,7 +259,7 @@ class ContribuicaoLogController
                 exit();
             }
 
-            $servicoPagamento = new $classeService;
+            $servicoPagamento = new $classeService($this->pdo);
 
             /*Controle de transação para que o log só seja registrado
             caso o serviço de pagamento tenha sido executado*/
@@ -375,11 +406,79 @@ class ContribuicaoLogController
 
                 $this->pdo->commit();
 
-                echo json_encode(['link' => WWW . 'html/contribuicao/' . $resultado['link']]);
+                $primeiraContribuicao = $resultado['contribuicoes']->getIterator()->current();
+                $uuidPrimeiraContribuicao = $primeiraContribuicao instanceof ContribuicaoLog
+                    ? $primeiraContribuicao->getUuid()
+                    : null;
+                $linkPdf = $uuidPrimeiraContribuicao !== null
+                    ? WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($uuidPrimeiraContribuicao)
+                    : WWW . 'html/contribuicao/' . $resultado['link'];
+
+                //$porEmail vem de qual rota chamou (pública vs interna da
+                //equipe), não de sessão
+                echo json_encode($porEmail
+                    ? Util::responderLinkGerado($linkPdf, $socio, 'carnê', $this->pdo)
+                    : ['link' => $linkPdf]);
             }
         } catch (Exception $e) {
             Util::tratarException($e);
         }
+    }
+
+    public function downloadPdfPorId()
+    {
+        $identificador = trim((string) ($_GET['id'] ?? ''));
+        if ($identificador === '') {
+            http_response_code(400);
+            echo json_encode(['erro' => 'Identificador da contribuição inválido']);
+            return;
+        }
+
+        $daoContribuicao = new ContribuicaoLogDAO($this->pdo);
+        $uuid = \api\utils\UuidGenerator::parseV7($identificador);
+        if ($uuid !== null) {
+            $documento = $daoContribuicao->buscarDocumentoPorUuid($uuid->toString());
+            if (!is_array($documento) || empty($documento['documento'])) {
+                http_response_code(404);
+                echo json_encode(['erro' => 'Arquivo PDF não encontrado']);
+                return;
+            }
+
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="contribuicao_' . $uuid->toString() . '.pdf"');
+            echo $documento['documento'];
+            exit;
+        }
+
+        $nomeArquivo = trim((string) ($_GET['nomeArquivo'] ?? $identificador));
+        $nomeArquivoSeguro = basename($nomeArquivo);
+        if ($nomeArquivoSeguro !== $nomeArquivo || !preg_match('/\.pdf$/i', $nomeArquivoSeguro)) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'Nome de arquivo inválido']);
+            return;
+        }
+
+        $caminhoArquivo = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR . $nomeArquivoSeguro;
+        if (is_file($caminhoArquivo) && is_readable($caminhoArquivo)) {
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="' . $nomeArquivoSeguro . '"');
+            readfile($caminhoArquivo);
+            exit;
+        }
+
+        http_response_code(404);
+        echo json_encode(['erro' => 'Arquivo PDF não encontrado']);
+    }
+
+    /**
+     * Ponto de entrada da rota privada: mesma geração de carnê de
+     * criarCarne(), usada pela ferramenta de geração da equipe
+     * (socio/sistema/psocio_geracao.php) — mostra o link direto na
+     * resposta em vez de mandar por email.
+     */
+    public function criarCarneInterno()
+    {
+        $this->criarCarne(false);
     }
 
     /**
@@ -400,7 +499,7 @@ class ContribuicaoLogController
             //captcha
             if (!isset($_SESSION['usuario'])) {
                 $captchaGoogle = new CaptchaGoogleService();
-                if (!$captchaGoogle->validate())
+                if (!$captchaGoogle->validate($documento))
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
             }
 
@@ -411,6 +510,9 @@ class ContribuicaoLogController
                 //Colocar uma mensagem para informar que o sócio não existe
                 exit('Sócio não encontrado');
             }
+
+            // Sem e-mail cadastrado: usa o do formulário só pra este pagamento.
+            $socio = Util::aplicarEmailEnvio($socio);
 
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamento = $meioPagamentoDao->buscarPorNome($formaPagamento);
@@ -435,7 +537,7 @@ class ContribuicaoLogController
                 exit();
             }
 
-            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['token'], $gatewayPagamentoArray['status']);
+            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['private_token'], $gatewayPagamentoArray['public_token'], $gatewayPagamentoArray['status']);
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
 
             //Requisição dinâmica e instanciação da classe com base no nome do gateway de pagamento
@@ -455,7 +557,7 @@ class ContribuicaoLogController
                 exit('Classe não encontrada');
             }
 
-            $servicoPagamento = new $classeService;
+            $servicoPagamento = new $classeService($this->pdo);
 
             //Verificar qual fuso horário será utilizado posteriormente
             $dataGeracao = date('Y-m-d');
@@ -517,7 +619,7 @@ class ContribuicaoLogController
             //captcha
             if (!isset($_SESSION['usuario'])) {
                 $captchaGoogle = new CaptchaGoogleService();
-                if (!$captchaGoogle->validate())
+                if (!$captchaGoogle->validate($documento))
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
             }
             
@@ -530,6 +632,9 @@ class ContribuicaoLogController
             if (is_null($socio)) {
                 throw new Exception('Sócio não encontrado', 400);
             }
+
+            // Sem e-mail cadastrado: usa o do formulário só pra este pagamento.
+            $socio = Util::aplicarEmailEnvio($socio);
 
             // Buscar meio de pagamento
             $meioPagamentoDao = new MeioPagamentoDAO();
@@ -558,7 +663,8 @@ class ContribuicaoLogController
             $gatewayPagamento = new GatewayPagamento(
                 $gatewayPagamentoArray['plataforma'],
                 $gatewayPagamentoArray['endPoint'],
-                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['private_token'],
+                $gatewayPagamentoArray['public_token'],
                 $gatewayPagamentoArray['status']
             );
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
@@ -596,24 +702,34 @@ class ContribuicaoLogController
             $contribuicaoLog->setAgradecimento($contribuicaoLogDao->getAgradecimento());
 
             // Processar pagamento
-            $codigoTransacao = $servicoPagamento->processarCartaoCredito($contribuicaoLog);
+            $resultadoPagamento = $servicoPagamento->processarCartaoCredito($contribuicaoLog);
 
-            if (!$codigoTransacao) {
+            if (empty($resultadoPagamento['transacao_id'])) {
                 throw new Exception('Falha no processamento do cartão', 500);
             }
+
+            $codigoTransacao = $resultadoPagamento['transacao_id'];
+            $statusPagamento = $resultadoPagamento['status'] ?? 'em_analise';
 
             // Atualizar registro com código da transação
             $contribuicaoLogDao->alterarCodigoPorId($codigoTransacao, $contribuicaoLog->getId());
 
             // Registrar log do sócio
-            $mensagem = 'Pagamento com cartão processado - ID: ' . htmlspecialchars($codigoTransacao);
+            $mensagem = 'Pagamento com cartão processado - ID: ' . htmlspecialchars($codigoTransacao) . ' - status: ' . $statusPagamento;
             $socioDao->registrarLog($socio, $mensagem, Util::getUserIp(), Util::getUserAgent());
 
             $this->pdo->commit();
 
+            // 'em_analise': o gateway ainda não confirmou a cobrança (pode virar
+            // aprovada ou recusada depois) — NUNCA dizer "aprovado" nesse caso,
+            // senão o pagador acha que pagou e depois recebe e-mail do gateway
+            // dizendo que foi recusado.
             echo json_encode([
                 'sucesso' => true,
-                'mensagem' => 'Pagamento processado com sucesso!',
+                'status' => $statusPagamento,
+                'mensagem' => $statusPagamento === 'aprovado'
+                    ? 'Pagamento aprovado com sucesso!'
+                    : 'Pagamento em análise. Você receberá a confirmação por e-mail assim que o gateway concluir a verificação.',
                 'transacao_id' => htmlspecialchars($codigoTransacao)
             ]);
         } catch (Exception $e) {
@@ -710,12 +826,14 @@ class ContribuicaoLogController
 
             $this->pdo->commit();
 
-            echo json_encode(['sucesso' => 'Sincronização realizada com sucesso']);
+            if (PHP_SAPI !== 'cli') {
+                echo json_encode(['sucesso' => 'Sincronização realizada com sucesso']);
+            }
         } catch (Exception $e) {
             if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
 
-            Util::tratarException($e);
+            $this->tratarExcecao($e);
         }
     }
 
@@ -794,7 +912,7 @@ class ContribuicaoLogController
             $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
 
             //tem que de alguma forma enviar os parâmetros da URL
-            $gatewayPagamentoObject = new GatewayPagamento($gatewayPagamento['plataforma'], $gatewayPagamento['endPoint'], $gatewayPagamento['token'], $gatewayPagamento['status']);
+            $gatewayPagamentoObject = new GatewayPagamento($gatewayPagamento['plataforma'], $gatewayPagamento['endPoint'], $gatewayPagamento['private_token'], $gatewayPagamento['public_token'], $gatewayPagamento['status']);
             $gatewayPagamentoObject->setId($gatewayPagamento['id']);
 
             //instanciar serviço do gateway de pagamento
@@ -860,17 +978,21 @@ class ContribuicaoLogController
 
             if (!$registrou) {
                 $this->pdo->rollBack();
-                echo json_encode(['sucesso' => 'Nenhuma nova fatura encontrada.', 200]);
+                if (PHP_SAPI !== 'cli') {
+                    echo json_encode(['sucesso' => 'Nenhuma nova fatura encontrada.', 200]);
+                }
             }else{
                 $this->pdo->commit();
-                echo json_encode(['sucesso' => 'Faturas registradas com sucesso.', 200]);
+                if (PHP_SAPI !== 'cli') {
+                    echo json_encode(['sucesso' => 'Faturas registradas com sucesso.', 200]);
+                }
             }
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
 
-            Util::tratarException($e);
+            $this->tratarExcecao($e);
         } finally {
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
@@ -886,8 +1008,17 @@ class ContribuicaoLogController
                     throw new Exception('Falha ao registrar log do sistema');
                 }
             } catch (Exception $e) {
-                Util::tratarException($e);
+                $this->tratarExcecao($e);
             }
         }
+    }
+
+    private function tratarExcecao(Throwable $e): void
+    {
+        if (PHP_SAPI === 'cli') {
+            throw $e;
+        }
+
+        Util::tratarException($e);
     }
 }

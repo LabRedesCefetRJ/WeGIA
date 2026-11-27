@@ -1,10 +1,10 @@
 <?php
 
 //requisitar arquivo de conexão
-require_once '../dao/ConexaoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 
 //requisitar model
-require_once '../model/MeioPagamento.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'MeioPagamento.php';
 
 class MeioPagamentoDAO
 {
@@ -64,6 +64,25 @@ class MeioPagamentoDAO
 
         $meioPagamentoArray = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        $meioPagamento = new MeioPagamento($meioPagamentoArray['meio'], $meioPagamentoArray['id_plataforma'], $meioPagamentoArray['status']);
+        $meioPagamento->setId($meioPagamentoArray['id']);
+
+        return $meioPagamento;
+    }
+
+    public function buscarPorId(int $id): ?MeioPagamento
+    {
+        $sqlBuscarPorId = 'SELECT id, meio, id_plataforma, status FROM contribuicao_meioPagamento WHERE id = :id LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sqlBuscarPorId);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        if ($stmt->rowCount() < 1) {
+            return null;
+        }
+
+        $meioPagamentoArray = $stmt->fetch(PDO::FETCH_ASSOC);
         $meioPagamento = new MeioPagamento($meioPagamentoArray['meio'], $meioPagamentoArray['id_plataforma'], $meioPagamentoArray['status']);
         $meioPagamento->setId($meioPagamentoArray['id']);
 

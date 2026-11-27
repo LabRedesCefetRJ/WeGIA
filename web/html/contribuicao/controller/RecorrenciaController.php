@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 //requisições necessárias
@@ -39,7 +40,7 @@ class RecorrenciaController
             //captcha
             if (!isset($_SESSION['usuario'])) {
                 $captchaGoogle = new CaptchaGoogleService();
-                if (!$captchaGoogle->validate())
+                if (!$captchaGoogle->validate($documento))
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
             }
 
@@ -52,6 +53,9 @@ class RecorrenciaController
             if (is_null($socio)) {
                 throw new Exception('Sócio não encontrado', 400);
             }
+
+            // Sem e-mail cadastrado: usa o do formulário só pra este pagamento.
+            $socio = Util::aplicarEmailEnvio($socio);
 
             // Buscar meio de pagamento
             $meioPagamentoDao = new MeioPagamentoDAO();
@@ -85,7 +89,8 @@ class RecorrenciaController
             $gatewayPagamento = new GatewayPagamento(
                 $gatewayPagamentoArray['plataforma'],
                 $gatewayPagamentoArray['endPoint'],
-                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['private_token'],
+                $gatewayPagamentoArray['public_token'],
                 $gatewayPagamentoArray['status']
             );
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
@@ -125,26 +130,33 @@ class RecorrenciaController
             $recorrencia->create();
 
             // Criar assinatura
-            $codigoAssinatura = $servicoPagamento->criarAssinatura($recorrencia);
+            $resultadoAssinatura = $servicoPagamento->criarAssinatura($recorrencia);
 
-            if (empty($codigoAssinatura)) {
+            if (empty($resultadoAssinatura['transacao_id'])) {
                 throw new Exception('Falha ao criar assinatura', 500);
             }
+
+            $codigoAssinatura = $resultadoAssinatura['transacao_id'];
+            $statusAssinatura = $resultadoAssinatura['status'] ?? 'em_analise';
 
             // Atualizar registro com código da assinatura
             $recorrenciaDao->alterarCodigoPorId($codigoAssinatura, $this->pdo->lastInsertId());
 
             // Registrar log do sócio
-            $mensagem = 'Assinatura mensal criada - ID:' . htmlspecialchars($codigoAssinatura);
+            $mensagem = 'Assinatura mensal criada - ID:' . htmlspecialchars($codigoAssinatura) . ' - status: ' . $statusAssinatura;
             $socioDao->registrarLog($socio, $mensagem, Util::getUserIp(), Util::getUserAgent());
 
             $this->pdo->commit();
 
-            // Mensagem de sucesso com detalhes
+            // 'em_analise': o gateway ainda não autorizou a assinatura de fato —
+            // não afirmar que já está criada/cobrando (ver ContribuicaoLogController).
             $diaCobranca = date('d');
             echo json_encode([
                 'sucesso' => true,
-                'mensagem' => "Assinatura criada com sucesso! Cobranças mensais no dia $diaCobranca.",
+                'status' => $statusAssinatura,
+                'mensagem' => $statusAssinatura === 'aprovado'
+                    ? "Assinatura criada com sucesso! Cobranças mensais no dia $diaCobranca."
+                    : 'Assinatura em análise pelo gateway de pagamento. Você receberá a confirmação por e-mail em breve.',
                 'assinatura_id' => htmlspecialchars($codigoAssinatura)
             ]);
         } catch (Exception $e) {

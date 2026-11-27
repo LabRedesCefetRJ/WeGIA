@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 require_once dirname(__DIR__, 3) . '/config.php';
 require_once dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FusoHorarioSistema.php';
 
@@ -30,9 +31,9 @@ try {
     $rotasPublicas = [
         'SocioController' => [
             'criarSocio',
-            'buscarPorDocumento',
             'exibirBoletosPorCpf',
-            'atualizarSocio'
+            'verificarCadastroSocio',
+            'completarCadastroSocio'
         ],
         'ReciboController' => [
             'gerarRecibo',
@@ -45,20 +46,26 @@ try {
             'criarBoleto',
             'criarCarne',
             'criarQRCode',
-            'processarCartaoCredito'
+            'processarCartaoCredito',
+            'downloadPdfPorId'
         ],
         'RegraPagamentoController' => [
             'buscaConjuntoRegrasPagamentoPorNomeMeioPagamento'
         ],
         'ContactController' => [
             'getSupportContact'
+        ],
+        'GatewayPagamentoController' => [
+            'getGatewayInfoByMethodPayment'
         ]
     ];
 
     $rotasPrivadas = [
         'SocioController' => [
             'sincronizarStatusSocios',
-            'deletarSocio'
+            'deletarSocio',
+            'buscarPorDocumento',
+            'atualizarSocio'
         ],
         'GatewayPagamentoController' => [
             'cadastrar',
@@ -72,7 +79,9 @@ try {
             'sincronizarStatus',
             'getContribuicoesLogJSON',
             'getRelatorio',
-            'registrarFaturas'
+            'registrarFaturas',
+            'criarBoletoInterno',
+            'criarCarneInterno'
         ],
         'MeioPagamentoController' => [
             'cadastrar',
@@ -158,7 +167,6 @@ try {
     }
 
     $controllerObject->$function();
-
 } catch (Throwable $e) {
     http_response_code(400);
     error_log('ERRO: ' . $e->getCode() . ' file: ' . $e->getFile() . ' line: ' . $e->getLine() . ' message: ' . $e->getMessage());

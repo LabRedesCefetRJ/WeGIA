@@ -1,12 +1,25 @@
 <?php
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiBoletoServiceInterface.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ContribuicaoLogDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 require_once 'ApiBoletoServiceInterface.php';
 require_once 'PdfDownloadService.php';
-require_once '../model/ContribuicaoLog.php';
-require_once '../dao/GatewayPagamentoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
 class PagarMeBoletoService implements ApiBoletoServiceInterface
 {
-    public function gerarBoleto(ContribuicaoLog $contribuicaoLog)
+    private PDO $pdo;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        $this->pdo = $pdo ?? ConexaoDAO::conectar();
+    }
+
+    public function gerarBoleto(ContribuicaoLog $contribuicaoLog, bool $porEmail = true)
     {
         //gerar um número para o documento
         $numeroDocumento = Util::gerarNumeroDocumento(16);
@@ -24,7 +37,7 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
             $msg = $contribuicaoLog->getAgradecimento();
             //Configurar cabeçalho da requisição
             $headers = [
-                'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+                'Authorization: Basic ' . base64_encode($gatewayPagamento['private_token'] . ':'),
                 'Content-Type: application/json;charset=utf-8',
             ];
 
@@ -113,10 +126,16 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
 
                 //armazena copia para segunda via
                 $contribuicaoLog->setCodigo($idPagarMe);
-                $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
+                $pdfInterno = $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
 
-                //envia resposta para o front-end
-                echo json_encode(['link' => $pdf_link]);
+                //envia resposta para o front-end. $porEmail vem de qual rota
+                //chamou (pública vs interna da equipe), não de sessão — quem
+                //decide é o método do controller que foi chamado, não quem
+                //está logado
+                $linkPdf = WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($contribuicaoLog->getUuid());
+                echo json_encode($porEmail
+                    ? Util::responderLinkGerado($linkPdf, $contribuicaoLog->getSocio(), 'boleto')
+                    : ['link' => $linkPdf]);
             } else {
                 throw new PaymentServiceException(
                     'Não foi possível gerar o boleto no momento. Tente novamente mais tarde.',
@@ -142,7 +161,7 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
     public function guardarSegundaVia($pdf_link, ContribuicaoLog $contribuicaoLog)
     {
         // Diretório onde os arquivos serão armazenados
-        $saveDir = '../pdfs/';
+        $saveDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR;
 
         // Verifica se o diretório existe, se não, cria o diretório
         if (!is_dir($saveDir)) {
@@ -155,9 +174,17 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
         $ultimaDataVencimento = $contribuicaoLog->getDataVencimento();
         $ultimaDataVencimento = str_replace('-', '', $ultimaDataVencimento);
         $codigo = str_replace('_', '-', $contribuicaoLog->getCodigo());
-        $nomeArquivo = $saveDir . $codigo . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $contribuicaoLog->getValor() . '.pdf';
+        $nomeArquivo = $codigo . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $contribuicaoLog->getValor() . '.pdf';
 
         $fileContent = PdfDownloadService::baixarConteudo($pdf_link, 'boleto');
-        file_put_contents($nomeArquivo, $fileContent);
+
+        $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
+        $idDocumento = $contribuicaoLogDao->salvarDocumentoPdf($fileContent, 'pdf');
+
+        if ($contribuicaoLog->getId()) {
+            $contribuicaoLogDao->vincularDocumento((int) $contribuicaoLog->getId(), $idDocumento);
+        }
+
+        return 'html/contribuicao/pdfs/' . $nomeArquivo; // Retorna o caminho relativo para o arquivo PDF
     }
 }

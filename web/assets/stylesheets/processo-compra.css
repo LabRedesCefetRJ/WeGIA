@@ -1,0 +1,221 @@
+.processo-compra .barra-cotacoes {
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.processo-compra .abas-cotacoes {
+    display: flex;
+    gap: 6px;
+}
+
+.processo-compra .campo-filtro label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.processo-compra .campo-filtro select,
+.processo-compra .campo-filtro input {
+    width: 220px;
+}
+
+#tabelaCotacoes_wrapper .dataTables_length,
+#tabelaCotacoes_wrapper .dataTables_filter,
+#tabelaCotacoes_wrapper .dataTables_info {
+    display: none !important;
+}
+
+#tabelaCotacoes_wrapper .dataTables_paginate {
+    margin-top: 15px;
+}
+
+#tabelaCotacoes thead th {
+    background: #fafafa;
+    font-size: 12px;
+    color: #666;
+}
+
+#tabelaCotacoes td {
+    vertical-align: middle;
+}
+
+.orcamento-escolhido > .panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.selo-orcamento-escolhido {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 20px;
+    background: #edf5ef;
+    color: #326443;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+/* Regras restritas às páginas de fornecedores e cotações. */
+.processo-compra .content-body,
+.processo-compra .panel-body,
+.processo-compra .form-group {
+    min-width: 0;
+}
+
+.processo-compra .barra-cotacoes,
+.processo-compra .filtros-cotacoes,
+.processo-compra .acoes-orcamentos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.processo-compra .acoes-orcamentos {
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.processo-compra .form-control {
+    max-width: 100%;
+}
+
+.processo-compra .orcamentos-compras {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.processo-compra .orcamentos-compras > div {
+    display: flex;
+    width: 100%;
+}
+
+.processo-compra .orcamentos-compras .panel {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (min-width: 768px) {
+    .processo-compra .orcamentos-compras > div {
+        width: 50%;
+    }
+}
+
+@media (min-width: 992px) {
+    .processo-compra .orcamentos-compras > div {
+        width: 33.333333%;
+    }
+}
+
+.processo-compra .panel-body p,
+.processo-compra .panel-title,
+.processo-compra .btn {
+    overflow-wrap: anywhere;
+}
+
+.processo-compra .btn {
+    white-space: normal;
+    max-width: 100%;
+}
+
+.processo-compra .tabela-compras {
+    width: 100%;
+    min-width: 0;
+}
+
+.processo-compra .tabela-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.processo-compra .tabela-scroll table {
+    min-width: 580px;
+    width: 100%;
+}
+
+.processo-compra .tabela-scroll:focus {
+    outline: 2px solid #0088cc;
+    outline-offset: 2px;
+}
+
+@media (max-width: 991px) {
+    .processo-compra .campo-filtro {
+        flex: 1 1 180px;
+        min-width: 0;
+    }
+
+    .processo-compra .campo-filtro input,
+    .processo-compra .campo-filtro select {
+        width: 100%;
+    }
+}
+
+@media (max-width: 767px) {
+    .processo-compra .content-body {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .processo-compra .panel-body,
+    .processo-compra .panel-heading {
+        padding: 12px;
+    }
+
+    .processo-compra .barra-cotacoes,
+    .processo-compra .filtros-cotacoes,
+    .processo-compra .abas-cotacoes {
+        width: 100%;
+    }
+
+    .processo-compra .abas-cotacoes {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .processo-compra .abas-cotacoes .btn {
+        flex: 1 1 auto;
+    }
+
+    .processo-compra .btn {
+        min-height: 40px;
+        padding-top: 9px;
+        padding-bottom: 9px;
+        margin-bottom: 4px;
+    }
+
+    .processo-compra .modal-dialog {
+        width: auto;
+        margin: 10px;
+    }
+
+    .processo-compra .modal-body {
+        max-height: 65vh;
+        overflow-y: auto;
+    }
+
+    .processo-compra .modal-footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .processo-compra .modal-footer .btn + .btn {
+        margin-left: 0;
+    }
+
+    .processo-compra .form-control {
+        font-size: 16px;
+    }
+
+    .processo-compra .dataTables_filter input {
+        max-width: 160px;
+    }
+}

@@ -12,6 +12,7 @@ if (!isset($_SESSION['usuario'])) {
 
 if (!isset($_SESSION['id_fichamedica'])) {
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/cadastrar_intercorrencias.php');
+  exit;
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
@@ -37,6 +38,7 @@ $pdo = Conexao::connect();
 
 if (!isset($teste)) {
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/cadastrar_intercorrencias.php?id_fichamedica=' . $id . '&id=' . $id);
+  exit;
 }
 
 $teste = $pdo->query("SELECT nome, f.id_funcionario FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa = " . $_SESSION['id_pessoa'])->fetchAll(PDO::FETCH_ASSOC);

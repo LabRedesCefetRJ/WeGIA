@@ -1,15 +1,26 @@
 <?php
-require_once '../model/ContribuicaoLogCollection.php';
-require_once '../model/ContribuicaoLog.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLogCollection.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
-require_once 'ApiCarneServiceInterface.php';
-require_once 'PdfDownloadService.php';
-require_once '../vendor/autoload.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiCarneServiceInterface.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'PdfDownloadService.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ContribuicaoLogDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 
 use setasign\Fpdi\Fpdi;
 
 class PagarMeCarneService implements ApiCarneServiceInterface
 {
+    private PDO $pdo;
+    private $contribuicaoLogCollection;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        $this->pdo = $pdo ?? ConexaoDAO::conectar();
+    }
+
     public function gerarCarne(ContribuicaoLogCollection $contribuicaoLogCollection)
     {
         //definir constantes que serão usadas em todas as parcelas
@@ -23,12 +34,14 @@ class PagarMeCarneService implements ApiCarneServiceInterface
 
         //Buscar Url da API e token no BD
         try {
+            $this->contribuicaoLogCollection = $contribuicaoLogCollection;
+
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gatewayPagamento = $gatewayPagamentoDao->buscarPorId(1); //Pegar valor do id dinamicamente
 
             //Configurar cabeçalho da requisição
             $headers = [
-                'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+                'Authorization: Basic ' . base64_encode($gatewayPagamento['private_token'] . ':'),
                 'Content-Type: application/json;charset=utf-8',
             ];
 
@@ -162,7 +175,7 @@ class PagarMeCarneService implements ApiCarneServiceInterface
     public function salvarTemp($pdf_links)
     {
         // Diretório onde os arquivos serão armazenados
-        $saveDir = '../pdfs/';
+        $saveDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR;
         $saveDirTemp = $saveDir . 'temp/';
 
         // Verifica se o diretório existe, se não, cria o diretório
@@ -191,7 +204,7 @@ class PagarMeCarneService implements ApiCarneServiceInterface
 
     public function removerTemp()
     {
-        $dir = '../pdfs/temp';
+        $dir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR . 'temp';
         // Verifica se o diretório existe
         if (!file_exists($dir)) {
             return false;
@@ -248,9 +261,31 @@ class PagarMeCarneService implements ApiCarneServiceInterface
         $numeroAleatorio = str_replace('_', '-', $ultimaParcela->getCodigo());
         $ultimaDataVencimento = $ultimaParcela->getDataVencimento();
         $ultimaDataVencimento = str_replace('-', '', $ultimaDataVencimento);
+        $caminhoArquivo = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR . $numeroAleatorio . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $ultimaParcela->getValor() . '.pdf';
 
         // Salva o arquivo PDF unido
-        $pdf->Output('F', '../pdfs/' . $numeroAleatorio . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $ultimaParcela->getValor() . '.pdf');
+        $pdf->Output('F', $caminhoArquivo);
+
+        $pdfContent = file_get_contents($caminhoArquivo);
+        if ($pdfContent !== false) {
+            $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
+            $idDocumento = $contribuicaoLogDao->salvarDocumentoPdf($pdfContent, 'pdf');
+
+            foreach ($arquivos as $arquivo) {
+                if (is_file($arquivo)) {
+                    unlink($arquivo);
+                }
+            }
+
+            // O carnê é um PDF único com todas as parcelas, portanto todas as parcelas do mesmo processo compartilham o mesmo documento.
+            if ($this->contribuicaoLogCollection instanceof ContribuicaoLogCollection) {
+                foreach ($this->contribuicaoLogCollection as $contribuicaoLog) {
+                    if ($contribuicaoLog instanceof ContribuicaoLog) {
+                        $contribuicaoLogDao->vincularDocumento((int) $contribuicaoLog->getId(), $idDocumento);
+                    }
+                }
+            }
+        }
 
         return 'pdfs/' . $numeroAleatorio . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $ultimaParcela->getValor() . '.pdf';
     }

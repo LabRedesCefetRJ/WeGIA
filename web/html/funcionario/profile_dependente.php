@@ -51,7 +51,7 @@ try {
 
 ?>
 <!doctype html>
-<html class="fixed">
+<html class="fixed" lang="pt-br">
 
 <head>
     <!-- Basic -->
@@ -61,7 +61,7 @@ try {
     <meta name="description" content="Porto Admin - Responsive HTML5 Template">
     <meta name="author" content="okler.net">
     <!-- Mobile Metas -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Web Fonts  -->
     <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
     <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
@@ -399,8 +399,8 @@ try {
                         .append($("<td>").text(item.descricao))
                         .append($("<td>").text(item.data))
                         .append($("<td style='display: flex; justify-content: space-evenly;'>")
-                            .append($("<a href='dependente_docdependente.php?action=download&id_doc=" + item.id_doc + "' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
-                            .append($("<a href='#' onclick='excluir_docdependente(" + item.id_doc + ")' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
+                            .append($("<a href='dependente_docdependente.php?action=download&id_doc=" + item.id_doc + "' title='Visualizar ou Baixar'><button class='btn btn-primary' title='Visualizar ou Baixar'><i class='fas fa-download'></i></button></a>"))
+                            .append($("<a href='#' onclick='excluir_docdependente(" + item.id_doc + ")' title='Excluir'><button class='btn btn-danger' title='Excluir'><i class='fas fa-trash-alt'></i></button></a>"))
                         )
                     )
             });
@@ -491,7 +491,7 @@ try {
                             <li><span>Páginas</span></li>
                             <li><span>Dependente</span></li>
                         </ol>
-                        <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+                        <a class="sidebar-right-toggle" aria-label="Alternar painel lateral"><i class="fa fa-chevron-left"></i></a>
                     </div>
                 </header>
                 <!-- start: page -->
@@ -539,10 +539,10 @@ try {
                                                 </div>
                                             </div>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
+                                                <label class="col-md-3 control-label">Sexo</label>
                                                 <div class="col-md-8">
-                                                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" disabled><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                                                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" disabled><i class="fa fa-female" style="font-size: 20px;"></i></label>
+                                                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" disabled aria-label="Masculino"><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                                                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" disabled aria-label="Feminino"><i class="fa fa-female" style="font-size: 20px;"></i></label>
                                                 </div>
                                             </div>
                                             <div class="form-group">
@@ -610,7 +610,7 @@ try {
                                     <section class="panel">
                                         <header class="panel-heading">
                                             <div class="panel-actions">
-                                                <a href="#" class="fa fa-caret-down"></a>
+                                                <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                                             </div>
                                             <h2 class="panel-title">Arquivos</h2>
                                         </header>
@@ -643,7 +643,7 @@ try {
                                                         <form action='docdependente_upload.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
                                                             <div class="modal-body" style="padding: 15px 40px">
                                                                 <div class="form-group" style="display: grid;">
-                                                                    <label class="my-1 mr-2" for="id_docdependente">Tipo de Documento</label><br>
+                                                                    <label class="my-1 mr-2" for="tipoDocumento">Tipo de Documento</label><br>
                                                                     <div style="display: flex;">
                                                                         <select name="id_docdependente" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
                                                                             <option selected disabled>Selecionar...</option>
@@ -653,7 +653,7 @@ try {
                                                                             }
                                                                             ?>
                                                                         </select>
-                                                                        <a onclick="adicionarDocDependente()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                                                                        <a onclick="adicionarDocDependente()" style="margin: 0 20px;" aria-label="Adicionar documento do dependente"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                                                                     </div>
                                                                 </div>
                                                                 <div class="form-group">
@@ -679,25 +679,25 @@ try {
                                     <form method='POST' id="formDocumentacao">
                                         <fieldset id="formDocumentacao">
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
+                                                <label class="col-md-3 control-label" for="rg">Número do RG</label>
                                                 <div class="col-md-8">
                                                     <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeydown="mascara('##.###.###-#',this,event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
+                                                <label class="col-md-3 control-label" for="orgao_emissor">Órgão Emissor</label>
                                                 <div class="col-md-8">
                                                     <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
+                                                <label class="col-md-3 control-label" for="data_expedicao">Data de expedição</label>
                                                 <div class="col-md-8">
                                                     <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max="<?php echo date('Y-m-d'); ?>" onchange="validarDatasNascimentoExpedicao()">
                                                 </div>
                                             </div>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
+                                                <label class="col-md-3 control-label" for="cpf">Número do CPF</label>
                                                 <div class="col-md-8">
                                                     <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeydown="mascara('###.###.###-##',this,event)" required>
                                                 </div>
@@ -752,7 +752,7 @@ try {
                                                 </div>
                                             </div>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label" for="profileCompany">Número residencial</label>
+                                                <label class="col-md-3 control-label" for="numero_residencia">Número residencial</label>
                                                 <div class="col-md-4">
                                                     <input type="number" min="0" oninput="this.value = Math.abs(this.value)" class="form-control" name="numero_residencia" id="numero_residencia">
                                                 </div>
@@ -763,7 +763,7 @@ try {
                                                 </div>
                                             </div>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label" for="profileCompany">Complemento</label>
+                                                <label class="col-md-3 control-label" for="complemento">Complemento</label>
                                                 <div class="col-md-8">
                                                     <input type="text" class="form-control" name="complemento" id="complemento">
                                                 </div>
@@ -818,7 +818,7 @@ try {
         });
     </script>
     <div align="right">
-        <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+        <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;" title="Rodapé"></iframe>
     </div>
 </body>
 

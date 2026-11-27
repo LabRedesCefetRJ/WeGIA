@@ -53,6 +53,7 @@ $pdo = Conexao::connect();
 
 if (!isset($teste)) {
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/profile_paciente.php?id_fichamedica=' . $id_fichamedica . '&id=' . $id_fichamedica);
+  exit;
 }
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
@@ -2774,6 +2775,25 @@ try {
         if (!documentos.files[0]) {
           exibirErroModalDocumento("É necessário inserir um documento.");
           return;
+        }
+
+        const arquivoSelecionado = documentos.files[0];
+
+        try {
+          const limitesResp = await fetch("../../controle/control.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nomeClasse: "ExameControle", metodo: "limitesUpload" })
+          });
+          const limites = await limitesResp.json();
+
+          if (arquivoSelecionado.size > limites.post_max_size_bytes) {
+            const limiteMb = (limites.post_max_size_bytes / 1024 / 1024).toFixed(1);
+            exibirErroModalDocumento(`O arquivo excede o tamanho máximo permitido (${limiteMb}MB). Por favor, escolha um arquivo menor.`);
+            return;
+          }
+        } catch (e) {
+           console.warn("Não foi possível verificar o limite de upload antes do envio:", e);
         }
 
         ocultarMensagemCadastroExame();

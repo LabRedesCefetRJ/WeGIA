@@ -19,7 +19,7 @@ class CategoriaDAO
 
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela categoria_produto = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            throw $e;
         }
     }
 
@@ -37,7 +37,7 @@ class CategoriaDAO
 
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela categoria_produto = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            throw $e;
         }
     }
 

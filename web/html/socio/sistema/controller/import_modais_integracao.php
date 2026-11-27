@@ -1,3 +1,14 @@
+<?php
+// Fragmento incluído por páginas de socio/sistema que exigem permissao(4, 7),
+// mas também acessível direto pela URL (o .htaccess desta pasta está
+// desativado): exige o mesmo acesso aqui, como em import_conteudo_graficos.php.
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['usuario'])) die("Você não está logado(a).");
+
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 4, 7);
+?>
 
   <!-- Modal perfil -->
 <div class="modal fade" id="modalBoletofacil" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -39,11 +50,11 @@
             <form id="frm_boletofacil">
             <div class="form-group col-xs-12">
           <label for="valor">URL API (ISSUE CHARGE - COBRANÇAS)</label>
-          <input type="text" class="form-control"  value="<?php echo($url); ?>" name="url" required>
+          <input type="text" class="form-control"  value="<?php echo(htmlspecialchars($url, ENT_QUOTES, 'UTF-8')); ?>" name="url" required>
         </div>
         <div class="form-group col-xs-12">
           <label for="valor">TOKEN API</label>
-          <input type="text" class="form-control" value="<?php echo($token); ?>" name="token" required>
+          <input type="text" class="form-control" value="<?php echo(htmlspecialchars($token, ENT_QUOTES, 'UTF-8')); ?>" name="token" required>
         </div>
         <div class="form-group col-xs-6">
           <label for="valor">VAL. MIN. BOLETO UNITÁRIO</label>
@@ -71,7 +82,7 @@
         </div>
         <div class="form-group col-xs-12">
           <label for="valor">MENSAGEM DE AGRADECIMENTO</label>
-          <textarea rows="5" name="agradecimento" class="form-control"><?php echo($agradecimento); ?></textarea>
+          <textarea rows="5" name="agradecimento" class="form-control"><?php echo(htmlspecialchars($agradecimento, ENT_QUOTES, 'UTF-8')); ?></textarea>
         </div>
             </div>
             <!-- /.box-body -->

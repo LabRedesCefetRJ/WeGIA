@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -24,14 +25,15 @@ class GatewayPagamentoController
     {
         $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $endpoint = filter_input(INPUT_POST, 'endpoint', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $token = filter_input(INPUT_POST, 'token', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $privateToken = filter_input(INPUT_POST, 'private_token', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $publicToken = filter_input(INPUT_POST, 'public_token', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         try {
             if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
                 throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
 
             $this->pdo->beginTransaction();
-            $gatewayPagamento = new GatewayPagamento($nome, $endpoint, $token);
+            $gatewayPagamento = new GatewayPagamento($nome, $endpoint, $privateToken, $publicToken);
             $gatewayPagamento->cadastrar();
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), 'Cadastro de gateway de pagamento.');
@@ -45,6 +47,7 @@ class GatewayPagamentoController
 
             $this->pdo->commit();
             header("Location: ../view/gateway_pagamento.php?msg=cadastrar-sucesso");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -52,6 +55,7 @@ class GatewayPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/gateway_pagamento.php?msg=cadastrar-falha");
+            exit;
         }
     }
 
@@ -117,6 +121,7 @@ class GatewayPagamentoController
 
             $this->pdo->commit();
             header("Location: ../view/gateway_pagamento.php?msg=excluir-sucesso#mensagem-tabela");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -124,6 +129,7 @@ class GatewayPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/gateway_pagamento.php?msg=excluir-falha#mensagem-tabela");
+            exit;
         }
     }
 
@@ -138,7 +144,8 @@ class GatewayPagamentoController
         // Sanitiza os campos de texto removendo caracteres especiais
         $gatewayNome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $gatewayEndepoint = filter_input(INPUT_POST, 'endpoint', FILTER_SANITIZE_URL); // URL pode conter : / ? etc
-        $gatewayToken = filter_input(INPUT_POST, 'token', FILTER_UNSAFE_RAW); // Não sanitiza (token pode ter símbolos)
+        $privateToken = filter_input(INPUT_POST, 'private_token', FILTER_UNSAFE_RAW); // Não sanitiza (token pode ter símbolos)
+        $publicToken = filter_input(INPUT_POST, 'public_token', FILTER_UNSAFE_RAW);
 
         try {
             if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
@@ -150,7 +157,7 @@ class GatewayPagamentoController
             }
             $this->pdo->beginTransaction();
 
-            $gatewayPagamento = new GatewayPagamento($gatewayNome, $gatewayEndepoint, $gatewayToken);
+            $gatewayPagamento = new GatewayPagamento($gatewayNome, $gatewayEndepoint, $privateToken, $publicToken);
             $gatewayPagamento->setId($gatewayId);
             $gatewayPagamento->editar();
 
@@ -165,6 +172,7 @@ class GatewayPagamentoController
 
             $this->pdo->commit();
             header("Location: ../view/gateway_pagamento.php?msg=editar-sucesso#mensagem-tabela");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -172,6 +180,7 @@ class GatewayPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/gateway_pagamento.php?msg=editar-falha#mensagem-tabela");
+            exit;
         }
     }
 
@@ -226,6 +235,37 @@ class GatewayPagamentoController
             }
 
             Util::tratarException($e);
+        }
+    }
+
+    /**
+     * Realiza os procedimentos necessários para buscar as informações de um gateway de pagamento específico, com base no método de pagamento informado.
+     */
+    public function getGatewayInfoByMethodPayment(){
+        header('Content-Type: application/json; charset=utf-8');
+
+        $metodoPagamento = filter_input(INPUT_GET, 'payment_method', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        try {
+            if (!$metodoPagamento || empty($metodoPagamento)) {
+                http_response_code(400);
+                echo json_encode(['erro' => 'O método de pagamento informado não é válido.']);
+                return;
+            }
+
+            $gatewayPagamentoDao = new GatewayPagamentoDAO();
+            $gatewayInfo = $gatewayPagamentoDao->getGatewayInfoByMethodPayment($metodoPagamento);
+
+            if (!$gatewayInfo) {
+                http_response_code(404);
+                echo json_encode(['erro' => 'Nenhum gateway de pagamento encontrado para o método informado: ' . $metodoPagamento]);
+                return;
+            }
+
+            echo json_encode($gatewayInfo->getPublicData());
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['erro' => $e->getMessage()]);
         }
     }
 }

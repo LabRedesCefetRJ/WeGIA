@@ -1,5 +1,7 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
@@ -11,7 +13,6 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 
@@ -41,6 +42,20 @@ $id_memorando = filter_input(INPUT_GET, 'id_memorando', FILTER_VALIDATE_INT);
 if (!$id_memorando || $id_memorando < 1) {
 	http_response_code(400);
 	echo json_encode(['erro' => 'O id do memorando informado não está dentro dos limites permitidos.']);
+	exit();
+}
+
+// Verifica se o usuário é remetente ou destinatário de algum despacho deste
+// memorando ANTES de buscar/embutir qualquer dado na página. A checagem de
+// $_SESSION['memorandoIdInativo'] mais abaixo só trocava o HTML do painel via
+// JavaScript no cliente, o que não impedia que o conteúdo dos despachos já
+// tivesse sido enviado na resposta HTTP (IDOR).
+$acessoMemorando = new MemorandoControle;
+$acessoMemorando->listarIdTodosInativos();
+
+if (!in_array($id_memorando, $_SESSION['memorandoIdInativo'] ?? [])) {
+	http_response_code(403);
+	echo json_encode(['erro' => 'Você não tem acesso a este memorando.']);
 	exit();
 }
 
@@ -585,7 +600,9 @@ require_once ROOT . "/html/personalizacao_display.php";
 										$pdo = Conexao::connect();
 										$memorandosDespachados->listarTodosId($id_memorando);
 										$memorando = $_SESSION['memorandoId'][0];
-										extract($memorando);
+										$titulo = $memorando['titulo'];
+										$id_status_memorando = $memorando['id_status_memorando'];
+										$id_pessoa = $memorando['id_pessoa'];
 										$statusMemorandoControle = new StatusMemorandoControle();
 										$statusMemorando = $statusMemorandoControle->getPorId(intval($id_status_memorando));
 										if ($statusMemorando) {
@@ -622,7 +639,10 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 										$pessoa_destino = $pessoa_destino["nome"] . ($pessoa_destino["sobrenome"] ? (" " . $pessoa_destino["sobrenome"]) : "");
 
-										$pessoa_memorando = $pdo->query("SELECT nome, sobrenome FROM pessoa WHERE id_pessoa=$id_pessoa;")->fetch(PDO::FETCH_ASSOC);
+										$stmtPessoaMemorando = $pdo->prepare("SELECT nome, sobrenome FROM pessoa WHERE id_pessoa=:idPessoa");
+										$stmtPessoaMemorando->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
+										$stmtPessoaMemorando->execute();
+										$pessoa_memorando = $stmtPessoaMemorando->fetch(PDO::FETCH_ASSOC);
 
 										$pessoa_memorando = $pessoa_memorando["nome"] . ($pessoa_memorando["sobrenome"] ? (" " . $pessoa_memorando["sobrenome"]) : "");
 

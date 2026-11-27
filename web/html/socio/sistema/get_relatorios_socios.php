@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 //refatorar para POO
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -107,7 +108,7 @@ $tipoSocioMap = [
 $tipoSocioIds = $tipoSocioMap[$tipo_socio] ?? null;
 
 // SQL base
-$base = "SELECT p.nome, p.telefone, p.cpf, p.email, s.valor_periodo, st.tipo, ss.status,
+$base = "SELECT p.nome, p.sobrenome, p.telefone, p.cpf, p.email, s.valor_periodo, st.tipo, ss.status,
 GROUP_CONCAT(DISTINCT stag.tag ORDER BY stag.tag SEPARATOR ', ') AS tag
 FROM pessoa p
 JOIN socio s ON (p.id_pessoa = s.id_pessoa)

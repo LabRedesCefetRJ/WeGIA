@@ -4,6 +4,31 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
 class ExameControle
 {
+    public function limitesUpload()
+    {
+        header('Content-Type: application/json');
+        echo json_encode([
+            "post_max_size_bytes" => $this->converterParaBytes(ini_get('post_max_size')),
+            "upload_max_filesize_bytes" => $this->converterParaBytes(ini_get('upload_max_filesize')),
+        ]);
+    }
+
+    private function converterParaBytes($valor)
+    {
+        $unidade = strtolower(substr(trim($valor), -1));
+        $numero = (int) $valor;
+        switch ($unidade) {
+            case 'g':
+                return $numero * 1024 * 1024 * 1024;
+            case 'm':
+                return $numero * 1024 * 1024;
+            case 'k':
+                return $numero * 1024;
+            default:
+                return $numero;
+        }
+    }
+
     public function inserirTipoExame()
     {
         header('Content-Type: application/json');
@@ -117,7 +142,7 @@ class ExameControle
             switch($arquivo['error']){
                 case UPLOAD_ERR_INI_SIZE:
                 case UPLOAD_ERR_FORM_SIZE:
-                    $mensagem = "O arquivo selecionado excede o tamanho máximo permitido. Por favor, escolha um arquivo de até ". ini_get('upload_max_filesize') ." e tente novamente.";
+                    $mensagem = "O arquivo excede o tamanho máximo permitido pelo servidor (" . ini_get('upload_max_filesize') . "). Por favor, escolha um arquivo menor.";
                     break;
                 default:
                     $mensagem = "Erro no upload do arquivo.";
