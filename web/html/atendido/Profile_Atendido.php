@@ -96,8 +96,10 @@ $processoAceitacao = $idPessoaAtendido > 0 ? $processoAceitacaoDAO->buscarProces
 $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEtapasPorProcesso((int)$processoAceitacao['id']) : [];
 
 require_once "../../controle/AtendidoControle.php";
+require_once "../../controle/ProcessoAceitacaoControle.php";
 
-$descricao = $processoAceitacaoDAO->getDescricaoProcesso((int)$processoAceitacao['id']);
+$processoAceitacaoControle = new ProcessoAceitacaoControle($pdo);
+$descricao = $processoAceitacaoControle->getDescricaoProcesso((int)$processoAceitacao['id']);
 $descricaoFormatada = str_replace(['&#13;&#10;', '&#10;', '&#13;'], "\n", $descricao);
 ?>
 

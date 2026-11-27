@@ -553,4 +553,20 @@ class ProcessoAceitacaoControle
             exit();
         }
     }
+
+    public function getDescricaoProcesso(int $idProcesso): ?string
+    {
+        try {
+            $dao = new ProcessoAceitacaoDAO($this->pdo);
+            return $dao->getDescricaoProcesso($idProcesso);
+        } catch (PDOException $e) {
+            error_log('Erro ao buscar descrição do processo de aceitação: ' . $e->getMessage());
+            setSessionMsg('Erro ao manipular o banco de dados da aplicação.', 'err');
+            return null;
+        } catch (Exception $e) {
+            error_log('Erro ao buscar descrição do processo de aceitação: ' . $e->getMessage());
+            setSessionMsg($e->getMessage(), 'err');
+            return null;
+        }
+    }
 }
