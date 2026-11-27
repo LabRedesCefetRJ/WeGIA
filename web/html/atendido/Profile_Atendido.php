@@ -373,7 +373,6 @@ require_once "../../controle/AtendidoControle.php";
 
   <script type="text/javascript">
     function editar_informacoes_pessoais() {
-      console.log("Edição liberada");
       $("#nome").prop('disabled', false);
       $("#sobrenome").prop('disabled', false);
       $("#radioM").prop('disabled', false);
@@ -637,7 +636,6 @@ require_once "../../controle/AtendidoControle.php";
 
     $(function() {
       var docfuncional = <?= $docfuncional ?>;
-      //console.log(docfuncional);
       $.each(docfuncional, function(i, item) {
         $("#doc-tab")
           .append($("<tr>")
@@ -1666,7 +1664,6 @@ require_once "../../controle/AtendidoControle.php";
     </script>
     <script>
       function verificaSucesso(response) {
-        //console.log(response);
         if (response.errorInfo) {
           if (response.errorInfo[1] == 1451) {
             window.alert("O dependente possui documentos cadastrados em seu nome. Retire-os do bando de dados antes de remover o dependente.");

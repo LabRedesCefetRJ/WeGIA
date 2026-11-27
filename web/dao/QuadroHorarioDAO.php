@@ -43,6 +43,17 @@ class QuadroHorarioDAO
         $stmt->execute();
     }
 
+    public function incluirFuncionarioExistente($quadro_horario, $id_funcionario){
+        $sql = 'INSERT INTO quadro_horario_funcionario(id_funcionario, escala, tipo) VALUES(:id_funcionario, :escala, :tipo)';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':id_funcionario', $id_funcionario, PDO::PARAM_INT);
+        $stmt->bindValue(':escala', $quadro_horario->getEscala());
+        $stmt->bindValue(':tipo', $quadro_horario->getTipo());
+
+        return $stmt->execute();
+    }
+
     public function alterar($quadro_horario, $id_funcionario)
     {
         $stmt1 = $this->pdo->prepare("SELECT id_quadro_horario FROM quadro_horario_funcionario WHERE id_funcionario=:idFuncionario");

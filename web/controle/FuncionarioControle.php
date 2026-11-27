@@ -19,7 +19,12 @@ require_once dirname(__FILE__, 2) . '/html/geral/msg.php';
 
 class FuncionarioControle
 {
+    private PDO $pdo;
 
+    public function __construct(?PDO $pdo = null)
+    {
+        isset($pdo) ? $this->pdo = $pdo : $this->pdo = Conexao::connect();
+    }
     /**
      * Recebe uma data no formato dd/mm/yyyy e retorna no formato yyyy/mm/dd
      */
@@ -331,8 +336,7 @@ class FuncionarioControle
                 $dias_trabalhados = $plantao;
                 $carga_horaria = 174;
             }
-        }
-        else {
+        } else {
             $dias_trabalhados = null;
             $carga_horaria = null;
         }
@@ -383,7 +387,7 @@ class FuncionarioControle
             throw new InvalidArgumentException('Cargo do funcionário não informado. Por favor, informe um cargo.', 412);
         }
 
-        if ((!isset($email)) || (empty($email))) { 
+        if ((!isset($email)) || (empty($email))) {
             $email = '';
         }
 
@@ -542,7 +546,7 @@ class FuncionarioControle
         }
 
         $senha = '';
-        $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha,$email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+        $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha, $email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
         $funcionario->setData_admissao($data_admissao);
         $funcionario->setPis($pis);
         $funcionario->setCtps($ctps);
@@ -565,6 +569,7 @@ class FuncionarioControle
         if ((!isset($nome)) || (empty($nome))) {
             $nome = 'Pessoa existente';
         }
+
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = '';
         }
@@ -673,8 +678,7 @@ class FuncionarioControle
 
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
-        }
-        else {
+        } else {
             $imgperfil = base64_encode($_SESSION['imagem']);
             unset($_SESSION['imagem']);
         }
@@ -696,7 +700,8 @@ class FuncionarioControle
         return $funcionario;
     }
 
-   public function verificarSenha($nova_senha, $confirmar_senha, $id_pessoa, $senha_antiga) {
+    public function verificarSenha($nova_senha, $confirmar_senha, $id_pessoa, $senha_antiga)
+    {
         try {
             if (empty($nova_senha) || empty($confirmar_senha) || empty($senha_antiga)) {
                 return 1; // campos obrigatórios ausentes
@@ -731,7 +736,7 @@ class FuncionarioControle
                 );
             }
 
-            
+
 
             $hashNovaSenha = LoginHelper::hashPassword($nova_senha);
             $funcionarioDAO->alterarSenha((int) $id_pessoa, $hashNovaSenha);
@@ -741,7 +746,8 @@ class FuncionarioControle
             throw $e;
         }
     }
-    public function verificarSenhaConfig($nova_senha, $confirmar_senha, $id_pessoa){
+    public function verificarSenhaConfig($nova_senha, $confirmar_senha, $id_pessoa)
+    {
         try {
             if (empty($nova_senha) || empty($confirmar_senha)) {
                 return 1; // campos obrigatórios ausentes
@@ -792,11 +798,11 @@ class FuncionarioControle
             $funcionarios = $funcionariosDAO->listarTodos($situacao_selecionada);
 
             $whitePages =
-            [
-                '../html/funcionario/informacao_funcionario.php',
-                WWW . "html/funcionario/informacao_funcionario.php",
-                '../html/geral/cadastrar_permissoes.php',
-            ];
+                [
+                    '../html/funcionario/informacao_funcionario.php',
+                    WWW . "html/funcionario/informacao_funcionario.php",
+                    '../html/geral/cadastrar_permissoes.php',
+                ];
 
             $_SESSION['funcionarios'] = json_encode($funcionarios);
 
@@ -804,8 +810,7 @@ class FuncionarioControle
                 isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
                 exit();
             }
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -816,8 +821,7 @@ class FuncionarioControle
             $funcionariosDAO = new FuncionarioDAO();
             $funcionarios = $funcionariosDAO->listarTodos2();
             $_SESSION['funcionarios2'] = json_encode($funcionarios);
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -828,8 +832,7 @@ class FuncionarioControle
             $funcionariosDAO = new FuncionarioDAO();
             $funcionarioscpf = $funcionariosDAO->listarCPF();
             $_SESSION['cpf_funcionario'] = json_encode($funcionarioscpf);
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -849,8 +852,7 @@ class FuncionarioControle
             $_SESSION['funcionario'] = json_encode($funcionario);
 
             header('Location:' . WWW . "/html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($idFuncionario));
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -867,8 +869,7 @@ class FuncionarioControle
             $id_funcionario = $funcionarioDAO->getIdFuncionarioComIdPessoa($id_pessoa);
 
             echo json_encode($id_funcionario);
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -891,12 +892,10 @@ class FuncionarioControle
 
             if (count($whitePages) == 1) {
                 header('Location: ' . $whitePages[0]);
-            }
-            else {
+            } else {
                 isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
             }
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -989,8 +988,7 @@ class FuncionarioControle
             $pdo->commit();
 
             header('Location:' . '../html/geral/cadastrar_permissoes.php' . '?msg_c=Permissão efetivada com sucesso.');
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             if (isset($pdo) && $pdo->inTransaction()) {
                 $pdo->rollBack();
             }
@@ -1024,8 +1022,7 @@ class FuncionarioControle
 
             header('Location:' . '../html/geral/listar_permissoes.php?msg_c=' . urlencode('Permissão deletada com sucesso.'));
             exit;
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -1061,8 +1058,7 @@ class FuncionarioControle
 
             header('Location:' . '../html/geral/listar_permissoes.php?msg_c=' . urlencode('Permissão alterada com sucesso.'));
             exit;
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -1093,8 +1089,7 @@ class FuncionarioControle
             // Já é funcionário
             header('Location: ../html/funcionario/pre_cadastro_funcionario.php?msg_e=' . urlencode('Erro, Funcionário já cadastrado no sistema.'));
             exit;
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -1106,7 +1101,7 @@ class FuncionarioControle
         try {
             $funcionario = $this->verificarFuncionario();
             $horario = $this->verificarHorario();
-            
+
 
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
@@ -1114,8 +1109,10 @@ class FuncionarioControle
             if (!Util::validarCPF($cpf))
                 throw new InvalidArgumentException('O CPF informado não é válido', 412);
 
-            if ($funcionario->getDataNascimento() > Funcionario::getDataNascimentoMaxima() ||
-            $funcionario->getDataNascimento() < Funcionario::getDataNascimentoMinima())
+            if (
+                $funcionario->getDataNascimento() > Funcionario::getDataNascimentoMaxima() ||
+                $funcionario->getDataNascimento() < Funcionario::getDataNascimentoMinima()
+            )
                 throw new InvalidArgumentException('A data de nascimento de um funcionário não está dentro dos limites permitidos.', 412);
 
             $dataAdmissao = filter_input(INPUT_POST, 'data_admissao', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -1132,7 +1129,7 @@ class FuncionarioControle
 
             if (!isset($idFuncionario))
                 throw new PDOException('Erro ao buscar o id do funcionário recém cadastrado.', 500);
-       
+
             $idTipoRegistro = filter_input(INPUT_POST, 'registroProfissionalTipo', FILTER_SANITIZE_NUMBER_INT);
             $numeroRegistro = filter_input(INPUT_POST, 'registro_profissional_numero', FILTER_SANITIZE_SPECIAL_CHARS);
             $ufRegistro     = filter_input(INPUT_POST, 'uf_RegistroProfissional', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -1140,7 +1137,7 @@ class FuncionarioControle
             if ($idFuncionario && !empty($idTipoRegistro) && !empty($numeroRegistro)) {
                 $registroDAO = new IdentificadorRegistroProfissionalDAO();
                 $registroDAO->salvarRegistroProfissional($idFuncionario, $idTipoRegistro, $numeroRegistro, $ufRegistro);
-            }           
+            }
 
             $horarioDAO->incluir($horario);
 
@@ -1148,8 +1145,7 @@ class FuncionarioControle
             $_SESSION['tipo'] = "success";
 
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($idFuncionario));
-        }
-        catch (InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             setSessionFormData($_POST);
             $fieldErrors = [];
             $message = $e->getMessage();
@@ -1170,8 +1166,7 @@ class FuncionarioControle
             setSessionMsg($e->getMessage(), 'err');
             header("Location: ../html/funcionario/cadastro_funcionario.php?cpf=" . urlencode($cpf));
             exit();
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             error_log("Erro ao cadastrar funcionário existente: " . $e->getFile() . ":" . $e->getLine() . " - " . $e->getMessage());
             $message = $e->getCode() == 23000 ? 'CPF já cadastrado no sistema.' : 'Erro ao cadastrar funcionário.';
             setSessionFormData($_POST);
@@ -1179,14 +1174,10 @@ class FuncionarioControle
             setSessionMsg($message, 'err');
             header("Location: ../html/funcionario/cadastro_funcionario.php?cpf=" . urlencode($cpf));
             exit();
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
-
-
-
 
     public function incluirExistente()
     {
@@ -1206,16 +1197,35 @@ class FuncionarioControle
             if (!empty($dataAdmissao) && !empty($dataNascimento)) {
                 $this->validarDataAdmissao($dataNascimento, $dataAdmissao);
             }
+            $escala = filter_input(INPUT_POST, 'escala', FILTER_SANITIZE_NUMBER_INT);
+            $tipoCargaHoraria = filter_input(INPUT_POST, 'tipoCargaHoraria', FILTER_SANITIZE_NUMBER_INT);
+            $quadroHorario = new QuadroHorario();
+            $quadroHorario
+                ->setEscala($escala)
+                ->setTipo($tipoCargaHoraria);
 
-            $funcionarioDAO = new FuncionarioDAO();
-            $funcionarioDAO->incluirExistente($funcionario, $idPessoa, $sobrenome);
+            $this->pdo->beginTransaction();
+
+            $funcionarioDAO = new FuncionarioDAO($this->pdo);
+            $idFuncionario = $funcionarioDAO->incluirExistente($funcionario, $idPessoa, $sobrenome);
+            if (!$idFuncionario) {
+                throw new PDOException('Erro ao buscar o id do funcionário recém cadastrado.', 500);
+            }
+            $quadroHorarioDAO = new QuadroHorarioDAO($this->pdo);
+            $resultado = $quadroHorarioDAO->incluirFuncionarioExistente($quadroHorario, $idFuncionario);
+            if (!$resultado) {
+                throw new PDOException("Erro ao cadastrar funcionário existente.");
+            }
+            $this->pdo->commit();
 
             $_SESSION['proxima'] = "Cadastrar outro funcionario";
             $_SESSION['link'] = "../html/funcionario/cadastro_funcionario.php";
             header("Location: ../html/funcionario/informacao_funcionario.php");
-        }
-        catch (InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             setSessionFormData($_POST);
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             $fieldErrors = [];
             $message = $e->getMessage();
             if (stripos($message, 'data de admissão') !== false || stripos($message, 'idade mínima') !== false || stripos($message, 'admissão') !== false) {
@@ -1229,8 +1239,10 @@ class FuncionarioControle
             setSessionMsg($message, 'err');
             header("Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=" . urlencode($cpf));
             exit();
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             error_log("Erro ao cadastrar funcionário existente: " . $e->getFile() . ":" . $e->getLine() . " - " . $e->getMessage());
             $message = $e->getCode() == 23000 ? 'CPF já cadastrado no sistema.' : 'Erro ao cadastrar funcionário.';
             setSessionFormData($_POST);
@@ -1238,8 +1250,10 @@ class FuncionarioControle
             setSessionMsg($message, 'err');
             header("Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=" . urlencode($cpf));
             exit();
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             Util::tratarException($e);
         }
     }
@@ -1282,8 +1296,13 @@ class FuncionarioControle
                 $erros[] = "Sexo do funcionário é obrigatório.";
             if (!isset($nascimento) || trim($nascimento) === '')
                 $erros[] = "Data de nascimento é obrigatória.";
-            if (!isset($telefone) || trim($telefone) === '')
-                $erros[] = "Telefone do funcionário é obrigatório.";
+            if (isset($telefone) && trim($telefone) !== '') {
+                $telefone = Util::validarTelefone($telefone);
+                if (!$telefone) {
+                    $erros[] = "Telefone inválido.";
+                }
+            }
+
 
             if (!empty($erros)) {
                 setSessionMsg(implode(' ', $erros), 'err');
@@ -1299,10 +1318,30 @@ class FuncionarioControle
             }
 
             $funcionario = new Funcionario(
-                '', $nome, $sobrenome, $gender, $nascimentoFinal, '', '', '',
-                $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', '',
-                $email ?? '', $telefone, '', '', '', '', '', '', '', '', ''
-                );
+                '',
+                $nome,
+                $sobrenome,
+                $gender,
+                $nascimentoFinal,
+                '',
+                '',
+                '',
+                $nome_mae ?? '',
+                $nome_pai ?? '',
+                $sangue ?? '',
+                '',
+                $email ?? '',
+                $telefone,
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                ''
+            );
             $funcionario->setId_funcionario($id_funcionario);
             $funcionario->setCns($cns !== '' ? $cns : null);
 
@@ -1310,13 +1349,11 @@ class FuncionarioControle
             $funcionarioDAO->alterarInfPessoal($funcionario);
 
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
-        }
-        catch (InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             setSessionMsg($e->getMessage(), 'err');
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
             exit();
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -1401,7 +1438,6 @@ class FuncionarioControle
                 // (a página não tem faixa vermelha, é só o alert() de sempre).
                 header("Location: " . WWW . "html/logout.php?verificacao=" . htmlspecialchars($verificacao));
                 exit();
-
             }
             // --- Fluxo: pessoa com acesso ao módulo de Permissões configurando senha de outro usuário ---
             elseif ($redir === "geral/configurar_senhas.php") {
@@ -1422,12 +1458,9 @@ class FuncionarioControle
                 ];
 
                 $redirErro($mensagensConfig[$verificacao] ?? 'Não foi possível alterar a senha.');
-
-            }
-            else {
+            } else {
                 throw new LogicException('Rota de alteração de senha não reconhecida para este usuário.', 400);
             }
-
         } catch (Exception $e) {
             error_log($e->__toString());
             // PDOException pode expor detalhes internos do banco (nomes de
@@ -1441,7 +1474,7 @@ class FuncionarioControle
         }
     }
 
-public function alterarOutros()
+    public function alterarOutros()
     {
         try {
             extract($_REQUEST);
@@ -1507,8 +1540,7 @@ public function alterarOutros()
             $funcionarioDAO->alterarOutros($funcionario);
 
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
-        }
-        catch (InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             setSessionFormData($_POST);
             $fieldErrors = [];
             $message = $e->getMessage();
@@ -1525,8 +1557,7 @@ public function alterarOutros()
             setSessionMsg($message, 'err');
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
             exit();
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -1547,8 +1578,7 @@ public function alterarOutros()
 
             $funcionarioDAO->alterarImagem($idFuncionario, $img);
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($idFuncionario));
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -1585,7 +1615,7 @@ public function alterarOutros()
 
             $formatar = new Util();
 
-            if ($_SESSION['data_nasc']) { 
+            if ($_SESSION['data_nasc']) {
                 if (strtotime($data_expedicao) < strtotime($formatar->formatoDataYMD($_SESSION['data_nasc']))) {
                     echo 'A data de expedição é anterior à do nascimento. Por favor, informe uma data válida!';
                     header("Location: ../html/funcionario/profile_funcionario.php?&id_funcionario=" . urlencode($id_funcionario));
@@ -1602,14 +1632,12 @@ public function alterarOutros()
 
             $funcionarioDAO->alterarDocumentacao($funcionario);
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
-        }
-        catch (InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             $_SESSION['msg'] = $e->getMessage();
             $_SESSION['tipo'] = "error";
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($_REQUEST['id_funcionario']));
             exit;
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -1655,8 +1683,7 @@ public function alterarOutros()
 
             if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
                 $numero_residencia = null;
-            }
-            elseif ($numero_residencia < 0) {
+            } elseif ($numero_residencia < 0) {
                 throw new InvalidArgumentException('O número da residência não pode ser negativo.', 412);
             }
 
@@ -1674,8 +1701,7 @@ public function alterarOutros()
             setSessionMsg("Endereço atualizado com sucesso!", "sccs");
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
             exit();
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             setSessionMsg("Erro ao atualizar endereço.", "err");
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
             exit();
@@ -1711,8 +1737,7 @@ public function alterarOutros()
                 'mensagem' => 'Carga horária atualizada com sucesso!'
             ]);
             exit();
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             // Retorna JSON com erro
             header('Content-Type: application/json');
             http_response_code(400);
@@ -1743,8 +1768,7 @@ public function alterarOutros()
 
             $funcionarioDAO->excluir($idFuncionario);
             header("Location:../controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/informacao_funcionario.php");
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -1753,7 +1777,7 @@ public function alterarOutros()
     {
         try {
             $idFuncionario = filter_input(INPUT_POST, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
-            
+
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('Token inválido.', 403);
 
@@ -1767,4 +1791,3 @@ public function alterarOutros()
         }
     }
 }
-

@@ -1273,7 +1273,7 @@ try {
                         <div class="col-md-8">
                           <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone"
                             id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)"
-                            onkeyup="mascara('(##)#####-####',this,event)" required>
+                            onkeyup="mascara('(##)#####-####',this,event)">
                         </div>
                       </div>
                       <div class="form-group">

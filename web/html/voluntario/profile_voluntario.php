@@ -438,7 +438,7 @@ try {
                                                     <input type="text" class="form-control" maxlength="14"
                                                         name="telefone" id="telefone"
                                                         onkeypress="return Onlynumbers(event)"
-                                                        onkeyup="mascara('(##)#####-####',this,event)" required>
+                                                        onkeyup="mascara('(##)#####-####',this,event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">

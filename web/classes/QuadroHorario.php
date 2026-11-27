@@ -3,9 +3,9 @@
 class QuadroHorario
 {
 	
-	private $id_quadro_horario;
-	private $escala;
-	private $tipo;
+	private int $id_quadro_horario;
+	private int $escala;
+	private int $tipo;
 	private $carga_horaria;
 	private $entrada1;
 	private $saida1;
@@ -75,14 +75,31 @@ class QuadroHorario
         $this->id_quadro_horario = $id_quadro_horario;
     }
 
-    public function setEscala($escala)
+    public function setEscala(int $escala)
     {
+        if($escala <= 0) {
+            throw new InvalidArgumentException("Escala inválida, valor negativo ou nulo.", 400);
+        }
+        if(strlen(("$escala")) > 11) {
+            throw new InvalidArgumentException("A escala deve ter, no máximo, 11 dígitos.", 400);
+        }
+
         $this->escala = $escala;
+        return $this;
+
     }
 
-    public function setTipo($tipo)
+    public function setTipo(int $tipo)
     {
+        if($tipo <= 0) {
+            throw new InvalidArgumentException("Tipo inválido, valor negativo ou nulo.", 400);
+        }
+        if(strlen(("$tipo")) > 11) {
+            throw new InvalidArgumentException("O tipo deve ter, no máximo, 11 dígitos.", 400);
+        }
+
         $this->tipo = $tipo;
+        return $this;
     }
 
     public function setCarga_horaria($carga_horaria)
