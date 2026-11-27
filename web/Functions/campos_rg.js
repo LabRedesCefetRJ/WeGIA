@@ -12,7 +12,6 @@ function getElements(rg="rg", orgao_emissor="orgao_emissor", data_expedicao="dat
 }
 
 function toggleElements(rg="rg", others="campos_rg") {
-    console.log("toggleElements called");
     const { rgElement, orgaoEmissorElement, dataExpedicaoElement, rgLabel, dateExpedicaoLabel, orgaoEmissorLabel, div } = getElements(rg, 'orgao_emissor', 'data_expedicao', 'label_rg', 'label_data_expedicao', 'label_orgao_emissor', 'campos_rg');
     if (rgElement && div) {
         if (rgElement.value.trim() === "") {
