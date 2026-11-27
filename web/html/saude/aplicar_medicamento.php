@@ -258,7 +258,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
       var interno = <?php echo $_SESSION['id_fichamedica']; ?>;
 
       $.each(interno, function(i, item) {
-        if (i = 1) {
+        if (i == 1) {
           $("#formulario").append($("<input type='hidden' name='id_fichamedica' value='" + item.id + "'>"));
           $("#nome").text("Nome: " + item.nome + ' ' + item.sobrenome);
           $("#nome").val(item.nome + " " + item.sobrenome);
@@ -743,49 +743,42 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
       event.preventDefault();
 
       const dadosForm = {
+        tipo_medicacao: 1, //1 = "SOS" Única possibilidade para esse fluxo
         medicamento: document.getElementById('nome_medicacao').value,
         dosagem: document.getElementById('dosagem_sos').value,
-        horario: document.getElementById('horario_medicacao_sos').value,
-        duracao: document.getElementById('duracao_medicacao_sos').value,
         status_id: 1 // 1 = "Prescrito" (padrão)
       };
 
       const id_pessoa_paciente = <?= $idPessoaPaciente; ?>;
       const id_pessoa_funcionario = <?= $idPessoa; ?>;
+ 
 
-
-      if (!dadosForm.medicamento || !dadosForm.dosagem || !dadosForm.horario || !dadosForm.duracao) {
+      if (!dadosForm.medicamento || !dadosForm.dosagem) {
         mostrarMensagemSOS('Por favor, preencha todos os campos do Medicamento SOS.');
         return;
       }
-
+ 
       const validacaoNomeMed = SaudeValidator.validarNome(dadosForm.medicamento);
       if (!validacaoNomeMed.valido) {
         mostrarMensagemSOS('Medicamento: ' + validacaoNomeMed.mensagem);
         return;
       }
-
+ 
       const validacaoDosagem = SaudeValidator.validarValorPositivo(dadosForm.dosagem, 'Dosagem');
       if (!validacaoDosagem.valido) {
         mostrarMensagemSOS(validacaoDosagem.mensagem);
         return;
       }
 
-      const validacaoDuracao = SaudeValidator.validarValorPositivo(dadosForm.duracao, 'Duração');
-      if (!validacaoDuracao.valido) {
-        mostrarMensagemSOS(validacaoDuracao.mensagem);
-        return;
-      }
       const payload = {
         nomeClasse: "MedicamentoPacienteControle",
         metodo: "cadastrarMedicacaoSOS",
 
         id_pessoa_paciente: id_pessoa_paciente,
         id_pessoa_funcionario: id_pessoa_funcionario,
+        tipo_medicacao: 1,
         medicamento: dadosForm.medicamento,
         dosagem: dadosForm.dosagem,
-        horario: dadosForm.horario,
-        duracao: dadosForm.duracao,
         status_id: dadosForm.status_id
       };
 
@@ -1059,7 +1052,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                         <span id="msg-sos-texto"></span>
                       </div>
                       <form id="form_medicacao_sos" class="form-horizontal form-bordered" onsubmit="event.preventDefault();">
-
+                        
                         <div class="form-group" id="primeira_medicacao">
                           <label class="col-md-3 control-label" for="nome_medicacao">
                             Medicamento:<sup class="obrig">*</sup>
@@ -1081,28 +1074,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                               title="valor positivo (ex: 500mg, 2ml)"
                               required>
                           </div>
-                        </div>
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="horario_medicacao_sos">
-                            Horário:<sup class="obrig">*</sup>
-                          </label>
-                          <div class="col-md-6">
-                            <input type="time" class="form-control" name="horario_medicacao_sos" id="horario_medicacao_sos" required>
-                          </div>
-                        </div>
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="duracao_medicacao_sos">
-                            Duração:<sup class="obrig">*</sup>
-                          </label>
-                          <div class="col-md-6">
-                            <input type="text" class="form-control" name="duracao_medicacao_sos" id="duracao_medicacao_sos"
-                              title="valor positivo (ex: 7 dias, 2 semanas)"
-                              required>
-                          </div>
-                        </div>
-
+                        </div>                        
                         <br>
                         <br>
                         <button type="button" class="btn btn-success" id="botao_cadastrar_sos">

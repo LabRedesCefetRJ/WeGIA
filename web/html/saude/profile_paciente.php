@@ -159,6 +159,13 @@ foreach ($descricao_medica as $key => $value) {
 
 $descricao_medica = json_encode($descricao_medica);
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'AtendimentoPacienteControle.php';
+
+$atendimentoPacienteControle = new AtendimentoPacienteControle();
+
+$medtiposmedicacoes = $atendimentoPacienteControle->listarTipoMedicacao();
+$medtiposuso = $atendimentoPacienteControle->listarTipoUsoMedicacao();
+
 $stmtMedicacoes = $pdo->prepare("
     SELECT sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem,
            GROUP_CONCAT(TIME_FORMAT(smh.horario, '%H:%i') ORDER BY smh.horario SEPARATOR ', ') AS horarios,
@@ -690,6 +697,46 @@ try {
       gerar_alergia();
     }
 
+    const LIMITE_CARACTERES = 30;
+
+    function truncarTexto(texto, limite = LIMITE_CARACTERES) {
+      texto = String(texto || "");
+      if (texto.length <= limite) {
+        return { texto: texto, truncado: false };
+      }
+      return { texto: texto.slice(0, limite).trimEnd() + "...", truncado: true };
+    }
+
+    function criarCelulaTruncada(conteudoCompleto, isHtml = false) {
+      const td = $("<td style='vertical-align: middle;'>");
+      const div = $("<div>");
+      const { texto, truncado } = truncarTexto(conteudoCompleto);
+
+      if (isHtml) {
+        div.html(texto);
+      } else {
+        div.text(texto);
+      }
+
+      if (truncado) {
+        div.addClass("texto-truncado")
+          .attr("title", "Clique para ver o texto completo")
+          .on("click", function(e) {
+            e.stopPropagation();
+            $(this).toggleClass("expandido");
+            const expandido = $(this).hasClass("expandido");
+            const conteudo = expandido ? conteudoCompleto : texto;
+            if (isHtml) {
+              $(this).html(conteudo);
+            } else {
+              $(this).text(conteudo);
+            }
+          });
+      }
+
+      return td.append(div);
+    }
+
     //descricao medica 
     $(function() {
       var descricao_medica = <?= $descricao_medica ?>;
@@ -706,7 +753,7 @@ try {
 
         tr.append($("<td>").text(item.medicoNome));
         tr.append($("<td>").text(item.enfermeiraNome + (item.enfermeiraSobrenome ? ' ' + item.enfermeiraSobrenome : '')));
-        tr.append($("<td>").html(item.descricao));
+        tr.append(criarCelulaTruncada(item.descricao, true));
         tr.append($("<td>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento));
         tr.append(
           $("<td class='coluna-status'>")
@@ -860,8 +907,8 @@ try {
         $("#exibimed")
           .append($("<tr>")
             .append($("<td style='text-align: center; vertical-align: middle;'>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento))
-            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.medicamento + ", " + item.dosagem + ", " + (item.horarios || 'Livre') + ", " + item.duracao + "."))
-            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.descricao))
+            .append(criarCelulaTruncada(item.medicamento + ", " + item.dosagem + ", " + (item.horarios || 'Livre') + (item.duracao ? ", " + item.duracao : "") + "."))
+            .append(criarCelulaTruncada(item.descricao))
             .append($("<td style='text-align: center; vertical-align: middle;'>")
               .append($("<a onclick='editarStatusMedico(" + item.id_medicacao + ")' href='#'title='Editar'><button class='btn btn-primary' id='teste'><i class='glyphicon glyphicon-pencil'></i></button></a>"))
             )
@@ -902,12 +949,6 @@ try {
           console.error("Erro ao carregar aplicações:", err);
         });
     })
-
-
-    $(function() {
-      // DataTables removido dessas tabelas dinâmicas para evitar conflito
-      // de largura/renderização quando a aba ainda está oculta.
-    });
 
     function escrevermed() {
 
@@ -1132,6 +1173,110 @@ try {
       align-items: center;
       justify-content: center;
       font-size: 16px;
+    }
+
+    #historico_medico .table-responsive {
+      overflow-x: hidden !important;
+      table-layout: fixed;
+    }
+
+    #historico_medico table {
+      table-layout: fixed;
+      width: 100% !important;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    #historico_medico table th,
+    #historico_medico table td {
+      white-space: normal;
+      word-break: normal;
+      overflow-wrap: break-word;
+      vertical-align: middle;
+    }
+
+    /* Cabeçalhos: centralizados, com quebra por palavra (sem divisão silábica) */
+    #historico_medico table th {
+      text-align: center;
+      white-space: normal;
+      word-break: normal;
+      overflow-wrap: break-word;
+    }
+
+    /* Atendimento: larguras por coluna */
+    #de-tab th:nth-child(1),
+    #de-tab td:nth-child(1) /* Médico */ {
+      width: 12%;
+    }
+
+    #de-tab th:nth-child(2),
+    #de-tab td:nth-child(2) /* Registro */ {
+      width: 8%;
+    }
+
+    #de-tab th:nth-child(4),
+    #de-tab td:nth-child(4) /* Data */ {
+      width: 15%;
+    }
+
+    #de-tab th:nth-child(5),
+    #de-tab td:nth-child(5) /* Status */ {
+      width: 7%;
+    }
+
+    #de-tab th:nth-child(6),
+    #de-tab td:nth-child(6), /* Motivo */
+    #de-tab th:nth-child(7),
+    #de-tab td:nth-child(7)  /* Anulador */ {
+      width: 12%;
+    }
+
+    #de-tab th:nth-child(3),
+    #de-tab td:nth-child(3) /* Descrições */ {
+      width: 34%;
+    }
+
+    /* Medicações: dá mais espaço para Medicações */
+    #exibimed th:nth-child(1),
+    #exibimed td:nth-child(1) /* Data */ {
+      width: 15%;
+    }
+
+    #exibimed th:nth-child(3),
+    #exibimed td:nth-child(3) /* Status */ {
+      width: 9%;
+    }
+
+    #exibimed th:nth-child(2),
+    #exibimed td:nth-child(2) /* Medicações */ {
+      width: 62%;
+    }
+
+    /* Coluna de ações estreita e sem quebra (botões) */
+    #historico_medico table th.coluna-acao,
+    #historico_medico table td.coluna-acao,
+    #historico_medico table td:nth-last-child(1),
+    #historico_medico table th:nth-last-child(1) {
+      width: 70px;
+      white-space: nowrap;
+    }
+
+    /* Texto truncado com reticências */
+    .texto-truncado {
+      display: -webkit-box;
+      -webkit-line-clamp: 6;
+      line-clamp: 6;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+
+    .texto-truncado.expandido {
+      display: block;
+      -webkit-line-clamp: unset;
+      line-clamp: unset;
+      overflow: visible;
     }
 
   </style>
@@ -1442,7 +1587,7 @@ try {
                               ?>
                                 <tr>
                                   <td><?= $index + 1 ?></td>
-                                  <td class="text-center"><?= htmlspecialchars($medicamento['medicamento'] . '|' . $medicamento['dosagem'] . '|' . ($medicamento['horarios'] ?? '') . '|' . $medicamento['duracao']) ?></td>
+                                  <td class="text-center"><?= htmlspecialchars($medicamento['medicamento'] . '|' . $medicamento['dosagem'] . '|' . ($medicamento['horarios'] ?? '') . (!empty($medicamento['duracao']) ? '|' . $medicamento['duracao'] : '')) ?></td>
                                 </tr>
                               <?php
                               endforeach;
@@ -2205,6 +2350,22 @@ try {
                           <br>
 
                           <div class="form-group" id="primeira_medicacao">
+                            <div class="form-group">
+                              <label class="col-md-3 control-label" for="tipo_medicacao">
+                                  Tipo Medicação:<sup class="obrig">*</sup>
+                              </label>
+
+                              <div class="col-md-6">
+                                  <select class="form-control input-lg mb-md" name="tipo_medicacao" id="tipo_medicacao" onchange = "return exibir_campos()">
+                                      <option value="" selected>Selecionar</option>
+                                      <?php foreach ($medtiposmedicacoes as $medtipomedicacao): ?>
+                                          <option value="<?= htmlspecialchars((string) $medtipomedicacao['id_tipo_medicacao'], ENT_QUOTES, 'UTF-8') ?>">
+                                              <?= htmlspecialchars($medtipomedicacao['descricao'], ENT_QUOTES, 'UTF-8') ?>
+                                          </option>
+                                      <?php endforeach; ?>
+                                  </select>
+                              </div>
+                            </div>
                             <label class="col-md-3 control-label" for="inputSuccess">Medicamento:<sup class="obrig">*</sup></label>
                             <div class="col-md-8">
                               <input type="text" class="form-control meddisabled" name="nome_medicacao" id="nome_medicacao">
@@ -2219,21 +2380,46 @@ try {
                           <input type="text" class="form-control" name="dosagem" id="dosagem">
                         </div>
                       </div>
+                      <div id="campos-med-comum" style="display: none">
+                        <div class="form-group">
+                          <label class="col-md-3 control-label">Horários:<sup class="obrig">*</sup></label>
+                          <div class="col-md-8" id="container_horarios_atd" style="overflow:visible;">
+                            <div class="horario-item">
+                              <input type="time" class="form-control horario_medicacao_atd" name="horario_medicacao[]">
+                              <button type="button" class="btn btn-success btn-horario" id="btn_add_horario_atd" title="Adicionar horário"><i class="bi bi-plus"></i></button>
+                            </div>
+                          </div>
+                        </div>
 
-                      <div class="form-group">
-                        <label class="col-md-3 control-label">Horários:<sup class="obrig">*</sup></label>
-                        <div class="col-md-8" id="container_horarios_atd" style="overflow:visible;">
-                          <div class="horario-item">
-                            <input type="time" class="form-control horario_medicacao_atd" name="horario_medicacao[]">
-                            <button type="button" class="btn btn-success btn-horario" id="btn_add_horario_atd" title="Adicionar horário"><i class="bi bi-plus"></i></button>
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="profileCompany">Duração:</label>
+                          <div class="col-md-8">
+                            <input type="text" class="form-control" name="duracao_medicacao" id="duracao_medicacao">
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="tipo_uso_medicacao">
+                            Tipo de Uso:<sup class="obrig">*</sup></label>
+                          <div class="col-md-6">
+                              <select class="form-control input-lg mb-md" name="tipo_uso_medicacao" id="tipo_uso_medicacao" onchange = "return solicitar_data_termino()">
+                                <option value="" selected disabled>Selecionar</option>
+                                <?php foreach ($medtiposuso as $medtipouso): ?>
+                                    <option value="<?= htmlspecialchars((string) $medtipouso['id_tipo_uso'], ENT_QUOTES, 'UTF-8') ?>">
+                                        <?= strtoupper(htmlspecialchars($medtipouso['descricao'], ENT_QUOTES, 'UTF-8')) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                           </div>
                         </div>
                       </div>
-
-                      <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileCompany">Duração:<sup class="obrig">*</sup></label>
-                        <div class="col-md-8">
-                          <input type="text" class="form-control" name="duracao_medicacao" id="duracao_medicacao">
+                    
+                      <div class="form-group" id="data_termino_med" style="display: none">
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="data_termino_medicacao">
+                          Data Término:<sup class="obrig">*</sup></label>
+                          <div class="col-md-6">
+                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_termino" id="data_termino_medicacao" min="<?php echo date('Y-m-d');?>" value="">
+                          </div> 
                         </div>
                       </div>
 
@@ -2253,10 +2439,13 @@ try {
                         <table class="table table-bordered table-striped mb-none" id="tabmed">
                           <thead>
                             <tr style="font-size:15px;">
+                              <th>Tipo Medicação</th>
                               <th>Medicação</th>
                               <th>Dosagem</th>
                               <th>Horário</th>
                               <th>Duração</th>
+                              <th>Tipo de Uso</th>
+                              <th>Data de Término</th>
                               <th>Ação</th>
                             </tr>
                           </thead>
@@ -2582,6 +2771,65 @@ try {
         </div>
     </div>
 
+    <script>
+      function exibir_campos() {
+        const tipoMedicacao = document.getElementById('tipo_medicacao')?.value;
+        const camposComuns = document.getElementById('campos-med-comum');
+
+        const inputDuracao = document.getElementById('duracao_medicacao');
+        const selectTipoUso = document.getElementById('tipo_uso_medicacao');
+
+        if (!camposComuns || !inputDuracao || !selectTipoUso) {
+            return;
+        }
+
+        // Tipo 1 = SOS: não exige horários, duração ou tipo de uso.
+        const exigeHorarios = tipoMedicacao !== "" && Number(tipoMedicacao) !== 1;
+
+        camposComuns.style.display = exigeHorarios ? 'block' : 'none';
+
+        document.querySelectorAll('.horario_medicacao_atd').forEach(input => {
+            input.required = exigeHorarios;
+
+            if (!exigeHorarios) {
+                input.value = '';
+            }
+        });
+        
+        // Duração é sempre opcional.
+        inputDuracao.required = false;
+        selectTipoUso.required = exigeHorarios;
+
+        if (!exigeHorarios) {
+            inputDuracao.value = '';
+            selectTipoUso.value = '';
+        }
+
+        solicitar_data_termino();
+      }
+
+      function solicitar_data_termino() {
+          const tipoMedicacao = document.getElementById('tipo_medicacao')?.value;
+          const tipoUso = document.getElementById('tipo_uso_medicacao')?.value;
+          const divDataTermino = document.getElementById('data_termino_med');
+          const inputDataTermino = document.getElementById('data_termino_medicacao');
+
+          if (!divDataTermino || !inputDataTermino) {
+              return;
+          }
+
+          // Tipo de uso 1 = Contínuo, não tem data de término.
+          const exigeDataTermino = tipoMedicacao !== "" && tipoMedicacao > 1 && tipoUso !== "" && tipoUso !== "1";
+
+          divDataTermino.style.display = exigeDataTermino ? 'block' : 'none';
+          inputDataTermino.required = exigeDataTermino;
+
+          if (!exigeDataTermino) {
+              inputDataTermino.value = '';
+          }
+      }
+    </script>
+    
     <script defer>
       function removerAlergia(id_enfermidade) {
         if (!window.confirm("Tem certeza que deseja inativar essa enfermidade?")) {
@@ -3361,18 +3609,33 @@ try {
       // codigo para inserir medicacao na tabela do medico
       $(function() {
         function lerCamposMedicacao() {
+          const horarios = Array.from(document.querySelectorAll('.horario_medicacao_atd')).map(input => input.value.trim()).filter(horario => horario !== "");
+
           return {
-            nome_medicacao: ($("#nome_medicacao").val() || "").trim(),
-            dosagem: ($("#dosagem").val() || "").trim(),
-            horarios: Array.from(document.querySelectorAll('.horario_medicacao_atd')).map(el => el.value).filter(v => v),
-            tempo: ($("#duracao_medicacao").val() || "").trim()
+              id_tipo_medicacao: $("#tipo_medicacao").val() || "",
+              tipo_medicacao_descricao: $("#tipo_medicacao option:selected").text(),
+              nome_medicacao: $("#nome_medicacao").val().trim(),
+              dosagem: $("#dosagem").val().trim(),
+              horarios: horarios,
+              tempo: $("#duracao_medicacao").val().trim(),
+              id_tipo_uso: $("#tipo_uso_medicacao").val() || "",
+              tipo_uso_descricao: $("#tipo_uso_medicacao option:selected").text(),
+              data_termino: $("#data_termino_medicacao").val() || ""
           };
-        }
+      }
+
 
         function limparCamposMedicacao() {
+          $("#tipo_medicacao").val("");
           $("#nome_medicacao").val("");
           $("#dosagem").val("");
           $("#duracao_medicacao").val("");
+          $("#tipo_uso_medicacao").val("");
+          $("#data_termino_medicacao").val("");
+
+          // Restaura a exibição inicial dos campos.
+          exibir_campos();
+
           const container = document.getElementById('container_horarios_atd');
           container.innerHTML = `
             <div class="horario-item">
@@ -3382,39 +3645,72 @@ try {
           container.querySelector('#btn_add_horario_atd').addEventListener('click', adicionarCampoHorario);
         }
 
-        function todosCamposMedicacaoPreenchidos(medicacao) {
+        function camposObrigatoriosPreenchidos(medicacao) {
           return (
+            medicacao.id_tipo_medicacao !== "" &&
             medicacao.nome_medicacao !== "" &&
-            medicacao.dosagem !== "" &&
-            medicacao.horarios.length > 0 &&
-            medicacao.tempo !== ""
+            medicacao.dosagem !== ""
           );
         }
 
+        function todosCamposMedicacaoPreenchidos(medicacao) {
+          const camposBasicosPreenchidos =
+              medicacao.id_tipo_medicacao !== "" &&
+              medicacao.nome_medicacao !== "" &&
+              medicacao.dosagem !== "" &&
+              medicacao.horarios.length > 0 &&
+              medicacao.id_tipo_uso !== "";
+
+          if (!camposBasicosPreenchidos) {
+              return false;
+          }
+
+          if (Number(medicacao.id_tipo_uso) !== 1 && medicacao.data_termino === "") {
+              return false;
+          }
+
+          return true;
+      }
+
         function algumCampoMedicacaoPreenchido(medicacao) {
           return (
+            medicacao.id_tipo_medicacao !== "" ||
             medicacao.nome_medicacao !== "" ||
             medicacao.dosagem !== "" ||
             medicacao.horarios.length > 0 ||
-            medicacao.tempo !== ""
+            medicacao.tempo !== "" ||
+            medicacao.id_tipo_uso !== "" || 
+            medicacao.data_termino !== ""
           );
         }
 
         function adicionarLinhaMedicacao(medicacao) {
           const horarioTexto = medicacao.horarios.join(", ");
+
           $("#tabmed tbody").append(
-            $("<tr>")
-              .addClass("tabmed")
-              .data("horarios", medicacao.horarios)
-              .append($("<td>").text(medicacao.nome_medicacao))
-              .append($("<td>").text(medicacao.dosagem))
-              .append($("<td>").text(horarioTexto))
-              .append($("<td>").text(medicacao.tempo))
-              .append(
-                $("<td style='display: flex; justify-content: space-evenly;'>").append(
-                  $("<button type='button' class='btn btn-danger'><i class='fas fa-trash-alt'></i></button>")
-                )
-              )
+              $("<tr>")
+                  .addClass("tabmed")
+                  .data("medicacao", {
+                      id_tipo_medicacao: medicacao.id_tipo_medicacao,
+                      nome_medicacao: medicacao.nome_medicacao,
+                      dosagem: medicacao.dosagem,
+                      horarios: medicacao.horarios,
+                      tempo: medicacao.tempo,
+                      id_tipo_uso: medicacao.id_tipo_uso,
+                      data_termino: medicacao.data_termino
+                  })
+                  .append($("<td>").text(medicacao.tipo_medicacao_descricao))
+                  .append($("<td>").text(medicacao.nome_medicacao))
+                  .append($("<td>").text(medicacao.dosagem))
+                  .append($("<td>").text(horarioTexto))
+                  .append($("<td>").text(medicacao.tempo))
+                  .append($("<td>").text(medicacao.tipo_uso_descricao))
+                  .append($("<td>").text(medicacao.data_termino))
+                  .append(
+                      $("<td style='display: flex; justify-content: space-evenly;'>").append(
+                          $("<button type='button' class='btn btn-danger'><i class='fas fa-trash-alt'></i></button>")
+                      )
+                  )
           );
         }
 
@@ -3422,34 +3718,40 @@ try {
           const tabelaMedicacao = [];
 
           $("#tabmed tbody tr.tabmed").each(function() {
-            const colunas = $(this).find("td");
-            if (colunas.length < 4) {
-              return;
-            }
+              const medicacao = $(this).data("medicacao");
 
-            const horarios = $(this).data("horarios") ||
-              ($(colunas[2]).text() || "").trim().split(", ").filter(v => v);
-
-            tabelaMedicacao.push({
-              nome_medicacao: ($(colunas[0]).text() || "").trim(),
-              dosagem: ($(colunas[1]).text() || "").trim(),
-              horarios: horarios,
-              tempo: ($(colunas[3]).text() || "").trim()
-            });
+              if (medicacao) {
+                  tabelaMedicacao.push(medicacao);
+              }
           });
 
           $("input[name=acervo]").val(JSON.stringify(tabelaMedicacao));
+
           return tabelaMedicacao;
         }
 
         function adicionarCampoHorario() {
           const container = document.getElementById('container_horarios_atd');
+
+          if (!container) {
+              return;
+          }
+
           const div = document.createElement('div');
           div.className = 'horario-item';
+
           div.innerHTML = `
-            <input type="time" class="form-control horario_medicacao_atd" name="horario_medicacao[]">
-            <button type="button" class="btn btn-danger btn-horario remover-horario-atd" title="Remover horário"><i class="bi bi-dash"></i></button>
+              <input type="time" class="form-control horario_medicacao_atd" name="horario_medicacao[]">
+              <button type="button" class="btn btn-danger btn-horario remover-horario-atd" title="Remover horário">
+                  <i class="bi bi-dash"></i>
+              </button>
           `;
+
+          const tipoMedicacao = document.getElementById('tipo_medicacao').value;
+
+          div.querySelector('.horario_medicacao_atd').required =
+              tipoMedicacao !== "" && tipoMedicacao !== "1";
+
           container.appendChild(div);
         }
 
@@ -3462,12 +3764,19 @@ try {
           }
         });
 
-        $("#botao").on("click", function() {
+        $("#botao").on("click", function() 
+        {
           const medicacao = lerCamposMedicacao();
-
-          if (!todosCamposMedicacaoPreenchidos(medicacao)) {
+          if (!camposObrigatoriosPreenchidos(medicacao)) {
             mostrarMensagemMedicacao("Por favor, informe a medicação corretamente!", "danger");
             return;
+          }
+
+          if(Number(medicacao.id_tipo_medicacao) !== 1) {
+            if(!todosCamposMedicacaoPreenchidos(medicacao)) {
+              mostrarMensagemMedicacao("Por favor, informe a medicação corretamente!", "danger");
+              return;
+            }
           }
 
           const validacaoNomeMedicacao = SaudeValidator.validarNome(medicacao.nome_medicacao);
@@ -3477,20 +3786,23 @@ try {
           }
 
           const validacaoDosagem = SaudeValidator.validarValorPositivo(medicacao.dosagem, "Dosagem");
-          if (!validacaoDosagem.valido) {
-            mostrarMensagemMedicacao(validacaoDosagem.mensagem, "danger");
-            return;
-          }
+            if (!validacaoDosagem.valido) {
+              mostrarMensagemMedicacao(validacaoDosagem.mensagem, "danger");
+              return;
+            }
 
-          const validacaoDuracao = SaudeValidator.validarValorPositivo(medicacao.tempo, "Duração");
-          if (!validacaoDuracao.valido) {
-            mostrarMensagemMedicacao(validacaoDuracao.mensagem, "danger");
-            return;
-          }
+            // Duração é opcional; valida apenas se preenchida.
+            if(medicacao.tempo !== "") {
+              const validacaoDuracao = SaudeValidator.validarValorPositivo(medicacao.tempo, "Duração");
+              if (!validacaoDuracao.valido) {
+                mostrarMensagemMedicacao(validacaoDuracao.mensagem, "danger");
+                return;
+              }
+            }
 
-          adicionarLinhaMedicacao(medicacao);
-          limparCamposMedicacao();
-          atualizarAcervoInputPelaTabela();
+            adicionarLinhaMedicacao(medicacao);
+            limparCamposMedicacao();
+            atualizarAcervoInputPelaTabela();          
         });
 
         $("#tabmed").on("click", "button", function(e) {

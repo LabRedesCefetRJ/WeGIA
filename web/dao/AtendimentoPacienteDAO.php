@@ -120,17 +120,14 @@ class AtendimentoPacienteDAO
 
             if (!empty($medicacoes)) {
                 $stmtMedicacao = $this->pdo->prepare(
-                    'INSERT INTO saude_medicacao (
-                        id_atendimento,
-                        medicamento,
-                        dosagem,
-                        duracao,
-                        saude_medicacao_status_idsaude_medicacao_status
-                    ) VALUES (
+                    'INSERT INTO saude_medicacao (id_atendimento, id_tipo_medicacao, medicamento, dosagem, duracao, id_tipo_uso, data_termino_medicacao, saude_medicacao_status_idsaude_medicacao_status) VALUES (
                         :id_atendimento,
+                        :id_tipo_medicacao,
                         :medicamento,
                         :dosagem,
                         :duracao,
+                        :id_tipo_uso,
+                        :data_termino,
                         :status
                     )'
                 );
@@ -141,44 +138,99 @@ class AtendimentoPacienteDAO
 
                 foreach ($medicacoes as $medicacao) {
                     if (!is_array($medicacao)) {
-                        if ($this->pdo->inTransaction()) {
-                            $this->pdo->rollBack();
-                        }
-                        $this->registrarErro('Formato de medicação inválido: item não é array.', null);
-                        return 0;
+                        throw new InvalidArgumentException('Formato de medicação inválido.');
                     }
 
+                    $idTipoMedicacao = (int)($medicacao['id_tipo_medicacao'] ?? $medicacao['tipo_medicacao'] ?? 0);
                     $medicamento = trim((string)($medicacao['nome_medicacao'] ?? ''));
                     $dosagem = trim((string)($medicacao['dosagem'] ?? ''));
-                    $horarios = $medicacao['horarios'] ?? [];
-                    if (is_string($horarios)) {
-                        $horarios = array_filter(array_map('trim', explode(',', $horarios)));
-                    }
-                    $duracao = trim((string)($medicacao['tempo'] ?? ''));
 
-                    if ($medicamento === '' || $dosagem === '' || empty($horarios) || $duracao === '') {
-                        if ($this->pdo->inTransaction()) {
-                            $this->pdo->rollBack();
+                    $duracao = trim((string)($medicacao['tempo'] ?? ''));
+                    $idTipoUso = $medicacao['id_tipo_uso'] ?? $medicacao['tipo_uso'] ?? null;
+                    $dataTermino = trim((string)($medicacao['data_termino'] ?? ''));
+
+                    $horarios = $medicacao['horarios'] ?? [];
+
+                    if (is_string($horarios)) {
+                        $horarios = array_filter(
+                            array_map('trim', explode(',', $horarios))
+                        );
+                    }
+
+                    if (!is_array($horarios)) {
+                        throw new InvalidArgumentException('Formato de horários inválido.');
+                    }
+
+                    // Toda medicação precisa ter tipo, nome e dosagem.
+                    if (!in_array($idTipoMedicacao, [1, 2], true) || $medicamento === '' || $dosagem === '') {
+                            throw new InvalidArgumentException('Dados básicos da medicação incompletos.');
+                    }
+
+                    // Tipo SOS = 1, não utiliza os campos comuns.
+                    if ($idTipoMedicacao === 1) {
+                        $duracao = '';
+                        $idTipoUso = null;
+                        $dataTermino = '';
+                        $horarios = [];
+                    } else {
+                        $idTipoUso = filter_var($idTipoUso, FILTER_VALIDATE_INT);
+
+                        if ($idTipoUso === false || !in_array($idTipoUso, [1, 2], true) || empty($horarios)) {
+                            throw new InvalidArgumentException('Campos da medicação prescrita incompletos.');
                         }
-                        $this->registrarErro('Campos de medicação incompletos durante inserção.', null);
-                        return 0;
+
+                        if ($idTipoUso === 2 && $dataTermino === '') {
+                            throw new InvalidArgumentException('Informe a data de término da medicação temporária.');
+                        }
+
+                        if ($idTipoUso === 1) {
+                            $dataTermino = '';
+                        }
+                    }
+
+                    // Converte a data para o formato DATETIME.
+                    if ($dataTermino !== null && $dataTermino !== '') {
+                        $data = DateTime::createFromFormat('!Y-m-d', $dataTermino);
+
+                        if (!$data || $data->format('Y-m-d') !== $dataTermino) {
+                            throw new InvalidArgumentException('Data de término inválida.');
+                        }
+                        $dataTermino .= ' 00:00:00';
                     }
 
                     $stmtMedicacao->bindValue(':id_atendimento', $idAtendimento, PDO::PARAM_INT);
-                    $stmtMedicacao->bindValue(':medicamento', $medicamento);
-                    $stmtMedicacao->bindValue(':dosagem', $dosagem);
-                    $stmtMedicacao->bindValue(':duracao', $duracao);
+                    $stmtMedicacao->bindValue(':id_tipo_medicacao', $idTipoMedicacao, PDO::PARAM_INT);
+                    $stmtMedicacao->bindValue(':medicamento', $medicamento, PDO::PARAM_STR);
+                    $stmtMedicacao->bindValue(':dosagem', $dosagem, PDO::PARAM_STR);
+                    $stmtMedicacao->bindValue(':duracao',
+                        $duracao !== null && $duracao !== '' ? $duracao : null,
+                        $duracao !== null && $duracao !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
+                    $stmtMedicacao->bindValue(':id_tipo_uso',
+                        $idTipoUso !== null ? (int)$idTipoUso : null,
+                        $idTipoUso !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+                    $stmtMedicacao->bindValue(':data_termino',
+                        $dataTermino !== '' ? $dataTermino : null,
+                        $dataTermino !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
                     $stmtMedicacao->bindValue(':status', 1, PDO::PARAM_INT);
+
                     $stmtMedicacao->execute();
 
                     $idMedicacao = (int)$this->pdo->lastInsertId();
+
+                    if ($idMedicacao < 1) {
+                        throw new RuntimeException('Não foi possível obter o ID da medicação cadastrada.');
+                    }
+
                     foreach ($horarios as $horario) {
-                        if (!empty(trim((string)$horario))) {
-                            $stmtHorario->execute([':id_medicacao' => $idMedicacao, ':horario' => trim((string)$horario)]);
+                        $horario = trim((string)$horario);
+
+                        if ($horario !== '') {
+                            $stmtHorario->execute([':id_medicacao' => $idMedicacao, ':horario' => $horario]);
                         }
                     }
                 }
             }
+
 
             $this->pdo->commit();
 
@@ -189,6 +241,12 @@ class AtendimentoPacienteDAO
             }
 
             $this->registrarErro('Erro ao inserir atendimento e medicações.', $e);
+
+            // Erros de validação são do usuário: devem chegar ao controller.
+            if ($e instanceof InvalidArgumentException) {
+                throw $e;
+            }
+
             return 0;
         }
     }

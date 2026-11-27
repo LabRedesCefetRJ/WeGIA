@@ -139,22 +139,24 @@ class MedicamentoPacienteDAO
      * @throws PDOException
      * @return int ID da medicacao inserida
      */
-    public function cadastrarMedicamentoSos($id_atendimento, $medicamento, $dosagem, $duracao, $status_id)
+    public function cadastrarMedicamentoSos($id_atendimento, $id_tipo_medicacao, $medicamento, $dosagem, $duracao, $id_tipo_uso, $data_termino, $status_id)
     {
         $stmt = $this->pdo->prepare("
             INSERT INTO saude_medicacao (
-                id_atendimento, medicamento, dosagem, duracao,
-                saude_medicacao_status_idsaude_medicacao_status
+                id_atendimento, id_tipo_medicacao, medicamento, dosagem, duracao, id_tipo_uso, data_termino_medicacao, saude_medicacao_status_idsaude_medicacao_status
             ) VALUES (
-                :id_atendimento, :medicamento, :dosagem, :duracao, :status_id
+                :id_atendimento, :id_tipo_medicacao, :medicamento, :dosagem, :duracao, :id_tipo_uso, :data_termino, :status_id
             )
         ");
         $stmt->execute([
-            ':id_atendimento' => $id_atendimento,
-            ':medicamento'    => $medicamento,
-            ':dosagem'        => $dosagem,
-            ':duracao'        => $duracao,
-            ':status_id'      => $status_id
+            ':id_atendimento'         => $id_atendimento,
+            ':id_tipo_medicacao'      => $id_tipo_medicacao,
+            ':medicamento'            => $medicamento,
+            ':dosagem'                => $dosagem,
+            ':duracao'                => $duracao,
+            ':id_tipo_uso'            => $id_tipo_uso,
+            ':data_termino'           => $data_termino,
+            ':status_id'              => $status_id
         ]);
         return (int)$this->pdo->lastInsertId();
     }
@@ -177,17 +179,16 @@ class MedicamentoPacienteDAO
     }
     public function listarMedicacoesPorFicha($idFichaMedica)
     {
-        $sql = "SELECT sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem,
-                GROUP_CONCAT(TIME_FORMAT(smh.horario, '%H:%i') ORDER BY smh.horario SEPARATOR ', ') AS horarios,
-                sm.duracao, st.descricao,
-                sm.saude_medicacao_status_idsaude_medicacao_status AS id_status
+        $sql = "SELECT sm.id_medicacao, sa.data_atendimento,sm.id_tipo_medicacao, smtm.descricao AS tipo_medicacao, sm.medicamento, sm.dosagem, GROUP_CONCAT(TIME_FORMAT(smh.horario, '%H:%i') ORDER BY smh.horario SEPARATOR ', ') AS horarios, sm.duracao, sm.id_tipo_uso, smtu.descricao AS tipo_uso, sm.data_termino_medicacao,st.descricao AS status, sm.saude_medicacao_status_idsaude_medicacao_status AS id_status
             FROM saude_atendimento sa
             JOIN saude_medicacao sm ON (sa.id_atendimento = sm.id_atendimento)
             JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)
-            LEFT JOIN saude_medicacao_horario smh ON (smh.id_medicacao = sm.id_medicacao)
+            LEFT JOIN saude_medicacao_horario smh ON (smh.id_medicacao = sm.id_medicacao) 
+            LEFT JOIN saude_medicacao_tipo_medicacao smtm ON(sm.id_tipo_medicacao = smtm.id_tipo_medicacao)
+            LEFT JOIN saude_medicacao_tipo_uso smtu ON(sm.id_tipo_uso = smtu.id_tipo_uso)
             WHERE sa.id_fichamedica = :idFichaMedica
-            GROUP BY sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem, sm.duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status
-            ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC";
+            GROUP BY sm.id_medicacao, sa.data_atendimento, sm.id_tipo_medicacao, smtm.descricao, sm.medicamento, sm.dosagem, sm.duracao, sm.id_tipo_uso, smtu.descricao, sm.data_termino_medicacao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status
+            ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC;";
         $stmt= $this->pdo->prepare($sql);
 
         $stmt->bindValue(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);

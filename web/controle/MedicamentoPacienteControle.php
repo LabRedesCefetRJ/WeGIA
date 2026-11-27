@@ -40,6 +40,7 @@
                 exit;
             }
 
+            Util::definirFusoHorario();
             $atendidoDAO = new AtendidoDAO();
             $data_nasc_paciente = $atendidoDAO->obterDataNascimentoPorPessoaId((int)$id_pessoa) ?: '1900-01-01';
             
@@ -72,7 +73,6 @@
             }
             
             $aplicacao= $aplicacao->format('Y-m-d H:i:s'); 
-            Util::definirFusoHorario();
             $registro = date('Y-m-d H:i:s');
 
             try{
@@ -153,6 +153,7 @@
             
             $id_pessoa_paciente = $dados['id_pessoa_paciente'] ?? null;
             $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
+            $tipo_medicacao = $dados['tipo_medicacao'] ?? null;
             $medicamento = $dados['medicamento'] ?? null;
             $dosagem = $dados['dosagem'] ?? null;
             $horarios = $dados['horarios'] ?? [];
@@ -162,13 +163,18 @@
             if (is_string($horarios)) {
                 $horarios = [$horarios];
             }
-            $duracao = $dados['duracao'] ?? null;
+            $duracao = !empty($dados['duracao']) ? $dados['duracao'] : null;
+            $tipo_uso = !empty($dados['tipo_uso']) ? (int)$dados['tipo_uso'] : null;
+            $data_termino = !empty($dados['data_termino']) ? $dados['data_termino'] : null;
+
             $status_id = $dados['status_id'] ?? 1;
 
             $campos_obrigatorios = [
                 'id_pessoa_paciente' => $id_pessoa_paciente,
                 'id_pessoa_funcionario' => $id_pessoa_funcionario,
-                'medicamento' => $medicamento
+                'tipo_medicacao' => $tipo_medicacao,
+                'medicamento' => $medicamento,
+                'dosagem' => $dosagem
             ];
 
             foreach ($campos_obrigatorios as $campo => $valor) {
@@ -201,9 +207,12 @@
 
                 $id_medicacao = $MedicamentosPacienteDAO->cadastrarMedicamentoSos(
                     $novo_id_atendimento,
+                    $tipo_medicacao,
                     $medicamento,
                     $dosagem,
                     $duracao,
+                    $tipo_uso,
+                    $data_termino,
                     (int)$status_id
                 );
 
@@ -227,11 +236,13 @@
             } catch (PDOException $e) {
                 $MedicamentosPacienteDAO->rollBack();
                 // Erro de Banco de Dados
+                error_log('[cadastrarMedicacaoSOS] ' . $e->getMessage());
                 http_response_code(500);
                 echo json_encode([
                     'status' => 'erro',
-                    'mensagem' => 'Erro de BD durante transação: ' . $e->getMessage()
+                    'mensagem' => 'Erro ao cadastrar a medicação (BD).'
                 ]);
+
             } catch (Exception $e) {
                 $MedicamentosPacienteDAO->rollBack();
                 Util::tratarException($e);

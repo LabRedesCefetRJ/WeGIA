@@ -332,4 +332,22 @@ class SaudeDAO
 
     }
     
+
+    public function listarTipoMedicacao()
+    {
+        $pdo = Conexao::connect();
+        $sql = "SELECT id_tipo_medicacao, descricao FROM saude_medicacao_tipo_medicacao WHERE id_tipo_medicacao>0";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function listarTipoUsoMedicacao()
+    {
+        $pdo = Conexao::connect();
+        $sql = "SELECT id_tipo_uso, descricao FROM saude_medicacao_tipo_uso";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
