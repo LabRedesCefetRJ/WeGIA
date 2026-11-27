@@ -1686,7 +1686,8 @@ $descricaoFormatada = str_replace(['&#13;&#10;', '&#10;', '&#13;'], "\n", $descr
       }
     </script>
     <script>
-      function verificaSucesso(response) { 
+      function verificaSucesso(response) {
+        //console.log(response);
         if (response.errorInfo) {
           if (response.errorInfo[1] == 1451) {
             window.alert("O dependente possui documentos cadastrados em seu nome. Retire-os do bando de dados antes de remover o dependente.");
