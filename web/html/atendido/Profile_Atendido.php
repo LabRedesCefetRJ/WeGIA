@@ -96,6 +96,11 @@ $processoAceitacao = $idPessoaAtendido > 0 ? $processoAceitacaoDAO->buscarProces
 $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEtapasPorProcesso((int)$processoAceitacao['id']) : [];
 
 require_once "../../controle/AtendidoControle.php";
+require_once "../../controle/ProcessoAceitacaoControle.php";
+
+$processoAceitacaoControle = new ProcessoAceitacaoControle($pdo);
+$descricao = $processoAceitacaoControle->getDescricaoProcesso((int)$processoAceitacao['id']);
+$descricaoFormatada = str_replace(['&#13;&#10;', '&#10;', '&#13;'], "\n", $descricao);
 ?>
 
 <!doctype html>
@@ -1401,6 +1406,22 @@ require_once "../../controle/AtendidoControle.php";
                             </a>
                           </div>
                         <?php else: ?>
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-none">
+                              <thead>
+                                <tr>
+                                  <th class="panel-title">Descrição</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr>
+                                  <td style="white-space: pre-wrap;"><?= htmlspecialchars($descricaoFormatada ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                          <br>
+
                           <div class="table-responsive">
                             <table class="table table-bordered table-striped mb-none">
                               <thead>

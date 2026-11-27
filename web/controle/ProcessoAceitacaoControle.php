@@ -12,6 +12,14 @@ require_once ROOT . '/classes/Util.php';
 require_once ROOT . '/dao/Conexao.php';
 require_once ROOT . '/html/geral/msg.php';
 
+/*id_status definidos no insert inicial de pa_status (wegia001.sql):
+    1 => 'Em Andamento'
+    2 => 'Concluído'
+    3 => 'Cancelado'
+    4 => 'Aguardando Aprovação'
+*/
+const id_statusConcluido = 2;
+
 class ProcessoAceitacaoControle
 {
     private PDO $pdo;
@@ -24,7 +32,8 @@ class ProcessoAceitacaoControle
     {
         $idProcesso = (int)($_POST['id_processo'] ?? 0);
         $idStatus   = (int)($_POST['id_status'] ?? 0);
-        $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
+        $descricao  = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
+        $abrirModalAtendido = ($_POST['abrir_modal_atendido'] ?? '') === '1';
 
         if ($idProcesso <= 0 || $idStatus <= 0) {
             $_SESSION['mensagem_erro'] = 'Processo ou status inválido.';
@@ -34,9 +43,25 @@ class ProcessoAceitacaoControle
 
         try {
             $dao = new ProcessoAceitacaoDAO($this->pdo);
-            $dao->alterar($idProcesso, $idStatus, $descricao);
+
+            if ($descricao === null) {
+                $dao->atualizarStatus($idProcesso, $idStatus);
+            } else {
+                $dao->alterar($idProcesso, $idStatus, $descricao);
+            }
 
             $_SESSION['msg'] = 'Status do processo atualizado com sucesso.';
+            
+            if ($abrirModalAtendido && $idStatus === id_statusConcluido && $dao->getIdAtendido($idProcesso) === false) {
+                $resumo = $dao->buscarResumoPorId($idProcesso);
+                if ($resumo) {
+                    $_SESSION['modal_cadastrar_atendido'] = [
+                        'id_processo' => (int)$resumo['id'],
+                        'nome'        => trim($resumo['nome'] . ' ' . $resumo['sobrenome']),
+                    ];
+                }
+            }
+
             header("Location: ../html/atendido/processo_aceitacao.php?status-processo=" . htmlspecialchars($idStatus));
             exit();
         } catch (Exception $e) {
@@ -136,6 +161,15 @@ class ProcessoAceitacaoControle
             ]);
 
             $processoDAO = new ProcessoAceitacaoDAO($this->pdo);
+
+            if (isset($id_pessoa)) {
+                $processoExistente = $processoDAO->buscarProcessoAtivoPorPessoa($id_pessoa);
+                if ($processoExistente !== null) {
+                    throw new InvalidArgumentException(
+                        "Já existe um processo de aceitação associado a essa pessoa, não é permitido cadastrar um novo processo.",409);
+                }
+            }
+
             $this->pdo->beginTransaction();
 
             if ($id_pessoa === null) {
@@ -180,7 +214,7 @@ class ProcessoAceitacaoControle
 
             $mensagem = $e instanceof PDOException ? 'Erro ao manipular o banco de dados da aplicação.' : $e->getMessage();
             setSessionFormData($_POST);
-            setSessionFormErrorFromMessage($mensagem);
+            setSessionFormErrorFromMessage($mensagem, $e->getCode() === 409 ? 'cpf' : 'global');
             setSessionOpenModal('modalNovoProcesso');
             setSessionMsg($mensagem, 'err');
 
@@ -580,6 +614,22 @@ class ProcessoAceitacaoControle
 
             header('Location: ../html/atendido/processo_aceitacao.php');
             exit();
+        }
+    }
+
+    public function getDescricaoProcesso(int $idProcesso): ?string
+    {
+        try {
+            $dao = new ProcessoAceitacaoDAO($this->pdo);
+            return $dao->getDescricaoProcesso($idProcesso);
+        } catch (PDOException $e) {
+            error_log('Erro ao buscar descrição do processo de aceitação: ' . $e->getMessage());
+            setSessionMsg('Erro ao manipular o banco de dados da aplicação.', 'err');
+            return null;
+        } catch (Exception $e) {
+            error_log('Erro ao buscar descrição do processo de aceitação: ' . $e->getMessage());
+            setSessionMsg($e->getMessage(), 'err');
+            return null;
         }
     }
 }
